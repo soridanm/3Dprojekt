@@ -8,7 +8,15 @@ Mandatory
  - written report
 
 Core techniques
- - Deferred Rendering
+ - Deferred Rendering (See library for more specific details)
+	- 5 G-Buffers. 
+		Depth
+		Light Accumulation (essentially ambient light)
+		Diffuse
+		Specular
+		Normals
+
+
 Geometry
  - Parsing and rendering an existing model format
  - Height-map terrain endering
@@ -22,3 +30,6 @@ Geometry
  Other techniques
  - AA
  - glow-effect
+
+
+ 
