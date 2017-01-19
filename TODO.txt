@@ -1,0 +1,24 @@
+
+Mandatory
+ - perspective camera
+ - textures
+ - ambient, diffuse, specular lighting
+ - wasd movement
+ - geometry shader
+ - written report
+
+Core techniques
+ - Deferred Rendering
+Geometry
+ - Parsing and rendering an existing model format
+ - Height-map terrain endering
+ Texture and lighting
+ - SSAO
+ Preojection techniques
+ - TBD
+ Acceleration techniques
+ - view frustum culling gainst a quadtree
+ - back face fulling using geometry shader
+ Other techniques
+ - AA
+ - glow-effect
