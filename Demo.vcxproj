@@ -156,6 +156,11 @@
   <ItemGroup>
     <ClInclude Include="bth_image.h" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="..\..\assignment2\knownissues.txt" />
+    <Text Include="..\..\assignment2\library.txt" />
+    <Text Include="..\..\assignment2\TODO.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
