@@ -1,0 +1,10 @@
+ - Introduction to DirectX 11 -
+http://www.3dgep.com/introduction-to-directx-11/
+
+
+ - HLSL Introduction -
+http://www.neatware.com/lbstudio/web/hlsl.html
+
+
+ - c++ Programming Style Guidelines -
+http://geosoft.no/development/cppstyle.html

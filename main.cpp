@@ -1,5 +1,5 @@
 //--------------------------------------------------------------------------------------
-// BTH - Stefan Petersson 2014.
+// 
 //--------------------------------------------------------------------------------------
 #include <windows.h>
 
@@ -13,8 +13,10 @@
 #pragma comment (lib, "d3dcompiler.lib")
 
 using namespace DirectX;
-float width = 640;
-float height = 480;
+
+const float SCREEN_WIDTH = 640;
+const float SCREEN_HEIGHT = 480;
+
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -406,8 +408,8 @@ void CreateTriangleData()
 void SetViewport()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = width;
-	vp.Height = height;
+	vp.Width = SCREEN_WIDTH;
+	vp.Height = SCREEN_HEIGHT;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0;
@@ -416,7 +418,7 @@ void SetViewport()
 }
 void Render()
 {
-	float clearColor[] = { 0.0f, 0.0f, 0.0f, 1 }; //background color
+	float clearColor[] = { 0.0f, 1.0f, 0.0f, 1 }; //background color
 	// set rendering state
 	// if nothing changes, this does not have to be "re-done" every frame...
 
@@ -479,7 +481,7 @@ void Render()
 	D3D11_MAPPED_SUBRESOURCE dataPtr3;
 	gDeviceContext->Map(gProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr3);
 	float fov = 0.45f*XM_PI;
-	float ar = width / height;
+	float ar = SCREEN_WIDTH / SCREEN_HEIGHT;
 	float closer = 0.1f;
 	float further = 20.0f;
 	XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar, closer, further);
@@ -564,7 +566,7 @@ HWND InitWindow(HINSTANCE hInstance)
 	if (!RegisterClassEx(&wcex))
 		return false;
 
-	RECT rc = { 0, 0, width, height };
+	RECT rc = { 0, 0, SCREEN_WIDTH, SCREEN_HEIGHT };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND handle = CreateWindow(
@@ -640,8 +642,8 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	}
 
 	D3D11_TEXTURE2D_DESC depthDesc;
-	depthDesc.Width = width;
-	depthDesc.Height = height;
+	depthDesc.Width = SCREEN_WIDTH;
+	depthDesc.Height = SCREEN_HEIGHT;
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;

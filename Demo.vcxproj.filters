@@ -35,4 +35,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="known_issues.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="library.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+    <Text Include="TODO.txt">
+      <Filter>Resource Files</Filter>
+    </Text>
+  </ItemGroup>
 </Project>
