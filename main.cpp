@@ -450,13 +450,19 @@ void Render()
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr1;
 	gDeviceContext->Map(gWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr1);
-	static float rotation;
+	static float rotation, rotationy, rotationz;
 	rotation += 0.05;
+	rotationy += 0.02;
+	rotationz += 0.01;
+	XMMATRIX Rot = XMMatrixRotationRollPitchYaw(rotation, rotationy, rotationz);
 	XMMATRIX W = XMMatrixRotationY(rotation);
 	XMMATRIX WT = XMMatrixTranspose(W);
-	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
+	XMMATRIX RotT = XMMatrixTranspose(Rot);
+	memcpy(dataPtr1.pData, &RotT, sizeof(valuesToWorld));
 	gDeviceContext->Unmap(gWorldBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(1, 1, &gWorldBuffer);
+
+
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr2;
 	gDeviceContext->Map(gViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
