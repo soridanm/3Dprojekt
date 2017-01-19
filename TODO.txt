@@ -9,13 +9,14 @@ Mandatory
 
 Core techniques
  - Deferred Rendering (See library for more specific details)
-	- 5 G-Buffers. 
+	- G-Buffer. 
 		Depth
-		Light Accumulation (essentially ambient light)
 		Diffuse
 		Specular
 		Normals
-
+	- 2 passes
+		Geometry pass
+		Lighting pass
 
 Geometry
  - Parsing and rendering an existing model format

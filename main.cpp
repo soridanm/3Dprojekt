@@ -71,7 +71,6 @@ void CreateConstantBufferExample() // NEW
 	}
 }
 
-
 ID3D11Buffer* gWorldBuffer = nullptr;
 struct valuesToWorld {
 	XMFLOAT4X4 worldMatrix;
@@ -610,7 +609,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;     // use 32-bit color
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
 	scd.OutputWindow = wndHandle;                           // the window to be used
-	scd.SampleDesc.Count = 4;                               // how many multisamples
+	scd.SampleDesc.Count = 1;                               // how many multisamples
 	scd.Windowed = TRUE;                                    // windowed/full-screen mode
 
 															// create a device, device context and swap chain using the information in the scd struct
@@ -647,7 +646,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthDesc.SampleDesc.Count = 4;
+	depthDesc.SampleDesc.Count = 1;
 	depthDesc.SampleDesc.Quality = 0;
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
 	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
