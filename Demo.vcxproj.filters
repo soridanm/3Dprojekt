@@ -35,15 +35,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <Text Include="..\..\assignment2\knownissues.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="..\..\assignment2\library.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="..\..\assignment2\TODO.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
 </Project>

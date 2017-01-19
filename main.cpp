@@ -26,7 +26,7 @@ ID3D11DeviceContext* gDeviceContext = nullptr;
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 
 ID3D11DepthStencilView* gDepthStecilView;
-ID3D11Texture2D* gDepthStencilBuffer=NULL;
+ID3D11Texture2D* gDepthStencilBuffer = NULL;
 
 
 ID3D11Buffer* gVertexBuffer = nullptr;
@@ -36,7 +36,7 @@ ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 
-ID3D11ShaderResourceView* gTextureView=nullptr;
+ID3D11ShaderResourceView* gTextureView = nullptr;
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ff476898(v=vs.85).aspx
 ID3D11Buffer* gExampleBuffer = nullptr; // NEW
@@ -195,7 +195,7 @@ void CreateShaders()
 	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
-	
+
 	//create geometry shader
 	ID3DBlob* pGS = nullptr;
 	D3DCompileFromFile(
@@ -210,7 +210,7 @@ void CreateShaders()
 		nullptr
 	);
 	gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShader);
-	
+
 
 	pGS->Release();
 }
@@ -221,30 +221,175 @@ void CreateTriangleData()
 	{
 		float x, y, z;
 		//float r,g,b;
-		float u,v;
+		float u, v;
 	};
 
-	TriangleVertex triangleVertices[4] =
+	TriangleVertex triangleVertices[36] =
 	{
+		//front
+				//lower left corner
+			-0.5f, -0.5f, -0.5f,	//v0 pos
+			0.0f, 1.0f,	//v0 texcoord
+		//	1.0f,0.0f,0.0f,//color
+
+			//upper left corner
+			-0.5f, 0.5f, -0.5f,	//v1
+			0.0f, 0.0f, 	//v1 texcoord
+		//	0.0f,1.0f,0.0f,//color
+
+			//lower right corner
+			0.5f, -0.5f, -0.5f, //v2
+			1.0f, 1.0f,	//v2 texcoord
+		//	0.0f,0.0f,1.0f,//color
+
+			//upper right corner
+			0.5f,0.5f,-0.5f,//v3
+			1.0f,0.0f,//v3 texcoord
+		 // 1.0f,0.0f,1.0f,//color
+
+
+		 //lower right corner
+		 0.5f, -0.5f, -0.5f, //v2
+		 1.0f, 1.0f,	//v2 texcoord
+
+		 //upper left corner
+		 -0.5f, 0.5f, -0.5f,	//v1
+		 0.0f, 0.0f, 	//v1 texcoord
+
+
+
+		 //left side
+
 		//lower left corner
-		-0.5f, -0.5f, 0.0f,	//v0 pos
+		-0.5f, -0.5f, 0.5f,	//v0 pos
 		0.0f, 1.0f,	//v0 texcoord
-	//	1.0f,0.0f,0.0f,//color
 
 		//upper left corner
-		-0.5f, 0.5f, 0.0f,	//v1
+		-0.5f, 0.5f, 0.5f,	//v1
 		0.0f, 0.0f, 	//v1 texcoord
-	//	0.0f,1.0f,0.0f,//color
-		
+
 		//lower right corner
-		0.5f, -0.5f, 0.0f, //v2
+		-0.5f, -0.5f, -0.5f, //v2
 		1.0f, 1.0f,	//v2 texcoord
-	//	0.0f,0.0f,1.0f,//color
 
 		//upper right corner
-		0.5f,0.5f,0.0f,//v3
+		-0.5f,0.5f,-0.5f,//v3
 		1.0f,0.0f,//v3 texcoord
-	 // 1.0f,0.0f,1.0f,//color
+
+		//lower right corner
+		-0.5f, -0.5f, -0.5f, //v2
+		1.0f, 1.0f,	//v2 texcoord
+
+		//upper left corner
+		-0.5f, 0.5f, 0.5f,	//v1
+		0.0f, 0.0f, //v1 texcoord
+
+		 //right side
+
+		//lower left corner
+		0.5f, -0.5f, -0.5f,
+		0.0f, 1.0f,
+
+		//upper left corner
+		0.5f, 0.5f, -0.5f,
+		0.0f, 0.0f,
+
+		//lower right corner
+		0.5f, -0.5f, 0.5f,
+		1.0f, 1.0f,
+
+		//upper right corner
+		0.5f,0.5f,0.5f,
+		1.0f,0.0f,
+
+		//lower right corner
+		0.5f, -0.5f, 0.5f,
+		1.0f, 1.0f,
+
+		//upper left corner
+		0.5f, 0.5f, -0.5f,
+		0.0f, 0.0f,
+
+		//top
+
+		//lower left corner
+		-0.5f, 0.5f, -0.5f,
+		0.0f, 1.0f,
+
+		//upper left corner
+		-0.5f, 0.5f, 0.5f,
+		0.0f, 0.0f,
+
+		//lower right corner
+		0.5f, 0.5f, -0.5f,
+		1.0f, 1.0f,
+
+		//upper right corner
+		0.5f,0.5f,0.5f,
+		1.0f,0.0f,
+
+		//lower right corner
+		0.5f,0.5f, -0.5f,
+		1.0f, 1.0f,
+
+		//upper left corner
+		-0.5f, 0.5f, 0.5f,
+		0.0f, 0.0f,
+
+
+			//bottom
+
+			//lower left corner
+			-0.5f, -0.5f, 0.5f,
+			0.0f, 1.0f,
+
+			//upper left corner
+			-0.5f, -0.5f, -0.5f,
+			0.0f, 0.0f,
+
+			//lower right corner
+			0.5f, -0.5f, 0.5f,
+			1.0f, 1.0f,
+
+			//upper right corner
+			0.5f, -0.5f, -0.5f,
+			1.0f, 0.0f,
+
+			//lower right corner
+			0.5f, -0.5f, 0.5f,
+			1.0f, 1.0f,
+
+			//upper left corner
+			-0.5f, -0.5f, -0.5f,
+			0.0f, 0.0f,
+
+			//back
+
+			//lower left corner
+			0.5f, -0.5f, 0.5f,
+			0.0f, 1.0f,
+
+			//upper left corner
+			0.5f, 0.5f, 0.5f,
+			0.0f, 0.0f,
+
+			//lower right corner
+			-0.5f, -0.5f, 0.5f,
+			1.0f, 1.0f,
+
+			//upper right corner
+			-0.5f, 0.5f, 0.5f,
+			1.0f, 0.0f,
+
+			//lower right corner
+			-0.5f, -0.5f, 0.5f,
+			1.0f, 1.0f,
+
+			//upper left corner
+			0.5f, 0.5f, 0.5f,
+			0.0f, 0.0f,
+
+
 	};
 
 	D3D11_BUFFER_DESC bufferDesc;
@@ -280,7 +425,7 @@ void Render()
 
 	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
@@ -308,21 +453,24 @@ void Render()
 	static float rotation;
 	rotation += 0.05;
 	XMMATRIX W = XMMatrixRotationY(rotation);
-	XMMATRIX WT=XMMatrixTranspose(W);
+	XMMATRIX WT = XMMatrixTranspose(W);
 	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
 	gDeviceContext->Unmap(gWorldBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(1, 1, &gWorldBuffer);
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr2;
 	gDeviceContext->Map(gViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
-//	XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
-//	XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
+		//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
+		//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
 
-	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
+		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
+
+	//XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
+	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	XMVECTOR target = XMVectorZero();
-	XMMATRIX V = XMMatrixLookAtLH(pos,target,up);
+	XMMATRIX V = XMMatrixLookAtLH(pos, target, up);
 	XMMATRIX VT = XMMatrixTranspose(V);
 	memcpy(dataPtr2.pData, &VT, sizeof(valuesToView));
 	gDeviceContext->Unmap(gWorldBuffer, 0);
@@ -331,10 +479,10 @@ void Render()
 	D3D11_MAPPED_SUBRESOURCE dataPtr3;
 	gDeviceContext->Map(gProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr3);
 	float fov = 0.45f*XM_PI;
-	float ar=width/height;
+	float ar = width / height;
 	float closer = 0.1f;
 	float further = 20.0f;
-	XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar,closer,further);
+	XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar, closer, further);
 	XMMATRIX PT = XMMatrixTranspose(P);
 	memcpy(dataPtr3.pData, &PT, sizeof(valuesToProject));
 	gDeviceContext->Unmap(gProjectionBuffer, 0);
@@ -346,7 +494,7 @@ void Render()
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// draw geometry
-	gDeviceContext->Draw(4, 0);//number of vertices to draw
+	gDeviceContext->Draw(36, 0);//number of vertices to draw
 }
 void CreateAllBuffers() {
 	CreateConstantBufferExample();
@@ -368,7 +516,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		CreateShaders(); //4. Skapa vertex- och pixel-shaders
 
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
-		
+
 		CreateAllBuffers();
 
 		ShowWindow(wndHandle, nCmdShow);
@@ -496,7 +644,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	depthDesc.Height = height;
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
-	depthDesc.Format =DXGI_FORMAT_D32_FLOAT;
+	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
 	depthDesc.SampleDesc.Count = 4;
 	depthDesc.SampleDesc.Quality = 0;
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
@@ -535,11 +683,11 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	D3D11_SUBRESOURCE_DATA data;
 	ZeroMemory(&data, sizeof(data));
 	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH*4*sizeof(char);
+	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
 	gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
-	ZeroMemory(&resourceViewDesc,sizeof(resourceViewDesc));
+	ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
 	resourceViewDesc.Format = bthTexDesc.Format;
 	resourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	resourceViewDesc.Texture2D.MipLevels = bthTexDesc.MipLevels;
