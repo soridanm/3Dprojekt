@@ -13,7 +13,7 @@
 #pragma comment (lib, "d3dcompiler.lib")
 
 using namespace DirectX;
-
+const UINT BUFFER_COUNT = 3;
 const float SCREEN_WIDTH = 640;
 const float SCREEN_HEIGHT = 480;
 
@@ -28,8 +28,15 @@ ID3D11DeviceContext* gDeviceContext = nullptr;
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 
 ID3D11DepthStencilView* gDepthStecilView;
-ID3D11Texture2D* gDepthStencilBuffer = NULL;
+ID3D11Texture2D* gDepthStencilTexture = NULL;
 
+struct gGraphicsBufferStruct {
+	ID3D11Texture2D* texture = nullptr;
+	ID3D11RenderTargetView* renderTargetView = nullptr;
+	ID3D11ShaderResourceView* shaderResourceView = nullptr;
+};
+
+gGraphicsBufferStruct gGraphicsBuffer[BUFFER_COUNT];
 
 ID3D11Buffer* gVertexBuffer = nullptr;
 
@@ -39,6 +46,15 @@ ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 
 ID3D11ShaderResourceView* gTextureView = nullptr;
+
+
+namespace Colors
+{
+	static const float White[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const float Black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	static const float LightSteelBlue[4] = { 0.69f, 0.77f, 0.87f, 1.0f };
+}
+
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ff476898(v=vs.85).aspx
 ID3D11Buffer* gExampleBuffer = nullptr; // NEW
@@ -543,7 +559,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gPixelShader->Release();
 		gGeometryShader->Release();
 		gDepthStecilView->Release();
-		gDepthStencilBuffer->Release();
+		gDepthStencilTexture->Release();
 		gBackbufferRTV->Release();
 		gSwapChain->Release();
 		gDevice->Release();
@@ -596,6 +612,100 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
+/* TODO: Should probably add hr checks */
+void initGraphicsBuffer()
+{
+	// Create render target textures
+	D3D11_TEXTURE2D_DESC textureDesc{};
+	textureDesc.Width = SCREEN_WIDTH;
+	textureDesc.Height = SCREEN_HEIGHT;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	//textureDesc.CPUAccessFlags = 0;
+	//textureDesc.MiscFlags = 0;
+	
+	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+		gDevice->CreateTexture2D(&textureDesc, NULL, &gGraphicsBuffer[i].texture);
+	}
+
+	// Create render target views.
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+	renderTargetViewDesc.Format = textureDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+		gDevice->CreateRenderTargetView(gGraphicsBuffer[i].texture, &renderTargetViewDesc, &gGraphicsBuffer[i].renderTargetView);
+	}
+
+	// Create the shader resource views
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+		gDevice->CreateShaderResourceView(gGraphicsBuffer[i].texture, &shaderResourceViewDesc, &gGraphicsBuffer[i].shaderResourceView);
+	}
+
+	//Create the depth stencil buffer texture
+	D3D11_TEXTURE2D_DESC depthDesc{};
+	depthDesc.Width = SCREEN_WIDTH;
+	depthDesc.Height = SCREEN_HEIGHT;
+	depthDesc.MipLevels = 1;
+	depthDesc.ArraySize = 1;
+	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthDesc.SampleDesc.Count = 1;
+	depthDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+	gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilTexture);
+
+
+	// Create the depth stencil view
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+	depthStencilViewDesc.Format = depthDesc.Format;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+
+	gDevice->CreateDepthStencilView(gDepthStencilTexture, // Depth stencil texture
+		&depthStencilViewDesc, // Depth stencil desc
+		&gDepthStecilView);  // [out] Depth stencil view
+
+}
+
+void BindFirstPass()
+{
+	SetViewport();
+
+	//set render targets
+	ID3D11RenderTargetView* renderTargets[] =
+	{
+		gGraphicsBuffer[0].renderTargetView,
+		gGraphicsBuffer[1].renderTargetView,
+		gGraphicsBuffer[2].renderTargetView,
+	};
+	gDeviceContext->OMSetRenderTargets(BUFFER_COUNT, renderTargets, gDepthStecilView);
+
+	//Clear the render targets
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::LightSteelBlue);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::Black);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::Black);
+	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+}
+
+void BindLastPass()
+{
+
+}
+
 HRESULT CreateDirect3DContext(HWND wndHandle)
 {
 	// create a struct to hold information about the swap chain
@@ -640,30 +750,33 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, NULL);
 	}
 
-	D3D11_TEXTURE2D_DESC depthDesc;
-	depthDesc.Width = SCREEN_WIDTH;
-	depthDesc.Height = SCREEN_HEIGHT;
-	depthDesc.MipLevels = 1;
-	depthDesc.ArraySize = 1;
-	depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	depthDesc.SampleDesc.Count = 1;
-	depthDesc.SampleDesc.Quality = 0;
-	depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthDesc.CPUAccessFlags = 0;
-	depthDesc.MiscFlags = 0;
-	gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilBuffer);
+
+	initGraphicsBuffer();
+
+	//D3D11_TEXTURE2D_DESC depthDesc;
+	//depthDesc.Width = SCREEN_WIDTH;
+	//depthDesc.Height = SCREEN_HEIGHT;
+	//depthDesc.MipLevels = 1;
+	//depthDesc.ArraySize = 1;
+	//depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
+	//depthDesc.SampleDesc.Count = 1;
+	//depthDesc.SampleDesc.Quality = 0;
+	//depthDesc.Usage = D3D11_USAGE_DEFAULT;
+	//depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	//depthDesc.CPUAccessFlags = 0;
+	//depthDesc.MiscFlags = 0;
+	//gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilBuffer);
 
 
-	// Create the depth stencil view
-	gDevice->CreateDepthStencilView(gDepthStencilBuffer, // Depth stencil texture
-		nullptr, // Depth stencil desc
-		&gDepthStecilView);  // [out] Depth stencil view
+	//// Create the depth stencil view
+	//gDevice->CreateDepthStencilView(gDepthStencilBuffer, // Depth stencil texture
+	//	nullptr, // Depth stencil desc
+	//	&gDepthStecilView);  // [out] Depth stencil view
 
-				 // Bind the depth stencil view
-	gDeviceContext->OMSetRenderTargets(1,          // One rendertarget view
-		&gBackbufferRTV,      // Render target view, created earlier
-		gDepthStecilView);     // Depth stencil view for the render target
+	//			 // Bind the depth stencil view
+	//gDeviceContext->OMSetRenderTargets(1,          // One rendertarget view
+	//	&gBackbufferRTV,      // Render target view, created earlier
+	//	gDepthStecilView);     // Depth stencil view for the render target
 
 
 	D3D11_TEXTURE2D_DESC bthTexDesc;

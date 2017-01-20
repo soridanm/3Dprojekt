@@ -29,6 +29,12 @@
     <FxCompile Include="Geometry.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
+    <FxCompile Include="DeferredShader.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="DeferredLighting.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bth_image.h">

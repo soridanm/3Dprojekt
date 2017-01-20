@@ -1,6 +1,13 @@
  - Deferred Rendering -
  http://www.3dgep.com/forward-plus/#Deferred_Shading
 
+ Kräver bth login
+ http://proquest.safaribooksonline.com.miman.bib.bth.se/book/animation-and-3d/9781439869765/chapter-11dot-deferred-rendering/chapter_11_deferred_rendering
+
+ video
+ https://www.youtube.com/watch?v=2ThW4Gz6oYM
+ code (initGraphoicsBuffer, and BindFirstPass code is from here with some modifications)
+ https://github.com/HVonck/Tutorials/tree/master/Deferred_Rendering/End_Code
 
  - Introduction to DirectX 11 -
 http://www.3dgep.com/introduction-to-directx-11/
