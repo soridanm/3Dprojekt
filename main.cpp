@@ -699,6 +699,7 @@ void BindFirstPass()
 
 	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	//TODO: select shaders
 }
 
 void BindLastPass()

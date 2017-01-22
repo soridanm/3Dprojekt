@@ -29,7 +29,7 @@ void GetGBufferAttributes(in float2 screenPos, out float3 normal,
 
 
 
-float3 PSMain (in float4 screenPos : SV_Position ) : SV_Target0
+float3 PSMain ( in float4 screenPos : SV_Position ) : SV_Target0
 {
 	float3 normal;
 	float3 position;
