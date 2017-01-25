@@ -614,11 +614,20 @@ void DetectInput(double time,HWND hwnd) {
 	if (keyboardState[DIK_C] & 0x80) {
 		gMoveUD -= speed;
 	}
-
 	if ((mouse_current_state.lX != gMouse_last_state.lX) || (mouse_current_state.lY != gMouse_last_state.lY)) {
 		gCAM_YAW += mouse_current_state.lX*0.001f;
 		gCAM_PITCH += mouse_current_state.lY*0.001f;
 		gMouse_last_state = mouse_current_state;
+	}
+	if (keyboardState[DIK_Q] & 0x80) {
+		CAM_POS = XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
+		CAM_TARGET = XMVectorZero();
+		CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+		CAM_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+		CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+		gCAM_PITCH = 0.0f;
+		gCAM_YAW = 0.0f;
+
 	}
 
 	gMouse_last_state = mouse_current_state;
