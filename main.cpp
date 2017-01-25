@@ -9,18 +9,43 @@
 #include "bth_image.h"
 #include <Windows.h>
 
+#include<dinput.h>
+#pragma comment(lib,"dinput8.lib")
+#pragma comment(lib,"dxguid.lib")
+
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 
 using namespace DirectX;
 
-const float SCREEN_WIDTH = 640;
-const float SCREEN_HEIGHT = 480;
+const float SCREEN_WIDTH = 1920;
+const float SCREEN_HEIGHT = 1080;
+
+XMVECTOR CAM_POS = XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
+XMVECTOR CAM_TARGET = XMVectorZero();
+XMVECTOR CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+XMVECTOR CAM_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+XMVECTOR CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+XMVECTOR DEFAULT_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+XMVECTOR DEFAULT_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+
+XMMATRIX CAM_ROT_MAT;
+
+float gMoveLR = 0, gMoveBF = 0,gMoveUD=0, gCAM_YAW = 0, gCAM_PITCH = 0;
+
+double gCounts_per_second = 0.0;
+_int64 CounterStart = 0;
+int gFrame_count = 0, gFPS = 0;
+_int64 gFrame_time_old = 0;
+double gFrame_time;
+
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 HRESULT CreateDirect3DContext(HWND wndHandle);
+bool InitDirectInput(HINSTANCE hInstance,HWND hwnd);
 
 IDXGISwapChain* gSwapChain = nullptr;
 ID3D11Device* gDevice = nullptr;
@@ -39,6 +64,12 @@ ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 
 ID3D11ShaderResourceView* gTextureView = nullptr;
+
+IDirectInputDevice8* DIKeyboard;
+IDirectInputDevice8* DIMouse;
+
+DIMOUSESTATE gMouse_last_state;
+LPDIRECTINPUT8 DirectInput;
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ff476898(v=vs.85).aspx
 ID3D11Buffer* gExampleBuffer = nullptr; // NEW
@@ -416,9 +447,59 @@ void SetViewport()
 	vp.TopLeftY = 0;
 	gDeviceContext->RSSetViewports(1, &vp);
 }
-void Render()
+
+void StartTimer() {
+	LARGE_INTEGER frequency_count;
+	QueryPerformanceFrequency(&frequency_count);
+
+	gCounts_per_second = double(frequency_count.QuadPart);
+	QueryPerformanceCounter(&frequency_count);
+	CounterStart = frequency_count.QuadPart;
+}
+double GetTime() {
+	LARGE_INTEGER current_time;
+	QueryPerformanceCounter(&current_time);
+	return double(current_time.QuadPart - CounterStart) / gCounts_per_second;
+}
+double GetFrameTime() {
+	LARGE_INTEGER current_time;
+	_int64 tick_count;
+	QueryPerformanceCounter(&current_time);
+	tick_count = current_time.QuadPart - gFrame_time_old;
+	gFrame_time_old = current_time.QuadPart;
+
+	if (tick_count < 0.0f) {
+		tick_count = 0.0f;
+	}
+	return float(tick_count) / gCounts_per_second;
+}
+
+void UpdateCamera() {
+	CAM_ROT_MAT = XMMatrixRotationRollPitchYaw(gCAM_PITCH, gCAM_YAW, 0.0f);
+	CAM_TARGET = XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT);
+	CAM_TARGET = XMVector3Normalize(CAM_TARGET);
+
+	XMMATRIX YRotation_CAM_directions = XMMatrixRotationY(gCAM_YAW);
+
+	CAM_RIGHT = XMVector3TransformCoord(DEFAULT_RIGHT, YRotation_CAM_directions);
+	CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
+	CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
+
+	CAM_POS += gMoveLR*CAM_RIGHT;
+	CAM_POS += gMoveBF*CAM_FORWARD;
+	CAM_POS += gMoveUD*CAM_UP;
+
+	gMoveLR = 0.0f;
+	gMoveBF = 0.0f;
+	gMoveUD = 0.0f;
+	
+	CAM_TARGET = CAM_POS + CAM_TARGET;
+
+}
+
+void Render(double time)
 {
-	float clearColor[] = { 0.0f, 1.0f, 0.0f, 1 }; //background color
+	float clearColor[] = { 0.1f, 0.1f, 0.1f, 1 }; //background color
 	// set rendering state
 	// if nothing changes, this does not have to be "re-done" every frame...
 
@@ -453,7 +534,8 @@ void Render()
 	D3D11_MAPPED_SUBRESOURCE dataPtr1;
 	gDeviceContext->Map(gWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr1);
 	static float rotation;
-	rotation += 0.05;
+	//rotation += 0.05;
+	rotation += 1.0f*time;
 	XMMATRIX W = XMMatrixRotationY(rotation);
 	XMMATRIX WT = XMMatrixTranspose(W);
 	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
@@ -462,17 +544,19 @@ void Render()
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr2;
 	gDeviceContext->Map(gViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
-		//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
-		//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
+	//	//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
+	//	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
 
-		XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
-		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
+	//	XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
+	//	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
 
-	//XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
-	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	////XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
+	////XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-	XMVECTOR target = XMVectorZero();
-	XMMATRIX V = XMMatrixLookAtLH(pos, target, up);
+	//XMVECTOR target = XMVectorZero();
+	//XMMATRIX V = XMMatrixLookAtLH(pos, target, up);
+
+	XMMATRIX V = XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP);
 	XMMATRIX VT = XMMatrixTranspose(V);
 	memcpy(dataPtr2.pData, &VT, sizeof(valuesToView));
 	gDeviceContext->Unmap(gWorldBuffer, 0);
@@ -498,6 +582,49 @@ void Render()
 	// draw geometry
 	gDeviceContext->Draw(36, 0);//number of vertices to draw
 }
+
+void DetectInput(double time,HWND hwnd) {
+	DIMOUSESTATE mouse_current_state;
+	BYTE keyboardState[256];
+	DIKeyboard->Acquire();
+	DIMouse->Acquire();
+
+	DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouse_current_state);
+	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
+	if (keyboardState[DIK_ESCAPE] & 0x80) {
+		PostMessage(hwnd, WM_DESTROY, 0, 0);
+	}
+
+	float speed = 15.0f*time;
+	if (keyboardState[DIK_A] & 0x80) {
+		gMoveLR -= speed;
+	}
+	if (keyboardState[DIK_D] & 0x80) {
+		gMoveLR += speed;
+	}
+	if (keyboardState[DIK_W] & 0x80) {
+		gMoveBF += speed;
+	}
+	if (keyboardState[DIK_S] & 0x80) {
+		gMoveBF -= speed;
+	}
+	if (keyboardState[DIK_SPACE] & 0x80) {
+		gMoveUD += speed;
+	}
+	if (keyboardState[DIK_C] & 0x80) {
+		gMoveUD -= speed;
+	}
+
+	if ((mouse_current_state.lX != gMouse_last_state.lX) || (mouse_current_state.lY != gMouse_last_state.lY)) {
+		gCAM_YAW += mouse_current_state.lX*0.001f;
+		gCAM_PITCH += mouse_current_state.lY*0.001f;
+		gMouse_last_state = mouse_current_state;
+	}
+
+	gMouse_last_state = mouse_current_state;
+	UpdateCamera();
+}
+
 void CreateAllBuffers() {
 	CreateConstantBufferExample();
 	CreateConstantBufferWorld();
@@ -508,7 +635,10 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 {
 	MSG msg = { 0 };
 	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
-
+	if (InitDirectInput(hInstance,wndHandle)==false) {
+		MessageBox(0, L"Direct Input Initialisation failed", L"Error", MB_OK);
+		return 0;
+	}
 	if (wndHandle)
 	{
 		CreateDirect3DContext(wndHandle); //2. Skapa och koppla SwapChain, Device och Device Context
@@ -532,12 +662,23 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 			else
 			{
-				Render(); //8. Rendera
+				gFrame_count++;
+				if (GetTime() > 1.0f) {
+					gFPS = gFrame_count;
+					gFrame_count = 0;
+					StartTimer();
+				}
+				double time = GetFrameTime();
+				DetectInput(time, wndHandle);
+				Render(time); //8. Rendera
 
 				gSwapChain->Present(1, 0); //9. Växla front- och back-buffer
 			}
 		}
-
+		gSwapChain->SetFullscreenState(false, NULL);
+		DIKeyboard->Unacquire();
+		DIMouse->Unacquire();
+		DirectInput->Release();
 		gVertexBuffer->Release();
 		gVertexLayout->Release();
 		gVertexShader->Release();
@@ -585,6 +726,24 @@ HWND InitWindow(HINSTANCE hInstance)
 	return handle;
 }
 
+bool InitDirectInput(HINSTANCE hInstance, HWND hwnd) {
+	HRESULT hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
+
+	hr = DirectInput->CreateDevice(GUID_SysKeyboard, &DIKeyboard, NULL);
+	hr = DirectInput->CreateDevice(GUID_SysMouse, &DIMouse, NULL);
+	
+
+	hr = DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
+	hr = DIKeyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+
+	hr = DIMouse->SetDataFormat(&c_dfDIMouse);
+	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
+
+	return true;
+
+}
+
+
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -611,7 +770,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
 	scd.OutputWindow = wndHandle;                           // the window to be used
 	scd.SampleDesc.Count = 4;                               // how many multisamples
-	scd.Windowed = TRUE;                                    // windowed/full-screen mode
+	scd.Windowed = FALSE;                                    // windowed/full-screen mode
 
 															// create a device, device context and swap chain using the information in the scd struct
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
