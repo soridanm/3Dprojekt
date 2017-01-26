@@ -81,7 +81,7 @@ PSOutput PSMain(in PSInput input)
 
 	//Output our G-Buffer values
 	output.Normal = float4(normalWS, 1.0f);
-	output.DiffuseAlbedo - float4(diffuseAlbedo, 1.0f);
+	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0f);
 	//output.SpecularAlbedo = float4(SpecularAlbedo, SpecularPower);
 	output.Position = float4(input.PositionWS, 1.0f);
 

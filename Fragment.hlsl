@@ -1,25 +1,50 @@
-Texture2D txDiffuse:register(t0);
-SamplerState sampAni;
-struct VS_OUT
+// First pass fragment shader
+
+Texture2D DiffuseMap		: register(t0);
+SamplerState AnisoSampler	: register(s0);
+
+struct PS_IN
 {
-	float4 Pos : SV_POSITION;
-	float2 Texcoord:TEXCOORD;
-	float4 Normal:NORMAL;
-	float4 worldPos:POSITION;
-	//float3 Color : COLOR;
+	float4 PositionCS : SV_Position;
+	float2 Texcoord	: TEXCOORD;
+	float3 NormalWS	: NORMALWS;
+	float3 PositionWS	: POSITIONWS;
 };
 
-
-float4 PS_main(VS_OUT input) : SV_Target
+struct PS_OUT
 {
+	float4 Normal		: SV_Target0;
+	float4 Position		: SV_Target1
+	float4 DiffuseAlbedo	: SV_Target2;
+	//float4 SpecularAlbedo	: SV_Target3;
+};
+
+PS_OUT PS_main(in PS_IN input) //: SV_Target
+{
+	PS_OUT output = (PS_OUT)0;
+
+	// Sample the diffuse map
+	float3 diffuseAlbedo = DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
+
+	// Normalize the normal after interpolation
+	float3 normalWS = normalize(input.NormalWS);
+
+	// Ouput G-Buffer values
+	output.Normal = float4(normalWS, 1.0f);
+	output.Position = float4(input.PositionWS, 1.0f);
+	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0f);
+	//output.SpecularAlbedo = float4(specularAlbedo, specularPower);
+
+	return output;
+
 	//float3 lightPos={0.0f,0.0f,-2.1f};
-	float3 s = txDiffuse.Sample(sampAni,input.Texcoord).xyz;
+	//float3 s = txDiffuse.Sample(sampAni,input.Texcoord).xyz;
 	/*float3 normal = normalize(input.Normal.xyz);
 	float3 lightVector = normalize(lightPos-input.worldPos.xyz);
 	float angle = clamp(dot(normal, lightVector),0,1);
 	float4 finalLight = float4(s*angle, 1.0f);*/
 
-	return float4(s, 1.0f);
+	//return float4(s, 1.0f);
 
 //	return input.Normal;
 	//return float4(input.Normal.xyz,1.0f);
