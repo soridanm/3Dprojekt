@@ -66,13 +66,13 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 	for (uint i = 0; i < 3; i++)
 	{
 		// Convert position to world space
-		output.PositionWS = mul(input.Position, worldMatrix)).xyz;
+		output.PositionWS = mul(input[i].Position, worldMatrix).xyz;
 
 		// Calculate clip-space position
 		output.PositionCS = mul(float4(output.PositionWS, 1.0f), VP);
 
 		// Pass along the texture coordinates
-		output.TexCoord = input.TexCoord;
+		output.TexCoord = input[i].TexCoord;
 
 		outStream.Append(output);
 	}

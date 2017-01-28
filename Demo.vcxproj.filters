@@ -20,19 +20,19 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="Fragment.hlsl">
-      <Filter>Source Files</Filter>
-    </FxCompile>
-    <FxCompile Include="Vertex.hlsl">
-      <Filter>Source Files</Filter>
-    </FxCompile>
-    <FxCompile Include="Geometry.hlsl">
-      <Filter>Source Files</Filter>
-    </FxCompile>
     <FxCompile Include="DeferredShader.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
-    <FxCompile Include="DeferredLighting.hlsl">
+    <FxCompile Include="LightFragment.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="GBufferFragment.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="GBufferGeometry.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="GBufferVertex.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>

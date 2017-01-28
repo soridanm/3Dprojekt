@@ -54,8 +54,8 @@
 
 struct VS_IN
 {
-	float3 Position : POSITION:
-	float2 TexCoord : TEXCOORDS0; // <- look up number
+	float3 Position : POSITION;
+	float2 TexCoord : TEXCOORD; // <- look up number
 };
 
 struct VS_OUT
@@ -68,7 +68,7 @@ VS_OUT VS_main(in VS_IN input)
 {
 	VS_OUT output = (VS_OUT)0;
 
-	ouput.Position = float4(input.Position, 1.0f);
+	output.Position = float4(input.Position, 1.0f);
 	output.TexCoord = input.TexCoord;
 
 	return output;

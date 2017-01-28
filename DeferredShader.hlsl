@@ -18,6 +18,7 @@ struct VSInput
 {
 	float4 Position : POSITION;
 	float2 TexCoord : TEXCOORDS0; //look up TEXCOORDS0
+	float3 Normal   : NORMAL;
 };
 
 struct VSOutput
@@ -49,7 +50,7 @@ struct PSOutput
 VSOutput VSMain(in VSInput input)
 {
 
-	float4x4 worldViewProjMatrix = mul(worldMatrix, mul(viewPatrix, projectionMatrix));
+	float4x4 worldViewProjMatrix = mul(worldMatrix, mul(viewMatrix, projectionMatrix));
 
 
 
@@ -69,24 +70,24 @@ VSOutput VSMain(in VSInput input)
 }
 
 /* G-Buffer pixel shader */
-PSOutput PSMain(in PSInput input)
-{
-	PSOutput output;
-
-	//Sample the diffuse map
-	float3 diffuseAlbedo = DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
-
-	//Normalize the normal after interpolation
-	float3 normalWS = normalize(input.NormalWS);
-
-	//Output our G-Buffer values
-	output.Normal = float4(normalWS, 1.0f);
-	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0f);
-	//output.SpecularAlbedo = float4(SpecularAlbedo, SpecularPower);
-	output.Position = float4(input.PositionWS, 1.0f);
-
-	return output;
-}
-
+//PSOutput PSMain(in PSInput input)
+//{
+//	PSOutput output;
+//
+//	//Sample the diffuse map
+//	float3 diffuseAlbedo = DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
+//
+//	//Normalize the normal after interpolation
+//	float3 normalWS = normalize(input.NormalWS);
+//
+//	//Output our G-Buffer values
+//	output.Normal = float4(normalWS, 1.0f);
+//	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0f);
+//	//output.SpecularAlbedo = float4(SpecularAlbedo, SpecularPower);
+//	output.Position = float4(input.PositionWS, 1.0f);
+//
+//	return output;
+//}
+//
 
 

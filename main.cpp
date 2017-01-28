@@ -14,8 +14,8 @@
 
 using namespace DirectX;
 const UINT BUFFER_COUNT = 3;
-const float SCREEN_WIDTH = 640;
-const float SCREEN_HEIGHT = 480;
+const LONG SCREEN_WIDTH = 640;
+const LONG SCREEN_HEIGHT = 480;
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -64,7 +64,7 @@ struct valuesFromCpu {					// NEW
 	float value3;						// NEW
 	float value4;						// NEW
 };
-valuesFromCpu globalValues{ 0.0,0.0,0.0,0.0 }; // NEW
+valuesFromCpu globalValues{ 0.0f, 0.0f, 0.0f, 0.0f }; // NEW
 
 void CreateConstantBufferExample() // NEW
 {
@@ -167,7 +167,7 @@ void CreateShaders()
 	//create vertex shader
 	ID3DBlob* pVS = nullptr;
 	D3DCompileFromFile(
-		L"Vertex.hlsl", // filename
+		L"GBufferVertex.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"VS_main",		// entry point
@@ -196,7 +196,7 @@ void CreateShaders()
 	//create pixel shader
 	ID3DBlob* pPS = nullptr;
 	D3DCompileFromFile(
-		L"Fragment.hlsl", // filename
+		L"GBufferFragment.hlsl", // filename
 		nullptr,		// optional macros
 		nullptr,		// optional include files
 		"PS_main",		// entry point
@@ -216,7 +216,7 @@ void CreateShaders()
 	//create geometry shader
 	ID3DBlob* pGS = nullptr;
 	D3DCompileFromFile(
-		L"Geometry.hlsl",
+		L"GBufferGeometry.hlsl",
 		nullptr,
 		nullptr,
 		"GS_main",
@@ -423,12 +423,12 @@ void CreateTriangleData()
 void SetViewport()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = SCREEN_WIDTH;
-	vp.Height = SCREEN_HEIGHT;
+	vp.Width = (FLOAT)SCREEN_WIDTH;
+	vp.Height = (FLOAT)SCREEN_HEIGHT;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 0;
-	vp.TopLeftY = 0;
+	vp.TopLeftX = 0.f;
+	vp.TopLeftY = 0.f;
 	gDeviceContext->RSSetViewports(1, &vp);
 }
 void Render()
@@ -457,7 +457,7 @@ void Render()
 	D3D11_MAPPED_SUBRESOURCE dataPtr;
 	gDeviceContext->Map(gExampleBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
 	// copy memory from CPU to GPU the entire struct
-	globalValues.value1 += 0.005;
+	globalValues.value1 += 0.005f;
 	memcpy(dataPtr.pData, &globalValues, sizeof(valuesFromCpu));
 	// UnMap constant buffer so that we can use it again in the GPU
 	gDeviceContext->Unmap(gExampleBuffer, 0);
@@ -467,8 +467,8 @@ void Render()
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr1;
 	gDeviceContext->Map(gWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr1);
-	static float rotation;
-	rotation += 0.05;
+	static float rotation = 0.0f;
+	rotation += 0.05f;
 	XMMATRIX W = XMMatrixRotationY(rotation);
 	XMMATRIX WT = XMMatrixTranspose(W);
 	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
@@ -496,7 +496,7 @@ void Render()
 	D3D11_MAPPED_SUBRESOURCE dataPtr3;
 	gDeviceContext->Map(gProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr3);
 	float fov = 0.45f*XM_PI;
-	float ar = SCREEN_WIDTH / SCREEN_HEIGHT;
+	float ar = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 	float closer = 0.1f;
 	float further = 20.0f;
 	XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar, closer, further);

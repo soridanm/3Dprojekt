@@ -1,4 +1,4 @@
-// First pass fragment shader
+// G-Buffer fragment shader
 
 Texture2D DiffuseMap		: register(t0);
 SamplerState AnisoSampler	: register(s0);
@@ -6,7 +6,7 @@ SamplerState AnisoSampler	: register(s0);
 struct PS_IN
 {
 	float4 PositionCS : SV_Position;
-	float2 Texcoord	: TEXCOORD;
+	float2 TexCoord	: TEXCOORD;
 	float3 NormalWS	: NORMALWS;
 	float3 PositionWS	: POSITIONWS;
 };
@@ -14,7 +14,7 @@ struct PS_IN
 struct PS_OUT
 {
 	float4 Normal		: SV_Target0;
-	float4 Position		: SV_Target1
+	float4 Position		: SV_Target1;
 	float4 DiffuseAlbedo	: SV_Target2;
 	//float4 SpecularAlbedo	: SV_Target3;
 };

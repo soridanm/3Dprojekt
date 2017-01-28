@@ -1,5 +1,6 @@
 /* Code from the book "Practical Rendering and Computation with Direct3D 11", page 504 */
 
+// Lightning fragment shader
 
 // Textures from G-Buffers
 Texture2D NormalTexture			: register(t0);
@@ -29,7 +30,7 @@ void GetGBufferAttributes(in float2 screenPos, out float3 normal,
 
 
 
-float3 PSMain ( in float4 screenPos : SV_Position ) : SV_Target0
+float4 PS_main ( in float4 screenPos : SV_Position ) : SV_Target0
 {
 	float3 normal;
 	float3 position;
