@@ -19,6 +19,7 @@ struct PS_OUT
 	//float4 SpecularAlbedo	: SV_Target3;
 };
 
+
 PS_OUT PS_main(in PS_IN input) //: SV_Target
 {
 	PS_OUT output = (PS_OUT)0;

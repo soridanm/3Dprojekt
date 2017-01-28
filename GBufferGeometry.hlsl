@@ -47,6 +47,7 @@ struct GS_OUT
 //};
 
 
+
 [maxvertexcount(6)]
 void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream) 
 {

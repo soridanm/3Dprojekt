@@ -1,22 +1,35 @@
 /* Code from the book "Practical Rendering and Computation with Direct3D 11", page 504 */
 
+/*
+* Only outputs the Diffuse texture
+* Diffuse and specular shading will be added later to complete the Phong shading
+*
+*
+*/
+
+// TODO: light constant buffer
+
+
 // Lightning fragment shader
 
 // Textures from G-Buffers
 Texture2D NormalTexture			: register(t0);
-Texture2D DiffuseAlbedoTexture	: register(t1);
-//Texture2D SpecularAlbedoTexture	: register(t2);
-Texture2D PositionTexture		: register(t3);
+Texture2D PositionTexture		: register(t1); 
+Texture2D DiffuseAlbedoTexture	: register(t2);
+//Texture2D SpecularAlbedoTexture	: register(t3);
+
+// TODO: light constant buffer here
 
 
 // Helper function for extracting G-Buffer attributes
-void GetGBufferAttributes(in float2 screenPos, out float3 normal,
+void GetGBufferAttributes( in float2 screenPos, 
+	out float3 normal,
 	out float3 position,
-	out float3 diffuseAlbedo /*,out float3 specularAlbedo,
+	out float3 diffuseAlbedo/*, 
+	out float3 specularAlbedo,
 	out float specularPower*/)
 {
-	// Determine our indices for sampling the texture based on the current 
-	// screen position
+	// Determine our indices for sampling the texture based on the current screen position
 	int3 sampleIndices = int3(screenPos.xy, 0);
 
 	normal = NormalTexture.Load(sampleIndices).xyz;
@@ -28,7 +41,7 @@ void GetGBufferAttributes(in float2 screenPos, out float3 normal,
 	//specularPower = spec.w;
 }
 
-
+// Lighting fragment shader
 
 float4 PS_main ( in float4 screenPos : SV_Position ) : SV_Target0
 {
@@ -43,6 +56,9 @@ float4 PS_main ( in float4 screenPos : SV_Position ) : SV_Target0
 	specularAlbedo, specularPower*/);
 
 	//float3 lighting = CalcLighting(normal, position, diffuseAlbedo, specularAlbedo, specularPower);
+	
+	// Only renders the diffuse color G-Buffer
+	// Change to normal, or position for respective G-Buffers.
 	float3 lighting = diffuseAlbedo;
 
 	return float4(lighting, 1.0f);

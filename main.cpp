@@ -676,6 +676,9 @@ void initGraphicsBuffer()
 		&depthStencilViewDesc, // Depth stencil desc
 		&gDepthStecilView);  // [out] Depth stencil view
 
+
+	//Relese
+
 }
 
 void BindFirstPass()

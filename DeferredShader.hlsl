@@ -1,5 +1,13 @@
 /* Code from the book "Practical Rendering and Computation with Direct3D 11", page 499 */
 
+/* -------------------------------------------------------
+
+THIS SHADER IS ONLY A TEMPLATE!
+WILL BE REMOVED EVENTUALLY
+
+-----------------------------------------------------------*/
+
+
 // TODO: make one single cbuffer instead of 3
 cbuffer WORLDMATRIX:register(b1) {
 	float4x4 worldMatrix;
