@@ -62,7 +62,7 @@ struct VS_IN
 struct VS_OUT
 {
 	float4 Position : POSITION;
-	float2 TexCoord : TEXCOORD0;
+	float2 TexCoord : TEXCOORD;
 };
 
 VS_OUT VS_main(in VS_IN input)

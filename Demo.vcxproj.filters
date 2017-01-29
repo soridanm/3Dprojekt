@@ -35,6 +35,9 @@
     <FxCompile Include="GBufferVertex.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
+    <FxCompile Include="LightVertex.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bth_image.h">

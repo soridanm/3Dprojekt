@@ -1,5 +1,6 @@
 
-Mandatory
+
+------------------------------ Mandatory ---------------------------------------
  - perspective camera
  - textures
  - ambient, diffuse, specular lighting
@@ -7,28 +8,42 @@ Mandatory
  - geometry shader
  - written report
 
-Core techniques
+---------------------------- Core techniques -----------------------------------
  - Deferred Rendering (See library for more specific details)
+
 	- G-Buffer. 
-		Depth
+		Depth (just a regular depth buffer)
+		Normal
+		Position
 		Diffuse
 		Specular
-		Normals
-	- 2 passes
-		Geometry pass
-		Lighting pass
 
-Geometry
+	- 2 passes
+	* Geometry pass [GBufferVertex -> GBufferGeometry -> GBufferFragment]
+		Vertex shader is just a pass through.
+		Geometry handles all translations and transformations.
+		Fragment outputs the data to the respective G-Buffers.
+
+	* Lighting pass [LightVertex -> LightFragment]
+		LightVertex shader generates a full screen triangle.
+		LightFragment shader does all the light calculations.
+
+------------------------------ Geometry -----------------------------------------
  - Parsing and rendering an existing model format
  - Height-map terrain endering
- Texture and lighting
+
+
+ ------------------------ Texture and lighting ----------------------------------
  - SSAO
- Preojection techniques
+
+ ----------------------- Preojection techniques ---------------------------------
  - TBD
- Acceleration techniques
+
+ ----------------------- Acceleration techniques --------------------------------
  - view frustum culling gainst a quadtree
  - back face fulling using geometry shader
- Other techniques
+
+ -------------------------- Other techniques ------------------------------------
  - AA
  - glow-effect
 

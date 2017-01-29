@@ -1,4 +1,19 @@
- - Deferred Rendering -
+----------------------------------------------------------------------------
+ * * * * * * * * * * * * * * * * * Basics * * * * * * * * * * * * * * * * * 
+----------------------------------------------------------------------------
+
+  - Introduction to DirectX 11 -
+http://www.3dgep.com/introduction-to-directx-11/
+
+ - HLSL Introduction -
+http://www.neatware.com/lbstudio/web/hlsl.html
+
+
+----------------------------------------------------------------------------
+ * * * * * * * * * * * * * * * Important stuff * * * * * * * * * * * * * * 
+----------------------------------------------------------------------------
+
+   - Deferred Rendering -
  http://www.3dgep.com/forward-plus/#Deferred_Shading
 
  Kräver bth login
@@ -9,13 +24,26 @@
  code (initGraphoicsBuffer, and BindFirstPass code is from here with some modifications)
  https://github.com/HVonck/Tutorials/tree/master/Deferred_Rendering/End_Code
 
- - Introduction to DirectX 11 -
-http://www.3dgep.com/introduction-to-directx-11/
+ Full screen triangle (the instructions say quad but a triangle is better)
+ Relevant slides: 12-14
+ http://www.slideshare.net/DevCentralAMD/vertex-shader-tricks-bill-bilodeau
 
 
- - HLSL Introduction -
-http://www.neatware.com/lbstudio/web/hlsl.html
 
+----------------------------------------------------------------------------
+ * * * * * * * * * * * * * * * Trivial stuff * * * * * * * * * * * * * * * 
+----------------------------------------------------------------------------
 
  - c++ Programming Style Guidelines -
 http://geosoft.no/development/cppstyle.html
+
+
+Differences between floating point grammar in cpp and hlsl. 
+(float = 32bit, double = 64bit)
+.cpp:
+	1.0f, 1.0F = float
+	1.0  = double
+	1.0l, 1.0L = long double
+.hlsl: 
+	1.0  = float
+	1.0L = double

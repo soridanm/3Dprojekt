@@ -21,6 +21,12 @@ Texture2D DiffuseAlbedoTexture	: register(t2);
 // TODO: light constant buffer here
 
 
+struct PS_IN
+{
+	float4 Position	: SV_Position;
+	float2 TexCoord	: TEXCOORD;
+};
+
 // Helper function for extracting G-Buffer attributes
 void GetGBufferAttributes( in float2 screenPos, 
 	out float3 normal,

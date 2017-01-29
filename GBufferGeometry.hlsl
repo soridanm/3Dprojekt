@@ -22,7 +22,7 @@ cbuffer PROJECTIONMATRIX	: register (b3)
 struct GS_IN
 {
 	float4 Position		: POSITION;
-	float2 TexCoord		: TEXCOORD0;
+	float2 TexCoord		: TEXCOORD;
 };
 
 struct GS_OUT
