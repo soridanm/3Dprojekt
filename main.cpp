@@ -1,5 +1,8 @@
 //--------------------------------------------------------------------------------------
 // 
+//
+// TODO: Bind shaders, Reorganize, merge constant buffers into one
+//
 //--------------------------------------------------------------------------------------
 #include <windows.h>
 
@@ -228,8 +231,10 @@ void CreateShaders()
 	);
 	gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShader);
 
-
 	pGS->Release();
+
+	//TODO: second pass shaders here
+
 }
 
 void CreateTriangleData()
@@ -431,6 +436,115 @@ void SetViewport()
 	vp.TopLeftY = 0.f;
 	gDeviceContext->RSSetViewports(1, &vp);
 }
+
+/* TODO: Should probably add hr checks */
+void initGraphicsBuffer()
+{
+	// Create render target textures
+	D3D11_TEXTURE2D_DESC textureDesc{};
+	textureDesc.Width = SCREEN_WIDTH;
+	textureDesc.Height = SCREEN_HEIGHT;
+	textureDesc.MipLevels = 1;
+	textureDesc.ArraySize = 1;
+	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	//textureDesc.CPUAccessFlags = 0;
+	//textureDesc.MiscFlags = 0;
+	
+	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+		gDevice->CreateTexture2D(&textureDesc, NULL, &gGraphicsBuffer[i].texture);
+	}
+
+	// Create render target views.
+	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
+	renderTargetViewDesc.Format = textureDesc.Format;
+	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+
+	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+		gDevice->CreateRenderTargetView(gGraphicsBuffer[i].texture, &renderTargetViewDesc, &gGraphicsBuffer[i].renderTargetView);
+	}
+
+	// Create the shader resource views
+	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
+	shaderResourceViewDesc.Format = textureDesc.Format;
+	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	shaderResourceViewDesc.Texture2D.MipLevels = 1;
+
+	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+		gDevice->CreateShaderResourceView(gGraphicsBuffer[i].texture, &shaderResourceViewDesc, &gGraphicsBuffer[i].shaderResourceView);
+	}
+
+	//Create the depth stencil buffer texture
+	D3D11_TEXTURE2D_DESC depthDesc{};
+	depthDesc.Width = SCREEN_WIDTH;
+	depthDesc.Height = SCREEN_HEIGHT;
+	depthDesc.MipLevels = 1;
+	depthDesc.ArraySize = 1;
+	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depthDesc.SampleDesc.Count = 1;
+	depthDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+
+	gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilTexture);
+
+
+	// Create the depth stencil view
+	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
+	depthStencilViewDesc.Format = depthDesc.Format;
+	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+
+
+	gDevice->CreateDepthStencilView(gDepthStencilTexture, // Depth stencil texture
+		&depthStencilViewDesc, // Depth stencil desc
+		&gDepthStecilView);  // [out] Depth stencil view
+
+
+	//Relese
+
+}
+
+void BindFirstPass()
+{
+	SetViewport();
+
+	//TODO: Move to global scope
+	//set render targets
+	ID3D11RenderTargetView* renderTargets[] =
+	{
+		gGraphicsBuffer[0].renderTargetView,
+		gGraphicsBuffer[1].renderTargetView,
+		gGraphicsBuffer[2].renderTargetView,
+	};
+	gDeviceContext->OMSetRenderTargets(BUFFER_COUNT, renderTargets, gDepthStecilView);
+
+	//Clear the render targets
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::LightSteelBlue);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::Black);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::Black);
+	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+
+	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//TODO: select shaders
+}
+
+void BindLastPass()
+{
+	//TODO: set render target
+
+	gDeviceContext->IASetInputLayout(nullptr);
+	gDeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//gDeviceContext->IASetVertexBuffers(0, 1, );
+	//gDeviceContext->VSSetShader();
+	//gDeviceContext->PSSetShader();
+
+	gDeviceContext->Draw(3, 0);
+}
+
+//TODO: rewrite with first- and last-pass, 
 void Render()
 {
 	float clearColor[] = { 0.0f, 1.0f, 0.0f, 1 }; //background color
@@ -513,12 +627,14 @@ void Render()
 	// draw geometry
 	gDeviceContext->Draw(36, 0);//number of vertices to draw
 }
+
 void CreateAllBuffers() {
 	CreateConstantBufferExample();
 	CreateConstantBufferWorld();
 	CreateConstantBufferView();
 	CreateConstantBufferProjection();
 }
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg = { 0 };
@@ -612,104 +728,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-/* TODO: Should probably add hr checks */
-void initGraphicsBuffer()
-{
-	// Create render target textures
-	D3D11_TEXTURE2D_DESC textureDesc{};
-	textureDesc.Width = SCREEN_WIDTH;
-	textureDesc.Height = SCREEN_HEIGHT;
-	textureDesc.MipLevels = 1;
-	textureDesc.ArraySize = 1;
-	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
-	textureDesc.SampleDesc.Count = 1;
-	textureDesc.SampleDesc.Quality = 0;
-	textureDesc.Usage = D3D11_USAGE_DEFAULT;
-	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	//textureDesc.CPUAccessFlags = 0;
-	//textureDesc.MiscFlags = 0;
-	
-	for (UINT i = 0; i < BUFFER_COUNT; i++) {
-		gDevice->CreateTexture2D(&textureDesc, NULL, &gGraphicsBuffer[i].texture);
-	}
-
-	// Create render target views.
-	D3D11_RENDER_TARGET_VIEW_DESC renderTargetViewDesc{};
-	renderTargetViewDesc.Format = textureDesc.Format;
-	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-
-	for (UINT i = 0; i < BUFFER_COUNT; i++) {
-		gDevice->CreateRenderTargetView(gGraphicsBuffer[i].texture, &renderTargetViewDesc, &gGraphicsBuffer[i].renderTargetView);
-	}
-
-	// Create the shader resource views
-	D3D11_SHADER_RESOURCE_VIEW_DESC shaderResourceViewDesc{};
-	shaderResourceViewDesc.Format = textureDesc.Format;
-	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	shaderResourceViewDesc.Texture2D.MipLevels = 1;
-
-	for (UINT i = 0; i < BUFFER_COUNT; i++) {
-		gDevice->CreateShaderResourceView(gGraphicsBuffer[i].texture, &shaderResourceViewDesc, &gGraphicsBuffer[i].shaderResourceView);
-	}
-
-	//Create the depth stencil buffer texture
-	D3D11_TEXTURE2D_DESC depthDesc{};
-	depthDesc.Width = SCREEN_WIDTH;
-	depthDesc.Height = SCREEN_HEIGHT;
-	depthDesc.MipLevels = 1;
-	depthDesc.ArraySize = 1;
-	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthDesc.SampleDesc.Count = 1;
-	depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-
-	gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilTexture);
-
-
-	// Create the depth stencil view
-	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
-	depthStencilViewDesc.Format = depthDesc.Format;
-	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-
-
-	gDevice->CreateDepthStencilView(gDepthStencilTexture, // Depth stencil texture
-		&depthStencilViewDesc, // Depth stencil desc
-		&gDepthStecilView);  // [out] Depth stencil view
-
-
-	//Relese
-
-}
-
-void BindFirstPass()
-{
-	SetViewport();
-
-	//set render targets
-	ID3D11RenderTargetView* renderTargets[] =
-	{
-		gGraphicsBuffer[0].renderTargetView,
-		gGraphicsBuffer[1].renderTargetView,
-		gGraphicsBuffer[2].renderTargetView,
-	};
-	gDeviceContext->OMSetRenderTargets(BUFFER_COUNT, renderTargets, gDepthStecilView);
-
-	//Clear the render targets
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::LightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::Black);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::Black);
-	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	//TODO: select shaders
-}
-
-void BindLastPass()
-{
-
-}
-
 HRESULT CreateDirect3DContext(HWND wndHandle)
 {
 	// create a struct to hold information about the swap chain
@@ -756,31 +774,6 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 
 
 	initGraphicsBuffer();
-
-	//D3D11_TEXTURE2D_DESC depthDesc;
-	//depthDesc.Width = SCREEN_WIDTH;
-	//depthDesc.Height = SCREEN_HEIGHT;
-	//depthDesc.MipLevels = 1;
-	//depthDesc.ArraySize = 1;
-	//depthDesc.Format = DXGI_FORMAT_D32_FLOAT;
-	//depthDesc.SampleDesc.Count = 1;
-	//depthDesc.SampleDesc.Quality = 0;
-	//depthDesc.Usage = D3D11_USAGE_DEFAULT;
-	//depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	//depthDesc.CPUAccessFlags = 0;
-	//depthDesc.MiscFlags = 0;
-	//gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilBuffer);
-
-
-	//// Create the depth stencil view
-	//gDevice->CreateDepthStencilView(gDepthStencilBuffer, // Depth stencil texture
-	//	nullptr, // Depth stencil desc
-	//	&gDepthStecilView);  // [out] Depth stencil view
-
-	//			 // Bind the depth stencil view
-	//gDeviceContext->OMSetRenderTargets(1,          // One rendertarget view
-	//	&gBackbufferRTV,      // Render target view, created earlier
-	//	gDepthStecilView);     // Depth stencil view for the render target
 
 
 	D3D11_TEXTURE2D_DESC bthTexDesc;

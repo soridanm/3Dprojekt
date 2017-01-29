@@ -70,7 +70,7 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 		output.PositionWS = mul(input[i].Position, worldMatrix).xyz;
 
 		// Calculate clip-space position
-		output.PositionCS = mul(float4(output.PositionWS, 1.0f), VP);
+		output.PositionCS = mul(float4(output.PositionWS, 1.0), VP);
 
 		// Pass along the texture coordinates
 		output.TexCoord = input[i].TexCoord;

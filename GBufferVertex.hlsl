@@ -69,7 +69,7 @@ VS_OUT VS_main(in VS_IN input)
 {
 	VS_OUT output = (VS_OUT)0;
 
-	output.Position = float4(input.Position, 1.0f);
+	output.Position = float4(input.Position, 1.0);
 	output.TexCoord = input.TexCoord;
 
 	return output;

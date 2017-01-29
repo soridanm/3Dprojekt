@@ -1,4 +1,4 @@
-/* Code from the book "Practical Rendering and Computation with Direct3D 11", page 504 */
+/* Base code from the book "Practical Rendering and Computation with Direct3D 11", page 504 */
 
 /*
 * Only outputs the Diffuse texture
@@ -18,12 +18,14 @@ Texture2D PositionTexture		: register(t1);
 Texture2D DiffuseAlbedoTexture	: register(t2);
 //Texture2D SpecularAlbedoTexture	: register(t3);
 
+SamplerState textureSampler; // TODO: set SamplerState settings
+
 // TODO: light constant buffer here
 
 
 struct PS_IN
 {
-	float4 Position	: SV_Position;
+	float4 Position	: SV_Position; //pixel location
 	float2 TexCoord	: TEXCOORD;
 };
 
@@ -49,7 +51,7 @@ void GetGBufferAttributes( in float2 screenPos,
 
 // Lighting fragment shader
 
-float4 PS_main ( in float4 screenPos : SV_Position ) : SV_Target0
+float4 PS_main ( PS_IN input ) : SV_Target
 {
 	float3 normal;
 	float3 position;
@@ -58,14 +60,13 @@ float4 PS_main ( in float4 screenPos : SV_Position ) : SV_Target0
 	//float specularPower;
 	
 	// Sample the G-Buffer properties from the textures
-	GetGBufferAttributes(screenPos.xy, normal, position, diffuseAlbedo/*,
-	specularAlbedo, specularPower*/);
+	//GetGBufferAttributes(screenPos.xy, normal, position, diffuseAlbedo, specularAlbedo, specularPower);
 
 	//float3 lighting = CalcLighting(normal, position, diffuseAlbedo, specularAlbedo, specularPower);
 	
 	// Only renders the diffuse color G-Buffer
 	// Change to normal, or position for respective G-Buffers.
-	float3 lighting = diffuseAlbedo;
+	float3 DiffuseColor = DiffuseAlbedoTexture.Sample(textureSampler, input.TexCoord).rgb;
 
-	return float4(lighting, 1.0f);
+	return float4(DiffuseColor, 1.0);
 }

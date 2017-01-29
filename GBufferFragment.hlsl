@@ -31,9 +31,9 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	float3 normalWS = normalize(input.NormalWS);
 
 	// Ouput G-Buffer values
-	output.Normal = float4(normalWS, 1.0f);
-	output.Position = float4(input.PositionWS, 1.0f);
-	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0f);
+	output.Normal = float4(normalWS, 1.0);
+	output.Position = float4(input.PositionWS, 1.0);
+	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0);
 	//output.SpecularAlbedo = float4(specularAlbedo, specularPower);
 
 	return output;
