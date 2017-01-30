@@ -53,9 +53,9 @@ void GetGBufferAttributes( in float2 screenPos,
 
 float4 PS_main ( PS_IN input ) : SV_Target
 {
-	float3 normal;
-	float3 position;
-	float3 diffuseAlbedo;
+	//float3 normal;
+	//float3 position;
+	//float3 diffuseAlbedo;
 	//float3 specularAlbedo;
 	//float specularPower;
 	
@@ -67,6 +67,10 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	// Only renders the diffuse color G-Buffer
 	// Change to normal, or position for respective G-Buffers.
 	float3 DiffuseColor = DiffuseAlbedoTexture.Sample(textureSampler, input.TexCoord).rgb;
+	float3 normal = NormalTexture.Sample(textureSampler, input.TexCoord).rgb;
+	float3 position = PositionTexture.Sample(textureSampler, input.TexCoord).rgb;
 
-	return float4(DiffuseColor, 1.0);
+	float3 finalColor = position;
+
+	return float4(finalColor, 1.0);
 }

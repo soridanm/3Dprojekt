@@ -16,7 +16,7 @@
 #pragma comment (lib, "d3dcompiler.lib")
 
 using namespace DirectX;
-const UINT BUFFER_COUNT = 3;
+const UINT GBUFFER_COUNT = 3;
 const LONG SCREEN_WIDTH = 640;
 const LONG SCREEN_HEIGHT = 480;
 
@@ -24,14 +24,22 @@ HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 HRESULT CreateDirect3DContext(HWND wndHandle);
+HRESULT gHR = 0;
 
 IDXGISwapChain* gSwapChain = nullptr;
 ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
-ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 
-ID3D11DepthStencilView* gDepthStecilView;
-ID3D11Texture2D* gDepthStencilTexture = NULL;
+// Depth Buffer
+ID3D11DepthStencilView* gDepthStecilView = nullptr;
+ID3D11Texture2D* gDepthStencilTexture = nullptr;
+
+// First Pass
+ID3D11Buffer* gVertexBuffer = nullptr;
+ID3D11InputLayout* gVertexLayout = nullptr;
+ID3D11VertexShader* gVertexShader = nullptr;
+ID3D11GeometryShader* gGeometryShader = nullptr;
+ID3D11PixelShader* gPixelShader = nullptr;
 
 struct gGraphicsBufferStruct {
 	ID3D11Texture2D* texture = nullptr;
@@ -39,16 +47,18 @@ struct gGraphicsBufferStruct {
 	ID3D11ShaderResourceView* shaderResourceView = nullptr;
 };
 
-gGraphicsBufferStruct gGraphicsBuffer[BUFFER_COUNT];
-
-ID3D11Buffer* gVertexBuffer = nullptr;
-
-ID3D11InputLayout* gVertexLayout = nullptr;
-ID3D11VertexShader* gVertexShader = nullptr;
-ID3D11PixelShader* gPixelShader = nullptr;
-ID3D11GeometryShader* gGeometryShader = nullptr;
+// G-Buffer
+gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
 
 ID3D11ShaderResourceView* gTextureView = nullptr;
+
+// Last Pass
+ID3D11VertexShader* gFullScreenTriangleShader = nullptr;
+ID3D11PixelShader* gLightPixelShader = nullptr;
+
+ID3D11RenderTargetView* gBackbufferRTV = nullptr;
+
+
 
 
 namespace Colors
@@ -183,7 +193,11 @@ void CreateShaders()
 						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
 	);
 
-	gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShader);
+	gHR = gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
 
 	//create input layout (verified using vertex shader)
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
@@ -212,7 +226,10 @@ void CreateShaders()
 						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
 	);
 
-	gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
+	gHR = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
 
@@ -229,12 +246,59 @@ void CreateShaders()
 		&pGS,
 		nullptr
 	);
-	gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShader);
-
+	gHR = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &gGeometryShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
 	pGS->Release();
 
-	//TODO: second pass shaders here
+	// Last pass shaders
 
+	//create vertex shader
+	ID3DBlob* pVS2 = nullptr;
+	D3DCompileFromFile(
+		L"LightVertex.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"VS_main",		// entry point
+		"vs_5_0",		// shader model (target)
+		0,				// shader compile options			// here DEBUGGING OPTIONS
+		0,				// effect compile options
+		&pVS2,			// double pointer to ID3DBlob		
+		nullptr			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+		);
+
+	gHR = gDevice->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &gFullScreenTriangleShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+	// we do not need anymore this COM object, so we release it.
+	pVS2->Release();
+
+	//create pixel shader
+	ID3DBlob* pPS2 = nullptr;
+	D3DCompileFromFile(
+		L"LightFragment.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"PS_main",		// entry point
+		"ps_5_0",		// shader model (target)
+		0,				// shader compile options
+		0,				// effect compile options
+		&pPS2,			// double pointer to ID3DBlob		
+		nullptr			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+		);
+
+	gHR = gDevice->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &gLightPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+	// we do not need anymore this COM object, so we release it.
+	pPS2->Release();
 }
 
 void CreateTriangleData()
@@ -454,7 +518,7 @@ void initGraphicsBuffer()
 	//textureDesc.CPUAccessFlags = 0;
 	//textureDesc.MiscFlags = 0;
 	
-	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+	for (UINT i = 0; i < GBUFFER_COUNT; i++) {
 		gDevice->CreateTexture2D(&textureDesc, NULL, &gGraphicsBuffer[i].texture);
 	}
 
@@ -463,7 +527,7 @@ void initGraphicsBuffer()
 	renderTargetViewDesc.Format = textureDesc.Format;
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
-	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+	for (UINT i = 0; i < GBUFFER_COUNT; i++) {
 		gDevice->CreateRenderTargetView(gGraphicsBuffer[i].texture, &renderTargetViewDesc, &gGraphicsBuffer[i].renderTargetView);
 	}
 
@@ -473,7 +537,7 @@ void initGraphicsBuffer()
 	shaderResourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
-	for (UINT i = 0; i < BUFFER_COUNT; i++) {
+	for (UINT i = 0; i < GBUFFER_COUNT; i++) {
 		gDevice->CreateShaderResourceView(gGraphicsBuffer[i].texture, &shaderResourceViewDesc, &gGraphicsBuffer[i].shaderResourceView);
 	}
 
@@ -506,50 +570,24 @@ void initGraphicsBuffer()
 
 }
 
-void BindFirstPass()
+//TODO: move as much out of render loop as possible
+void RenderFirstPass()
 {
-	SetViewport();
-
-	//TODO: Move to global scope
 	//set render targets
 	ID3D11RenderTargetView* renderTargets[] =
 	{
-		gGraphicsBuffer[0].renderTargetView,
-		gGraphicsBuffer[1].renderTargetView,
-		gGraphicsBuffer[2].renderTargetView,
+		gGraphicsBuffer[0].renderTargetView, /* Normal */
+		gGraphicsBuffer[1].renderTargetView, /* Position */
+		gGraphicsBuffer[2].renderTargetView, /* Diffuse */
 	};
-	gDeviceContext->OMSetRenderTargets(BUFFER_COUNT, renderTargets, gDepthStecilView);
+	gDeviceContext->OMSetRenderTargets(GBUFFER_COUNT, renderTargets, gDepthStecilView);
 
 	//Clear the render targets
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::LightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::Black);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::Black);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::LightSteelBlue);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::Black);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
-	//TODO: select shaders
-}
-
-void BindLastPass()
-{
-	//TODO: set render target
-
-	gDeviceContext->IASetInputLayout(nullptr);
-	gDeviceContext->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//gDeviceContext->IASetVertexBuffers(0, 1, );
-	//gDeviceContext->VSSetShader();
-	//gDeviceContext->PSSetShader();
-
-	gDeviceContext->Draw(3, 0);
-}
-
-//TODO: rewrite with first- and last-pass, 
-void Render()
-{
-	float clearColor[] = { 0.0f, 1.0f, 0.0f, 1 }; //background color
-	// set rendering state
-	// if nothing changes, this does not have to be "re-done" every frame...
+	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
@@ -563,8 +601,8 @@ void Render()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 
+	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 
 	// NEW ========================================================
 	// Map constant buffer so that we can write to it.
@@ -591,11 +629,11 @@ void Render()
 
 	D3D11_MAPPED_SUBRESOURCE dataPtr2;
 	gDeviceContext->Map(gViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
-		//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
-		//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
+	//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
+	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
 
-		XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
-		XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
+	XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
+	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
 
 	//XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
 	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -619,13 +657,149 @@ void Render()
 	gDeviceContext->Unmap(gProjectionBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(3, 1, &gProjectionBuffer);
 
-
-	// clear screen
-	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, clearColor);
-	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
-
 	// draw geometry
 	gDeviceContext->Draw(36, 0);//number of vertices to draw
+}
+
+//TODO: move as much out of render loop as possible
+void RenderLastPass()
+{
+	// get the address of the back buffer
+	ID3D11Texture2D* pBackBuffer = nullptr;
+	gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+
+	// use the back buffer address to create the render target
+	gDevice->CreateRenderTargetView(pBackBuffer, NULL, &gBackbufferRTV);
+	pBackBuffer->Release();
+
+	// set the render target as the back buffer
+	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
+
+
+	const uintptr_t n0 = 0;
+
+	/* Full screen triangle is created in Vertex shader so no input buffer needed */
+	gDeviceContext->IASetInputLayout(nullptr);
+	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	gDeviceContext->IASetVertexBuffers(0, 0, 
+		reinterpret_cast<ID3D11Buffer *const *>(&n0), 
+		reinterpret_cast<const UINT *>(n0), 
+		reinterpret_cast<const UINT *>(&n0)
+		);
+
+	int test = 1;
+	if (gFullScreenTriangleShader == nullptr) {
+		exit(-1);
+	}
+
+	gDeviceContext->VSSetShader(gFullScreenTriangleShader, nullptr, 0);
+	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
+	gDeviceContext->PSSetShader(gLightPixelShader, nullptr, 0);
+
+
+	ID3D11ShaderResourceView* GBufferTextureViews[] =
+	{
+		gGraphicsBuffer[0].shaderResourceView,
+		gGraphicsBuffer[1].shaderResourceView,
+		gGraphicsBuffer[2].shaderResourceView
+	};
+
+	gDeviceContext->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
+
+	// Clear screen
+	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, Colors::White);
+
+	// Draw full screen triangle
+	gDeviceContext->Draw(3, 0);
+}
+
+//TODO: rewrite with first- and last-pass, 
+void Render()
+{
+	//float clearColor[] = { 0.0f, 1.0f, 0.0f, 1 }; //background color
+	//// set rendering state
+	//// if nothing changes, this does not have to be "re-done" every frame...
+
+	//UINT32 vertexSize = sizeof(float) * 5;
+	//UINT32 offset = 0;
+
+	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	//gDeviceContext->IASetInputLayout(gVertexLayout);
+	//gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
+	//gDeviceContext->HSSetShader(nullptr, nullptr, 0);
+	//gDeviceContext->DSSetShader(nullptr, nullptr, 0);
+	//gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
+	//gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
+	//gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+
+
+	//// NEW ========================================================
+	//// Map constant buffer so that we can write to it.
+	//D3D11_MAPPED_SUBRESOURCE dataPtr;
+	//gDeviceContext->Map(gExampleBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
+	//// copy memory from CPU to GPU the entire struct
+	//globalValues.value1 += 0.005f;
+	//memcpy(dataPtr.pData, &globalValues, sizeof(valuesFromCpu));
+	//// UnMap constant buffer so that we can use it again in the GPU
+	//gDeviceContext->Unmap(gExampleBuffer, 0);
+	//// set resource to Vertex Shader
+	//gDeviceContext->VSSetConstantBuffers(0, 1, &gExampleBuffer);
+	//// ==============================================================
+
+	//D3D11_MAPPED_SUBRESOURCE dataPtr1;
+	//gDeviceContext->Map(gWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr1);
+	//static float rotation = 0.0f;
+	//rotation += 0.05f;
+	//XMMATRIX W = XMMatrixRotationY(rotation);
+	//XMMATRIX WT = XMMatrixTranspose(W);
+	//memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
+	//gDeviceContext->Unmap(gWorldBuffer, 0);
+	//gDeviceContext->GSSetConstantBuffers(1, 1, &gWorldBuffer);
+
+	//D3D11_MAPPED_SUBRESOURCE dataPtr2;
+	//gDeviceContext->Map(gViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
+	//	//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
+	//	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
+
+	//	XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
+	//	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
+
+	////XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
+	////XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	//XMVECTOR target = XMVectorZero();
+	//XMMATRIX V = XMMatrixLookAtLH(pos, target, up);
+	//XMMATRIX VT = XMMatrixTranspose(V);
+	//memcpy(dataPtr2.pData, &VT, sizeof(valuesToView));
+	//gDeviceContext->Unmap(gWorldBuffer, 0);
+	//gDeviceContext->GSSetConstantBuffers(2, 1, &gViewBuffer);
+
+	//D3D11_MAPPED_SUBRESOURCE dataPtr3;
+	//gDeviceContext->Map(gProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr3);
+	//float fov = 0.45f*XM_PI;
+	//float ar = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
+	//float closer = 0.1f;
+	//float further = 20.0f;
+	//XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar, closer, further);
+	//XMMATRIX PT = XMMatrixTranspose(P);
+	//memcpy(dataPtr3.pData, &PT, sizeof(valuesToProject));
+	//gDeviceContext->Unmap(gProjectionBuffer, 0);
+	//gDeviceContext->GSSetConstantBuffers(3, 1, &gProjectionBuffer);
+
+
+	//// clear screen
+	//gDeviceContext->ClearRenderTargetView(gBackbufferRTV, clearColor);
+	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	//// draw geometry
+	//gDeviceContext->Draw(36, 0);//number of vertices to draw
+
+	RenderFirstPass();
+	RenderLastPass();
 }
 
 void CreateAllBuffers() {
