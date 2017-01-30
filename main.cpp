@@ -475,6 +475,12 @@ double GetFrameTime() {
 }
 
 void UpdateCamera() {
+	if (gCAM_PITCH < -1.5f) {
+		gCAM_PITCH = -1.5f;
+	}
+	if (gCAM_PITCH > 1.5f) {
+		gCAM_PITCH = 1.5f;
+	}
 	CAM_ROT_MAT = XMMatrixRotationRollPitchYaw(gCAM_PITCH, gCAM_YAW, 0.0f);
 	CAM_TARGET = XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT);
 	CAM_TARGET = XMVector3Normalize(CAM_TARGET);
@@ -619,7 +625,7 @@ void DetectInput(double time,HWND hwnd) {
 		gCAM_PITCH += mouse_current_state.lY*0.001f;
 		gMouse_last_state = mouse_current_state;
 	}
-	if (keyboardState[DIK_Q] & 0x80) {
+		if (keyboardState[DIK_Q] & 0x80) {
 		CAM_POS = XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
 		CAM_TARGET = XMVectorZero();
 		CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
