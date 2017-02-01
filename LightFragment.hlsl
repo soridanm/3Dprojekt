@@ -53,6 +53,15 @@ void GetGBufferAttributes( in float2 screenPos,
 
 float4 PS_main ( PS_IN input ) : SV_Target
 {
+	float3 camera_pos = float3(0.0, 1.0, 2.0);
+
+	float shinyPower = 100.0;
+
+	float3 light_pos = float3(0.0, -1.0, 4.0);
+	float3 specular_color = float3(0.8, 0.8, 0.8);
+	float3 ambient_color = float3(0.05, 0.05, 0.05);
+	
+
 	//float3 normal;
 	//float3 position;
 	//float3 diffuseAlbedo;
@@ -66,11 +75,50 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	
 	// Only renders the diffuse color G-Buffer
 	// Change to normal, or position for respective G-Buffers.
-	float3 DiffuseColor = DiffuseAlbedoTexture.Sample(textureSampler, input.TexCoord).rgb;
-	float3 normal = NormalTexture.Sample(textureSampler, input.TexCoord).rgb;
+	float4 DiffuseColor = DiffuseAlbedoTexture.Sample(textureSampler, input.TexCoord);
+	float4 normalTex = NormalTexture.Sample(textureSampler, input.TexCoord);
 	float3 position = PositionTexture.Sample(textureSampler, input.TexCoord).rgb;
 
-	float3 finalColor = position;
+
+
+
+
+	float3 normal = normalTex.xyz; // normal vector from surface
+	float3 to_light = normalize(light_pos - position); // vector from light source to surface
+	float3 to_camera = normalize(camera_pos - position); // vectore from surface to camera
+	float3 reflection = reflect(-to_light, normal); // vector of reflected light after light hits surface
+
+	// Diffuse part
+	float3 diffuse_factor = DiffuseColor.rgb * max(dot(to_light, normal), 0.0);
+
+	// Specular part
+	float3 specular_factor = specular_color * pow(max(dot(reflection, to_camera), 0.0), shinyPower);
+
+	// ambient part
+	float3 ambient_component = ambient_color*DiffuseColor.rgb;
+
+
+	float3 final_color = saturate(ambient_component + diffuse_factor + specular_factor);
+
+
+
+	float specularPower = normalTex.w;
+
+	
+
+	//diffuse lighting
+	
+
+	// vector from light to point
+	//float3 light_ray = normalize(position - light_pos);
+	//// diffuse lighting
+	//float3 diffuse_light = DiffuseColor.rgb * DiffuseColor.a * saturate(dot(normal, -light_ray));
+
+	//// specular lighting
+	//float3 r = 2.0*dot(normal - light_ray)*normal - light_ray;
+	//float3 specular_light = 2.0*float3(1.0,1.0,1.0)*dot(r, )
+
+	float3 finalColor = final_color;
 
 	return float4(finalColor, 1.0);
 }

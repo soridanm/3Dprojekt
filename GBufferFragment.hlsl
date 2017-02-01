@@ -13,10 +13,10 @@ struct PS_IN
 
 struct PS_OUT
 {
-	float4 Normal		: SV_Target0;
-	float4 Position		: SV_Target1;
-	float4 DiffuseAlbedo	: SV_Target2;
-	//float4 SpecularAlbedo	: SV_Target3;
+	float4 Normal		: SV_Target0; // x-y-z-Unused
+	float4 Position		: SV_Target1; // x-y-z-Unused
+	float4 DiffuseAlbedo	: SV_Target2; // Diffuse Albedo RBG - Unused
+	//float4 SpecularAlbedo	: SV_Target3; // Specular Albedo RGB - SpecularPower
 };
 
 
@@ -30,10 +30,13 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	// Normalize the normal after interpolation
 	float3 normalWS = normalize(input.NormalWS);
 
+	float materialDiffusePower = 0.8;
+	float specularPower = 0.8;
+
 	// Ouput G-Buffer values
-	output.Normal = float4(normalWS, 1.0);
+	output.Normal = float4(normalWS, specularPower);
 	output.Position = float4(input.PositionWS, 1.0);
-	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0);
+	output.DiffuseAlbedo = float4(diffuseAlbedo, materialDiffusePower);
 	//output.SpecularAlbedo = float4(specularAlbedo, specularPower);
 
 	return output;

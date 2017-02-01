@@ -30,18 +30,18 @@
 
 ------------------------------ Geometry -----------------------------------------
  - Parsing and rendering an existing model format
- - Height-map terrain endering
+ - Height-map terrain rendering
 
 
  ------------------------ Texture and lighting ----------------------------------
  - SSAO
 
  ----------------------- Preojection techniques ---------------------------------
- - TBD
+ - Shadow mapping
 
  ----------------------- Acceleration techniques --------------------------------
  - view frustum culling gainst a quadtree
- - back face fulling using geometry shader
+ - back face culling using geometry shader
 
  -------------------------- Other techniques ------------------------------------
  - AA

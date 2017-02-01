@@ -17,8 +17,8 @@
 
 using namespace DirectX;
 const UINT GBUFFER_COUNT = 3;
-const LONG SCREEN_WIDTH = 640;
-const LONG SCREEN_HEIGHT = 480;
+const LONG SCREEN_WIDTH = 2*640;
+const LONG SCREEN_HEIGHT = 2*480;
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -609,7 +609,7 @@ void RenderFirstPass()
 	D3D11_MAPPED_SUBRESOURCE dataPtr;
 	gDeviceContext->Map(gExampleBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
 	// copy memory from CPU to GPU the entire struct
-	globalValues.value1 += 0.005f;
+	globalValues.value1 += 0.001f;
 	memcpy(dataPtr.pData, &globalValues, sizeof(valuesFromCpu));
 	// UnMap constant buffer so that we can use it again in the GPU
 	gDeviceContext->Unmap(gExampleBuffer, 0);
@@ -620,7 +620,7 @@ void RenderFirstPass()
 	D3D11_MAPPED_SUBRESOURCE dataPtr1;
 	gDeviceContext->Map(gWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr1);
 	static float rotation = 0.0f;
-	rotation += 0.05f;
+	rotation += 0.01f;
 	XMMATRIX W = XMMatrixRotationY(rotation);
 	XMMATRIX WT = XMMatrixTranspose(W);
 	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
@@ -632,7 +632,7 @@ void RenderFirstPass()
 	//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
 	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
 
-	XMVECTOR pos = XMVectorSet(0.0f, -1.0f, -2.0f, 1.0f);
+	XMVECTOR pos = XMVectorSet(0.0f, 1.0f, 2.0f, 1.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
 
 	//XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
