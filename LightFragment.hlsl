@@ -8,9 +8,11 @@
 */
 
 // TODO: light constant buffer
-
+// Gamma correction?
 
 // Lightning fragment shader
+
+#define MAX_LIGHTS 8
 
 // Textures from G-Buffers
 Texture2D NormalTexture			: register(t0);
@@ -22,6 +24,35 @@ SamplerState textureSampler; // TODO: set SamplerState settings
 
 // TODO: light constant buffer here
 
+
+struct materialStruct
+{
+	float3 specularAlbedo;
+	float specularPower;
+};
+
+cbuffer materialProperties : register(b0)
+{
+	materialStruct Material;
+};
+
+
+struct Light
+{
+	float4 light_position; // the position of the light in world space
+	float4 color; // the color of the light
+	float constant_attenuation;
+	float linear_attenuation;
+	float quadratic_attenuation;
+	float ambient_coefficient; //might be moved/removed
+};
+
+cbuffer pointLightProperties		: register (b1)
+{
+	float4 camera_position;
+	float4 global_ambient;
+	Light Lights[MAX_LIGHTS];
+};
 
 struct PS_IN
 {
@@ -51,15 +82,21 @@ void GetGBufferAttributes( in float2 screenPos,
 
 // Lighting fragment shader
 
+float4 DiffusePart(Light light, float3 light_ray, float3 normal)
+{
+	return light.color;
+}
+
+
 float4 PS_main ( PS_IN input ) : SV_Target
 {
-	float3 camera_pos = float3(0.0, 1.0, 2.0);
+	float3 camera_pos = float3(0.0, 0.0, 2.0);
 
 	float shinyPower = 100.0;
 
 	float3 light_pos = float3(0.0, -1.0, 4.0);
 	float3 specular_color = float3(0.8, 0.8, 0.8);
-	float3 ambient_color = float3(0.05, 0.05, 0.05);
+	float3 ambient_power = float3(0.05, 0.05, 0.05);
 	
 
 	//float3 normal;
@@ -89,13 +126,13 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float3 reflection = reflect(-to_light, normal); // vector of reflected light after light hits surface
 
 	// Diffuse part
-	float3 diffuse_factor = DiffuseColor.rgb * max(dot(to_light, normal), 0.0);
+	float3 diffuse_factor = specular_color * DiffuseColor.rgb * max(dot(to_light, normal), 0.0);
 
 	// Specular part
 	float3 specular_factor = specular_color * pow(max(dot(reflection, to_camera), 0.0), shinyPower);
 
 	// ambient part
-	float3 ambient_component = ambient_color*DiffuseColor.rgb;
+	float3 ambient_component = ambient_power*DiffuseColor.rgb;
 
 
 	float3 final_color = saturate(ambient_component + diffuse_factor + specular_factor);
