@@ -21,6 +21,7 @@ using namespace DirectX;
 const float SCREEN_WIDTH = 1920;
 const float SCREEN_HEIGHT = 1080;
 
+//following lines are for the camera
 XMVECTOR CAM_POS = XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
 XMVECTOR CAM_TARGET = XMVectorZero();
 XMVECTOR CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -32,6 +33,7 @@ XMVECTOR DEFAULT_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 
 XMMATRIX CAM_ROT_MAT;
 
+//folowing lines are for the timer, frametime
 float gMoveLR = 0, gMoveBF = 0,gMoveUD=0, gCAM_YAW = 0, gCAM_PITCH = 0;
 
 double gCounts_per_second = 0.0;
@@ -456,12 +458,12 @@ void StartTimer() {
 	QueryPerformanceCounter(&frequency_count);
 	CounterStart = frequency_count.QuadPart;
 }
-double GetTime() {
+double GetTime() {//returns time
 	LARGE_INTEGER current_time;
 	QueryPerformanceCounter(&current_time);
 	return double(current_time.QuadPart - CounterStart) / gCounts_per_second;
 }
-double GetFrameTime() {
+double GetFrameTime() {//returns time per frame, in order to get smooth timebased movements
 	LARGE_INTEGER current_time;
 	_int64 tick_count;
 	QueryPerformanceCounter(&current_time);
@@ -475,22 +477,25 @@ double GetFrameTime() {
 }
 
 void UpdateCamera() {
+	//limits cam pitch in order to not spin around
 	if (gCAM_PITCH < -1.5f) {
 		gCAM_PITCH = -1.5f;
 	}
 	if (gCAM_PITCH > 1.5f) {
 		gCAM_PITCH = 1.5f;
 	}
+	//transforms the cameras target
 	CAM_ROT_MAT = XMMatrixRotationRollPitchYaw(gCAM_PITCH, gCAM_YAW, 0.0f);
 	CAM_TARGET = XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT);
 	CAM_TARGET = XMVector3Normalize(CAM_TARGET);
 
 	XMMATRIX YRotation_CAM_directions = XMMatrixRotationY(gCAM_YAW);
-
+	//trnsforms the cameras directions
 	CAM_RIGHT = XMVector3TransformCoord(DEFAULT_RIGHT, YRotation_CAM_directions);
 	CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
 	CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
 
+	//transforms the cameras position
 	CAM_POS += gMoveLR*CAM_RIGHT;
 	CAM_POS += gMoveBF*CAM_FORWARD;
 	CAM_POS += gMoveUD*CAM_UP;
@@ -597,10 +602,12 @@ void DetectInput(double time,HWND hwnd) {
 
 	DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouse_current_state);
 	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
+	
+	//closes the program
 	if (keyboardState[DIK_ESCAPE] & 0x80) {
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 	}
-
+	//all the different movements
 	float speed = 15.0f*time;
 	if (keyboardState[DIK_A] & 0x80) {
 		gMoveLR -= speed;
@@ -620,20 +627,23 @@ void DetectInput(double time,HWND hwnd) {
 	if (keyboardState[DIK_C] & 0x80) {
 		gMoveUD -= speed;
 	}
+
+	//mouse movement do change camera directions
 	if ((mouse_current_state.lX != gMouse_last_state.lX) || (mouse_current_state.lY != gMouse_last_state.lY)) {
 		gCAM_YAW += mouse_current_state.lX*0.001f;
 		gCAM_PITCH += mouse_current_state.lY*0.001f;
 		gMouse_last_state = mouse_current_state;
 	}
-		if (keyboardState[DIK_Q] & 0x80) {
-		CAM_POS = XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
-		CAM_TARGET = XMVectorZero();
-		CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-		CAM_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-		CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		gCAM_PITCH = 0.0f;
-		gCAM_YAW = 0.0f;
 
+	//reset camera directions and position
+	if (keyboardState[DIK_Q] & 0x80) {
+	CAM_POS = XMVectorSet(0.0f, 0.0f, -1.0f, 1.0f);
+	CAM_TARGET = XMVectorZero();
+	CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	CAM_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	gCAM_PITCH = 0.0f;
+	gCAM_YAW = 0.0f;
 	}
 
 	gMouse_last_state = mouse_current_state;
@@ -650,7 +660,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 {
 	MSG msg = { 0 };
 	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
-	if (InitDirectInput(hInstance,wndHandle)==false) {
+	if (InitDirectInput(hInstance,wndHandle)==false) {//creates input
 		MessageBox(0, L"Direct Input Initialisation failed", L"Error", MB_OK);
 		return 0;
 	}
@@ -677,6 +687,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 			else
 			{
+				//increases time
 				gFrame_count++;
 				if (GetTime() > 1.0f) {
 					gFPS = gFrame_count;
@@ -741,7 +752,7 @@ HWND InitWindow(HINSTANCE hInstance)
 	return handle;
 }
 
-bool InitDirectInput(HINSTANCE hInstance, HWND hwnd) {
+bool InitDirectInput(HINSTANCE hInstance, HWND hwnd) {//creates the directx input, sets the data format
 	HRESULT hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
 
 	hr = DirectInput->CreateDevice(GUID_SysKeyboard, &DIKeyboard, NULL);
