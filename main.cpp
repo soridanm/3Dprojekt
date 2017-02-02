@@ -64,10 +64,14 @@ ID3D11RenderTargetView* gBackbufferRTV = nullptr;
 
 namespace Colors
 {
-	static const float White[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	static const float Black[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	static const float LightSteelBlue[4] = { 0.69f, 0.77f, 0.87f, 1.0f };
+	static const XMFLOAT4 White			= { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const XMFLOAT4 Black			= { 0.0f, 0.0f, 0.0f, 1.0f };
+	static const XMFLOAT4 LightSteelBlue	= { 0.69f, 0.77f, 0.87f, 1.0f };
+	static const float fWhite[4]			= { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const float fBlack[4]			= { 0.0f, 0.0f, 0.0f, 1.0f };
+	static const float fLightSteelBlue[4]	= { 0.69f, 0.77f, 0.87f, 1.0f };
 }
+
 
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ff476898(v=vs.85).aspx
@@ -181,7 +185,8 @@ void CreateConstantBufferProjection() // NEW
 
 struct materialStruct
 {
-	materialStruct() : specularAlbedo(0.0f, 0.0f, 0.0f), specularPower(128.0f) {}
+	//materialStruct() : specularAlbedo(0.0f, 0.0f, 0.0f), specularPower(128.0f) {}
+	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f) : specularAlbedo(r, g, b), specularPower(specPow) {}
 
 	XMFLOAT3 specularAlbedo;
 	float specularPower;
@@ -190,16 +195,20 @@ struct materialStruct
 
 ID3D11Buffer* gMaterialBuffer = nullptr;
 struct materialBuffer {
+	materialBuffer(materialStruct mat = materialStruct()) : material(mat) {}
 	materialStruct material;
 };
 
 static_assert((sizeof(materialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 
-void CreateConstantBufferMaterial(float specularAlbedo[3], float specularPower) {
-	materialBuffer MaterialProperties;
-	MaterialProperties.material.specularAlbedo = XMFLOAT3(specularAlbedo);
-	MaterialProperties.material.specularPower = specularPower;
+namespace Materials
+{
+	static const materialStruct Black_plastic = materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
+	static const materialStruct Black_rubber = materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
+}
 
+void CreateConstantBufferMaterial(materialStruct matprop) {
+	materialBuffer MaterialProperties(matprop);
 
 	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC materialBufferDesc;
@@ -220,8 +229,14 @@ void CreateConstantBufferMaterial(float specularAlbedo[3], float specularPower) 
 	}
 }
 
+
 struct Light
 {
+	Light(XMFLOAT4 pos,XMFLOAT4 col,
+		float c_att, float l_att, float q_att, float amb)
+		: Position(pos), Color(col), 
+		constantAttenuation(c_att), linearAttenuation(l_att), quadraticAttenuation(q_att), 
+		ambientCoefficient(amb) {}
 	Light() : 
 		Position(0.0f, 0.0f, 0.0f, 1.0f), 
 		Color(1.0f, 1.0f, 1.0f, 1.0f),
@@ -253,29 +268,15 @@ struct lightBuffer {
 
 static_assert((sizeof(lightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 
-lightBuffer lightProperties;
+lightBuffer gLightProperties;
 
 // TODO: change MAX_LIGHTS to NR_OF_LIGHTS or add bool Enable to light struct
-void CreateConstantBufferLight(float position[4], float color[4], float constantAttenuation, 
-	float linearAttenuation, float quadraticAttenuation, float ambientCoefficient) 
+void CreateConstantBufferLight() 
 {
-	Light testLight;
-
-	testLight.Position = XMFLOAT4(position);
-	testLight.Color = XMFLOAT4(color);
-	testLight.constantAttenuation = constantAttenuation;
-	testLight.linearAttenuation = linearAttenuation;
-	testLight.quadraticAttenuation = quadraticAttenuation;
-	testLight.ambientCoefficient = ambientCoefficient;
-
-	lightProperties.cameraPosition = XMFLOAT4(0.0f, 0.0f, 2.0f, 1.0f);
-	lightProperties.globalAmbient = XMFLOAT4(0.1f, 0.1f, 0.1f, 1.0f);
-	lightProperties.Lights[MAX_LIGHTS] = { testLight };
-
 	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC lightBufferDesc;
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	lightBufferDesc.ByteWidth = sizeof(lightProperties);
+	lightBufferDesc.ByteWidth = sizeof(gLightProperties);
 	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	lightBufferDesc.MiscFlags = 0;
@@ -289,6 +290,20 @@ void CreateConstantBufferLight(float position[4], float color[4], float constant
 		// handle the error, could be fatal or a warning...
 		exit(-1);
 	}
+}
+
+void setLights()
+{
+	XMFLOAT4 light_position = { 0.0f, -1.0f, 4.0f, 1.0f };
+	XMFLOAT4 light_color = Colors::Black;
+	float c_att = 0.2f;
+	float l_att = 0.5f;
+	float q_att = 0.009f;
+	float amb = 0.01f;
+	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
+
+	gLightProperties.Lights[0] = test_light;
+	gLightProperties.globalAmbient = { 0.1f, 0.1f, 0.1f, 1.0f };
 }
 
 void CreateShaders()
@@ -701,10 +716,10 @@ void RenderFirstPass()
 	gDeviceContext->OMSetRenderTargets(GBUFFER_COUNT, renderTargets, gDepthStecilView);
 
 	//Clear the render targets
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::Black);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::LightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::Black);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::Black);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::fBlack);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::fBlack);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fBlack);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -722,6 +737,7 @@ void RenderFirstPass()
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+	gDeviceContext->PSGetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// NEW ========================================================
 	// Map constant buffer so that we can write to it.
@@ -751,8 +767,12 @@ void RenderFirstPass()
 	//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
 	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
 
+
 	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 2.0f, 1.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
+
+	// Bind camera position in LightFragmentShader
+	XMStoreFloat4(&gLightProperties.cameraPosition, pos);
 
 	//XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
 	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -835,7 +855,7 @@ void RenderLastPass()
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
 	gDeviceContext->Map(gLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightBufferPtr);
-	memcpy(LightBufferPtr.pData, &lightProperties, sizeof(lightBuffer));
+	memcpy(LightBufferPtr.pData, &gLightProperties, sizeof(lightBuffer));
 	gDeviceContext->Unmap(gLightBuffer, 0);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gLightBuffer);
 
@@ -945,6 +965,8 @@ void CreateAllBuffers() {
 	CreateConstantBufferProjection();
 }
 
+
+
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
 	MSG msg = { 0 };
@@ -959,6 +981,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		CreateShaders(); //4. Skapa vertex- och pixel-shaders
 
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
+
+
+		CreateConstantBufferMaterial(Materials::Black_plastic);
+
+		CreateConstantBufferLight();
 
 		CreateAllBuffers();
 

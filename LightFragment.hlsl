@@ -24,19 +24,6 @@ SamplerState textureSampler; // TODO: set SamplerState settings
 
 // TODO: light constant buffer here
 
-
-struct materialStruct
-{
-	float3 specularAlbedo;
-	float specularPower;
-};
-
-cbuffer materialProperties : register(b0)
-{
-	materialStruct Material;
-};
-
-
 struct Light
 {
 	float4 light_position; // the position of the light in world space
@@ -47,7 +34,7 @@ struct Light
 	float ambient_coefficient; //might be moved/removed
 };
 
-cbuffer pointLightProperties		: register (b1)
+cbuffer pointLightProperties		: register (b0)
 {
 	float4 camera_position;
 	float4 global_ambient;

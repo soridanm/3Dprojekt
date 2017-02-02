@@ -28,7 +28,8 @@ http://www.neatware.com/lbstudio/web/hlsl.html
  Relevant slides: 12-14
  http://www.slideshare.net/DevCentralAMD/vertex-shader-tricks-bill-bilodeau
 
-
+ Phong lighting
+ http://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
 
 ----------------------------------------------------------------------------
  * * * * * * * * * * * * * * * Trivial stuff * * * * * * * * * * * * * * * 

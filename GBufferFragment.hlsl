@@ -48,7 +48,7 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	output.Normal = float4(normalWS, 1.0);
 	output.Position = float4(input.PositionWS, 1.0);
 	output.DiffuseAlbedo = float4(diffuseAlbedo, 1.0);
-	output.SpecularAlbedo = float4(specularAlbedo, specularPower);
+	output.SpecularAlbedo = float4(Material.specularAlbedo, Material.specularPower);
 
 	return output;
 
