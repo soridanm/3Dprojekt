@@ -1,11 +1,10 @@
 //--------------------------------------------------------------------------------------
-// 
-//
-// TODO: Bind shaders, Reorganize, merge constant buffers into one
-//
+// TODO: 
+//	Bind shaders, Reorganize, merge constant buffers into one
+// TODO?:
+//	Turn global constants into getFunctions()
 //--------------------------------------------------------------------------------------
 #include <windows.h>
-
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
@@ -23,6 +22,8 @@ const LONG SCREEN_WIDTH = 2*640;
 const LONG SCREEN_HEIGHT = 2*480;
 const int MAX_LIGHTS = 8;
 const int NR_OF_OBJECTS = 1;
+const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 0.0f, 2.0f, 1.0f);
+float CUBE_ROTATION_SPEED = 0.01f;
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -45,14 +46,6 @@ ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 
-struct gGraphicsBufferStruct {
-	ID3D11Texture2D* texture = nullptr;
-	ID3D11RenderTargetView* renderTargetView = nullptr;
-	ID3D11ShaderResourceView* shaderResourceView = nullptr;
-};
-
-// G-Buffer
-gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
 
 ID3D11ShaderResourceView* gTextureView = nullptr;
 
@@ -61,6 +54,98 @@ ID3D11VertexShader* gFullScreenTriangleShader = nullptr;
 ID3D11PixelShader* gLightPixelShader = nullptr;
 
 ID3D11RenderTargetView* gBackbufferRTV = nullptr;
+
+/*--------------------------------------------------------------------------------------
+*			G-Buffer
+--------------------------------------------------------------------------------------*/
+
+struct gGraphicsBufferStruct {
+	ID3D11Texture2D* texture = nullptr;
+	ID3D11RenderTargetView* renderTargetView = nullptr;
+	ID3D11ShaderResourceView* shaderResourceView = nullptr;
+}; gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
+
+/*--------------------------------------------------------------------------------------
+*			Constant Buffers
+--------------------------------------------------------------------------------------*/
+ID3D11Buffer* gPerFrameBuffer = nullptr;
+ID3D11Buffer* gPerObjectBuffer = nullptr;
+
+struct cPerFrameBuffer
+{
+	XMFLOAT4X4 ViewProjection;
+}; cPerFrameBuffer VPBufferData;
+
+struct cPerObjectBuffer
+{
+	XMFLOAT4X4 World;
+}; cPerObjectBuffer ObjectBufferData;
+
+//------------------ Material (GBufferFragment.hlsl) -----------------------------------
+ID3D11Buffer* gMaterialBuffer = nullptr;
+
+struct materialStruct
+{
+	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f) 
+		: specularAlbedo(r, g, b), specularPower(specPow) 
+	{}
+	XMFLOAT3 specularAlbedo;
+	float specularPower;
+};
+
+struct cMaterialBuffer
+{
+	cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat) 
+	{}
+	materialStruct material;
+}; cMaterialBuffer gMaterialBufferData;
+
+//------------------ Lights (LightFragment.hlsl) ---------------------------------------
+ID3D11Buffer* gLightBuffer = nullptr;
+
+// TODO: one default constructor instead of two
+struct Light
+{
+	Light(XMFLOAT4 pos = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), 
+		XMFLOAT4 col = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		float c_att = 1.0f, 
+		float l_att = 0.0f, 
+		float q_att = 0.0f, 
+		float amb = 0.0f)
+		: Position(pos), 
+		Color(col),
+		constantAttenuation(c_att), 
+		linearAttenuation(l_att), 
+		quadraticAttenuation(q_att),
+		ambientCoefficient(amb) 
+	{}
+	XMFLOAT4 Position;
+	XMFLOAT4 Color;
+	float constantAttenuation;
+	float linearAttenuation;
+	float quadraticAttenuation;
+	float ambientCoefficient;
+};
+
+struct cLightBuffer 
+{
+	cLightBuffer() :
+		cameraPosition(0.0f, 0.0f, 0.0f, 1.0f),
+		globalAmbient(0.2f, 0.2f, 0.2f, 1.0f)
+	{}
+	XMFLOAT4 cameraPosition;
+	XMFLOAT4 globalAmbient;
+	Light Lights[MAX_LIGHTS];
+}; cLightBuffer gLightBufferData;
+
+static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cMaterialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+
+/*--------------------------------------------------------------------------------------
+*				Namespaces
+--------------------------------------------------------------------------------------*/
 
 namespace Colors
 {
@@ -72,26 +157,17 @@ namespace Colors
 	static const float fLightSteelBlue[4]	= { 0.69f, 0.77f, 0.87f, 1.0f };
 }
 
-
-
-
-ID3D11Buffer* gPerFrameBuffer = nullptr;
-ID3D11Buffer* gPerObjectBuffer = nullptr;
-ID3D11Buffer* gMaterialBuffer = nullptr;
-
-
-struct cPerFrame
+namespace Materials
 {
-	XMFLOAT4X4 ViewProjection;
-};
-cPerFrame VPBuffer;
+	static const materialStruct Black_plastic = materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
+	static const materialStruct Black_rubber	= materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
+}
 
-struct cPerObject
-{
-	XMFLOAT4X4 World;
-};
-cPerObject ObjBuffer;
+/*--------------------------------------------------------------------------------------
+*			Functions
+--------------------------------------------------------------------------------------*/
 
+//--------------------- Create Constant Buffers ----------------------------------------
 void CreatePerFrameConstantBuffer()
 {
 	float aspect_ratio = (float)SCREEN_WIDTH / SCREEN_HEIGHT;
@@ -100,25 +176,23 @@ void CreatePerFrameConstantBuffer()
 	float far_plane = 20.f;
 
 	//camera, look at, up
-	XMVECTOR camera = XMVectorSet(0.0f, 0.0f, 2.0f, 1.0f);
+	XMVECTOR camera = CAMERA_STARTING_POS;
 	XMVECTOR look_at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
-	//view
 	XMMATRIX view = XMMatrixTranspose(XMMatrixLookAtLH(camera, look_at, up));
 
-	//projection
 	XMMATRIX projection = XMMatrixTranspose(XMMatrixPerspectiveFovLH(
 		XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
 
 	XMMATRIX viewProjection = view * projection;
 
 	// Store the matrix in the constant buffer
-	XMStoreFloat4x4(&VPBuffer.ViewProjection, viewProjection);
+	XMStoreFloat4x4(&VPBufferData.ViewProjection, viewProjection);
 
 	D3D11_BUFFER_DESC VPBufferDesc;
 	VPBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	VPBufferDesc.ByteWidth = sizeof(cPerFrame);
+	VPBufferDesc.ByteWidth = sizeof(cPerFrameBuffer);
 	VPBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	VPBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	VPBufferDesc.MiscFlags = 0;
@@ -134,11 +208,11 @@ void CreatePerObjectConstantBuffer()
 {
 	XMMATRIX world = XMMatrixTranspose(XMMatrixRotationY(0.0f));
 	
-	XMStoreFloat4x4(&ObjBuffer.World, world);
+	XMStoreFloat4x4(&ObjectBufferData.World, world);
 
 	D3D11_BUFFER_DESC WBufferDesc;
 	WBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	WBufferDesc.ByteWidth = sizeof(cPerObject);
+	WBufferDesc.ByteWidth = sizeof(cPerObjectBuffer);
 	WBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	WBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	WBufferDesc.MiscFlags = 0;
@@ -150,36 +224,11 @@ void CreatePerObjectConstantBuffer()
 	}
 }
 
-struct materialStruct
-{
-	//materialStruct() : specularAlbedo(0.0f, 0.0f, 0.0f), specularPower(128.0f) {}
-	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f) : specularAlbedo(r, g, b), specularPower(specPow) {}
-
-	XMFLOAT3 specularAlbedo;
-	float specularPower;
-};
-
-struct materialBuffer 
-{
-	materialBuffer(materialStruct mat = materialStruct()) : material(mat) {}
-	materialStruct material;
-};
-materialBuffer gMaterialProperties;
-
-static_assert((sizeof(materialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-
-namespace Materials
-{
-	static const materialStruct Black_plastic = materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
-	static const materialStruct Black_rubber = materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
-}
-
 void CreateMaterialConstantBuffer() 
 {
-	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC materialBufferDesc;
 	materialBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	materialBufferDesc.ByteWidth = sizeof(materialBuffer);
+	materialBufferDesc.ByteWidth = sizeof(cMaterialBuffer);
 	materialBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	materialBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	materialBufferDesc.MiscFlags = 0;
@@ -195,59 +244,13 @@ void CreateMaterialConstantBuffer()
 	}
 }
 
-// might need a rewrite? Not sure if this is the best way to do it
-void SetMaterial(materialStruct matprop)
-{
-	gMaterialProperties.material = matprop;
-}
-
-// TODO: one default constructor instead of two
-struct Light
-{
-	Light(XMFLOAT4 pos,XMFLOAT4 col,
-		float c_att, float l_att, float q_att, float amb)
-		: Position(pos), Color(col), 
-		constantAttenuation(c_att), linearAttenuation(l_att), quadraticAttenuation(q_att), 
-		ambientCoefficient(amb) {}
-	Light() : 
-		Position(0.0f, 0.0f, 0.0f, 1.0f), 
-		Color(1.0f, 1.0f, 1.0f, 1.0f),
-		constantAttenuation(1.0f),
-		linearAttenuation(0.0f),
-		quadraticAttenuation(0.0f),
-		ambientCoefficient(0.0f)
-	{}
-
-	XMFLOAT4 Position;
-	XMFLOAT4 Color;
-	float constantAttenuation;
-	float linearAttenuation;
-	float quadraticAttenuation;
-	float ambientCoefficient;
-};
-
-ID3D11Buffer* gLightBuffer = nullptr;
-struct lightBuffer {
-	lightBuffer() :
-		cameraPosition(0.0f, 0.0f, 0.0f, 1.0f),
-		globalAmbient(0.2f, 0.2f, 0.2f, 1.0f)
-	{}
-	XMFLOAT4 cameraPosition;
-	XMFLOAT4 globalAmbient;
-	Light Lights[MAX_LIGHTS];
-};
-
-static_assert((sizeof(lightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-
-lightBuffer gLightProperties;
-
 // TODO: change MAX_LIGHTS to NR_OF_LIGHTS or add bool Enable to light struct
 void CreateLightConstantBuffer() 
 {
 	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC lightBufferDesc;
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	lightBufferDesc.ByteWidth = sizeof(gLightProperties);
+	lightBufferDesc.ByteWidth = sizeof(gLightBufferData);
 	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	lightBufferDesc.MiscFlags = 0;
@@ -263,7 +266,15 @@ void CreateLightConstantBuffer()
 	}
 }
 
-//TODO: CAMERA POSITION!
+//---------------------- Set Constant Buffers ------------------------------------------
+
+// might need a rewrite? Not sure if this is the best way to do it
+// storing them in an array could be a good idea
+void SetMaterial(materialStruct matprop)
+{
+	gMaterialBufferData.material = matprop;
+}
+
 void setLights()
 {
 	XMFLOAT4 light_position = { 0.0f, -1.0f, 4.0f, 1.0f };
@@ -274,19 +285,12 @@ void setLights()
 	float amb = 0.01f;
 	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
 
-	gLightProperties.Lights[0] = test_light;
-	gLightProperties.globalAmbient = { 0.1f, 0.1f, 0.1f, 1.0f };
+	gLightBufferData.Lights[0] = test_light;
+	XMStoreFloat4(&gLightBufferData.cameraPosition, CAMERA_STARTING_POS);
+	gLightBufferData.globalAmbient = { 0.1f, 0.1f, 0.1f, 1.0f };
 }
 
-
-
-
-
-
-
-
 // REMOVE FROM HERE ---------------------------------------------------------------------------------
-
 
 // https://msdn.microsoft.com/en-us/library/windows/desktop/ff476898(v=vs.85).aspx
 ID3D11Buffer* gExampleBuffer = nullptr; // NEW
@@ -374,7 +378,6 @@ struct valuesToProject {
 	XMFLOAT4X4 projectionMatrix;
 };
 
-
 void CreateConstantBufferProjection() // NEW
 {
 	// initialize the description of the buffer.
@@ -396,13 +399,11 @@ void CreateConstantBufferProjection() // NEW
 	}
 }
 
-
 // REMOVE TO HERE ---------------------------------------------------------------------------------
-
-
 
 void CreateShaders()
 {
+//---------------------------------- First Pass ----------------------------------------------------
 	//create vertex shader
 	ID3DBlob* pVS = nullptr;
 	D3DCompileFromFile(
@@ -418,12 +419,10 @@ void CreateShaders()
 						// how to use the Error blob, see here
 						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
 	);
-
 	gHR = gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &gVertexShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
-
 
 	//create input layout (verified using vertex shader)
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
@@ -431,33 +430,9 @@ void CreateShaders()
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 	};
 
-
 	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
 	// we do not need anymore this COM object, so we release it.
 	pVS->Release();
-
-	//create pixel shader
-	ID3DBlob* pPS = nullptr;
-	D3DCompileFromFile(
-		L"GBufferFragment.hlsl", // filename
-		nullptr,		// optional macros
-		nullptr,		// optional include files
-		"PS_main",		// entry point
-		"ps_5_0",		// shader model (target)
-		0,				// shader compile options
-		0,				// effect compile options
-		&pPS,			// double pointer to ID3DBlob		
-		nullptr			// pointer for Error Blob messages.
-						// how to use the Error blob, see here
-						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-	);
-
-	gHR = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
-	if (FAILED(gHR)) {
-		exit(-1);
-	}
-	// we do not need anymore this COM object, so we release it.
-	pPS->Release();
 
 	//create geometry shader
 	ID3DBlob* pGS = nullptr;
@@ -478,7 +453,29 @@ void CreateShaders()
 	}
 	pGS->Release();
 
-	// Last pass shaders
+	//create pixel shader
+	ID3DBlob* pPS = nullptr;
+	D3DCompileFromFile(
+		L"GBufferFragment.hlsl", // filename
+		nullptr,		// optional macros
+		nullptr,		// optional include files
+		"PS_main",		// entry point
+		"ps_5_0",		// shader model (target)
+		0,				// shader compile options
+		0,				// effect compile options
+		&pPS,			// double pointer to ID3DBlob		
+		nullptr			// pointer for Error Blob messages.
+						// how to use the Error blob, see here
+						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
+	);
+	gHR = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &gPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+	// we do not need anymore this COM object, so we release it.
+	pPS->Release();
+
+//---------------------------------- Last Pass ----------------------------------------------------
 
 	//create vertex shader
 	ID3DBlob* pVS2 = nullptr;
@@ -494,8 +491,7 @@ void CreateShaders()
 		nullptr			// pointer for Error Blob messages.
 						// how to use the Error blob, see here
 						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-		);
-
+	);
 	gHR = gDevice->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &gFullScreenTriangleShader);
 	if (FAILED(gHR)) {
 		exit(-1);
@@ -517,8 +513,7 @@ void CreateShaders()
 		nullptr			// pointer for Error Blob messages.
 						// how to use the Error blob, see here
 						// https://msdn.microsoft.com/en-us/library/windows/desktop/hh968107(v=vs.85).aspx
-		);
-
+	);
 	gHR = gDevice->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &gLightPixelShader);
 	if (FAILED(gHR)) {
 		exit(-1);
@@ -532,7 +527,6 @@ void CreateTriangleData()
 	struct TriangleVertex
 	{
 		float x, y, z;
-		//float r,g,b;
 		float u, v;
 	};
 
@@ -567,7 +561,6 @@ void CreateTriangleData()
 		 //upper left corner
 		 -0.5f, 0.5f, -0.5f,	//v1
 		 0.0f, 0.0f, 	//v1 texcoord
-
 
 
 		 //left side
@@ -727,7 +720,7 @@ void SetViewport()
 	gDeviceContext->RSSetViewports(1, &vp);
 }
 
-/* TODO: Should probably add hr checks */
+// TODO: Should probably add hr checks. also Relese()
 void initGraphicsBuffer()
 {
 	// Create render target textures
@@ -780,23 +773,19 @@ void initGraphicsBuffer()
 
 	gDevice->CreateTexture2D(&depthDesc, NULL, &gDepthStencilTexture);
 
-
 	// Create the depth stencil view
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
 	depthStencilViewDesc.Format = depthDesc.Format;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
-
 	gDevice->CreateDepthStencilView(gDepthStencilTexture, // Depth stencil texture
 		&depthStencilViewDesc, // Depth stencil desc
 		&gDepthStecilView);  // [out] Depth stencil view
 
-
 	//Relese
-
 }
 
-//TODO: move as much out of render loop as possible
+//TODO: move as much out of render loop as possible. Will need a loop to loop through all ojects in the future
 void RenderFirstPass()
 {
 	//set render targets
@@ -821,81 +810,56 @@ void RenderFirstPass()
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
 
+	// Set Vertex Shader input
 	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
+	// Set shaders
 	gDeviceContext->VSSetShader(gVertexShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
+	// set textures and constant buffers
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 	gDeviceContext->PSGetConstantBuffers(0, 1, &gMaterialBuffer);
 
-	// NEW ========================================================
-	// Map constant buffer so that we can write to it.
-	D3D11_MAPPED_SUBRESOURCE dataPtr;
-	gDeviceContext->Map(gExampleBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr);
-	// copy memory from CPU to GPU the entire struct
-	globalValues.value1 += 0.001f;
-	memcpy(dataPtr.pData, &globalValues, sizeof(valuesFromCpu));
-	// UnMap constant buffer so that we can use it again in the GPU
-	gDeviceContext->Unmap(gExampleBuffer, 0);
-	// set resource to Vertex Shader
-	gDeviceContext->VSSetConstantBuffers(0, 1, &gExampleBuffer);
-	// ==============================================================
+	// set constant buffers
 
-	D3D11_MAPPED_SUBRESOURCE dataPtr1;
-	gDeviceContext->Map(gWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr1);
+	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
+	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
+	gDeviceContext->Map(gPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
+
+// LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
+
+	// update per-object buffer to spin cube
 	static float rotation = 0.0f;
-	rotation += 0.01f;
-	XMMATRIX W = XMMatrixRotationY(rotation);
-	XMMATRIX WT = XMMatrixTranspose(W);
-	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
-	gDeviceContext->Unmap(gWorldBuffer, 0);
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gWorldBuffer);
+	rotation += CUBE_ROTATION_SPEED;
 
-	D3D11_MAPPED_SUBRESOURCE dataPtr2;
-	gDeviceContext->Map(gViewBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr2);
-	//XMVECTOR pos = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
-	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, -1.0f, 0.0f);
+	XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(rotation)));
 
-
-	XMVECTOR pos = XMVectorSet(0.0f, 0.0f, 2.0f, 1.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 1.0f, 0.0f);
-
-	// Bind camera position in LightFragmentShader
-	XMStoreFloat4(&gLightProperties.cameraPosition, pos);
-
-	//XMVECTOR pos = XMVectorSet(0.0f, 0.0f, -2.0f, 1.0f);
-	//XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	XMVECTOR target = XMVectorZero();
-	XMMATRIX V = XMMatrixLookAtLH(pos, target, up);
-	XMMATRIX VT = XMMatrixTranspose(V);
-	memcpy(dataPtr2.pData, &VT, sizeof(valuesToView));
-	gDeviceContext->Unmap(gWorldBuffer, 0);
-	gDeviceContext->GSSetConstantBuffers(2, 1, &gViewBuffer);
-
-	D3D11_MAPPED_SUBRESOURCE dataPtr3;
-	gDeviceContext->Map(gProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr3);
-	float fov = 0.45f*XM_PI;
-	float ar = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
-	float closer = 0.1f;
-	float further = 20.0f;
-	XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar, closer, further);
-	XMMATRIX PT = XMMatrixTranspose(P);
-	memcpy(dataPtr3.pData, &PT, sizeof(valuesToProject));
-	gDeviceContext->Unmap(gProjectionBuffer, 0);
-	gDeviceContext->GSSetConstantBuffers(3, 1, &gProjectionBuffer);
+	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
+	gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	// copy memory from CPU to GPU of the entire struct
+	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
+	// Unmap constant buffer so that we can use it again in the GPU
+	gDeviceContext->Unmap(gPerObjectBuffer, 0);
+	// set resource to Geometry Shader
+	gDeviceContext->GSGetConstantBuffers(1, 1, &gPerObjectBuffer);
 
 	// Map material properties buffer
-
+	D3D11_MAPPED_SUBRESOURCE materialBufferPtr;
+	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialBufferPtr);
+	gDeviceContext->PSGetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// draw geometry
 	gDeviceContext->Draw(36, 0);//number of vertices to draw
+
+// LOOP OVER OBJECTS TO HERE -----------------------------------------------------------------
+
 }
 
 //TODO: move as much out of render loop as possible
@@ -950,7 +914,7 @@ void RenderLastPass()
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
 	gDeviceContext->Map(gLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightBufferPtr);
-	memcpy(LightBufferPtr.pData, &gLightProperties, sizeof(lightBuffer));
+	memcpy(LightBufferPtr.pData, &gLightBufferData, sizeof(cLightBuffer));
 	gDeviceContext->Unmap(gLightBuffer, 0);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gLightBuffer);
 
@@ -999,7 +963,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
 
-		CreateMaterialConstantBuffer(Materials::Black_plastic);
+		CreateMaterialConstantBuffer();
 
 		CreateLightConstantBuffer();
 

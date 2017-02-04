@@ -5,6 +5,21 @@
 // WS - world space
 // CS - clip-space
 
+// REWRITE START ------------------------------------
+
+cbuffer PER_FRAME			: register(b0)
+{
+	float4x4 viewProjection;
+};
+
+cbuffer PER_OBJECT		: register(b1)
+{
+	float4x4 world;
+};
+
+// REWRITE END ------------------------------------
+
+// REMOVE FROM HERE ---------------------------------
 cbuffer WORLDMATRIX		: register(b1) 
 {
 	float4x4 worldMatrix;
@@ -17,6 +32,7 @@ cbuffer PROJECTIONMATRIX	: register (b3)
 {
 	float4x4 projectionMatrix;
 };
+// REMOVE TO HERE ---------------------------------
 
 
 struct GS_IN
