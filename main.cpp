@@ -16,14 +16,15 @@
 
 using namespace DirectX;
 
-const double MATH_PI = 3.14159265358;
-const UINT GBUFFER_COUNT = 4;
-const LONG SCREEN_WIDTH = 2*640;
-const LONG SCREEN_HEIGHT = 2*480;
-const int MAX_LIGHTS = 8;
-const int NR_OF_OBJECTS = 1;
-const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, 2.0f, 1.0f);
-float CUBE_ROTATION_SPEED = 0.01f;
+const double MATH_PI			= 3.14159265358;
+const UINT GBUFFER_COUNT		= 4;
+const LONG SCREEN_WIDTH			= 2*640;
+const LONG SCREEN_HEIGHT		= 2*480;
+const int MAX_LIGHTS			= 8;
+const int NR_OF_OBJECTS			= 1;
+const XMVECTOR CAMERA_STARTING_POS	= XMVectorSet(0.0f, 1.0f, 2.0f, 1.0f);
+float CUBE_ROTATION_SPEED		= 0.01f;
+float LIGHT_ROTATION_SPEED		= 0.001f;
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -31,38 +32,37 @@ LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 HRESULT CreateDirect3DContext(HWND wndHandle);
 HRESULT gHR = 0;
 
-IDXGISwapChain* gSwapChain = nullptr;
-ID3D11Device* gDevice = nullptr;
-ID3D11DeviceContext* gDeviceContext = nullptr;
+IDXGISwapChain* gSwapChain						= nullptr;
+ID3D11Device* gDevice							= nullptr;
+ID3D11DeviceContext* gDeviceContext				= nullptr;
 
 // Depth Buffer
-ID3D11DepthStencilView* gDepthStecilView = nullptr;
-ID3D11Texture2D* gDepthStencilTexture = nullptr;
+ID3D11DepthStencilView* gDepthStecilView		= nullptr;
+ID3D11Texture2D* gDepthStencilTexture			= nullptr;
 
 // First Pass
-ID3D11Buffer* gVertexBuffer = nullptr;
-ID3D11InputLayout* gVertexLayout = nullptr;
-ID3D11VertexShader* gVertexShader = nullptr;
-ID3D11GeometryShader* gGeometryShader = nullptr;
-ID3D11PixelShader* gPixelShader = nullptr;
+ID3D11Buffer* gVertexBuffer						= nullptr;
+ID3D11InputLayout* gVertexLayout				= nullptr;
+ID3D11VertexShader* gVertexShader				= nullptr;
+ID3D11GeometryShader* gGeometryShader			= nullptr;
+ID3D11PixelShader* gPixelShader					= nullptr;
 
-
-ID3D11ShaderResourceView* gTextureView = nullptr;
+ID3D11ShaderResourceView* gTextureView			= nullptr;
 
 // Last Pass
-ID3D11VertexShader* gFullScreenTriangleShader = nullptr;
-ID3D11PixelShader* gLightPixelShader = nullptr;
+ID3D11VertexShader* gFullScreenTriangleShader	= nullptr;
+ID3D11PixelShader* gLightPixelShader			= nullptr;
 
-ID3D11RenderTargetView* gBackbufferRTV = nullptr;
+ID3D11RenderTargetView* gBackbufferRTV			= nullptr;
 
 /*--------------------------------------------------------------------------------------
 *			G-Buffer
 --------------------------------------------------------------------------------------*/
 
 struct gGraphicsBufferStruct {
-	ID3D11Texture2D* texture = nullptr;
-	ID3D11RenderTargetView* renderTargetView = nullptr;
-	ID3D11ShaderResourceView* shaderResourceView = nullptr;
+	ID3D11Texture2D* texture						= nullptr;
+	ID3D11RenderTargetView* renderTargetView		= nullptr;
+	ID3D11ShaderResourceView* shaderResourceView	= nullptr;
 }; gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
 
 
@@ -70,8 +70,8 @@ struct gGraphicsBufferStruct {
 /*--------------------------------------------------------------------------------------
 *			Constant Buffers
 --------------------------------------------------------------------------------------*/
-ID3D11Buffer* gPerFrameBuffer = nullptr;
-ID3D11Buffer* gPerObjectBuffer = nullptr;
+ID3D11Buffer* gPerFrameBuffer	= nullptr;
+ID3D11Buffer* gPerObjectBuffer	= nullptr;
 
 struct cPerFrameBuffer
 {
@@ -110,12 +110,12 @@ ID3D11Buffer* gLightBuffer = nullptr;
 // TODO: one default constructor instead of two
 struct Light
 {
-	Light(XMFLOAT4 pos = XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), 
-		XMFLOAT4 col = XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-		float c_att = 1.0f, 
-		float l_att = 0.0f, 
-		float q_att = 0.0f, 
-		float amb = 0.0f)
+	Light(XMFLOAT4 pos	= XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f), 
+		XMFLOAT4 col	= XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+		float c_att		= 1.0f, 
+		float l_att		= 0.0f, 
+		float q_att		= 0.0f, 
+		float amb		= 0.0f)
 		: PositionWS(pos), 
 		Color(col),
 		constantAttenuation(c_att), 
@@ -134,18 +134,18 @@ struct Light
 struct cLightBuffer 
 {
 	cLightBuffer() 
-		: cameraPositionWS(0.0f, 0.0f, 0.0f, 1.0f),
-		globalAmbient(0.2f, 0.2f, 0.2f, 1.0f)
+		: cameraPositionWS	(0.0f, 0.0f, 0.0f, 1.0f),
+		globalAmbient		(0.2f, 0.2f, 0.2f, 1.0f)
 	{}
 	XMFLOAT4 cameraPositionWS;
 	XMFLOAT4 globalAmbient;
 	Light Lights[MAX_LIGHTS];
 }; cLightBuffer gLightBufferData;
 
-static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-static_assert((sizeof(cMaterialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cPerFrameBuffer) % 16)	== 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cPerObjectBuffer) % 16)	== 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cMaterialBuffer) % 16)	== 0, "Constant Buffer size must be 16-byte aligned");
+static_assert((sizeof(cLightBuffer) % 16)		== 0, "Constant Buffer size must be 16-byte aligned");
 
 /*--------------------------------------------------------------------------------------
 *				Namespaces
@@ -153,12 +153,12 @@ static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Buffer size must be 16
 
 namespace Colors
 {
-	static const XMFLOAT4 White			= { 1.0f, 1.0f, 1.0f, 1.0f };
-	static const XMFLOAT4 Black			= { 0.0f, 0.0f, 0.0f, 1.0f };
+	static const XMFLOAT4 White				= { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const XMFLOAT4 Black				= { 0.0f, 0.0f, 0.0f, 1.0f };
 	static const XMFLOAT4 LightSteelBlue	= { 0.69f, 0.77f, 0.87f, 1.0f };
-	static const XMFLOAT4 Red			= { 1.0f, 0.0f, 0.0f, 1.0f };
-	static const XMFLOAT4 Green			= { 0.0f, 1.0f, 0.0f, 1.0f };
-	static const XMFLOAT4 Blue			= { 0.0f, 0.0f, 1.0f, 1.0f };
+	static const XMFLOAT4 Red				= { 1.0f, 0.0f, 0.0f, 1.0f };
+	static const XMFLOAT4 Green				= { 0.0f, 1.0f, 0.0f, 1.0f };
+	static const XMFLOAT4 Blue				= { 0.0f, 0.0f, 1.0f, 1.0f };
 	static const float fWhite[4]			= { 1.0f, 1.0f, 1.0f, 1.0f };
 	static const float fBlack[4]			= { 0.0f, 0.0f, 0.0f, 1.0f };
 	static const float fLightSteelBlue[4]	= { 0.69f, 0.77f, 0.87f, 1.0f };
@@ -166,9 +166,8 @@ namespace Colors
 
 namespace Materials
 {
-	static const materialStruct Black_plastic = materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
+	static const materialStruct Black_plastic	= materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
 	static const materialStruct Black_rubber	= materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
-	static const materialStruct White_metal	= materialStruct(1.0f, 1.0f, 1.0f, 410.0f);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -178,36 +177,31 @@ namespace Materials
 //--------------------- Create Constant Buffers ----------------------------------------
 void CreatePerFrameConstantBuffer()
 {
-	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
-	float degrees_field_of_view = 90.0f;
-	float near_plane = 0.1f;
-	float far_plane = 20.f;
+	float aspect_ratio			= (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
+	float degrees_field_of_view	= 90.0f;
+	float near_plane			= 0.1f;
+	float far_plane				= 20.f;
 
 	//camera, look at, up
-	XMVECTOR camera = CAMERA_STARTING_POS;
-	XMVECTOR look_at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
-	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	XMVECTOR camera		= CAMERA_STARTING_POS;
+	XMVECTOR look_at	= XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
+	XMVECTOR up			= XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	XMMATRIX view = XMMatrixTranspose(XMMatrixLookAtLH(camera, look_at, up));
 
 	XMMATRIX projection = XMMatrixTranspose(XMMatrixPerspectiveFovLH(
 		XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
 
-	//XMMATRIX viewProjection = view * projection;
-
-	// Store the matrix in the constant buffer
-	//XMStoreFloat4x4(&VPBufferData.ViewProjection, viewProjection);
-
 	XMStoreFloat4x4(&VPBufferData.Projection, projection);
 	XMStoreFloat4x4(&VPBufferData.View, view);
 
 	D3D11_BUFFER_DESC VPBufferDesc;
-	VPBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	VPBufferDesc.ByteWidth = sizeof(cPerFrameBuffer);
-	VPBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	VPBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	VPBufferDesc.MiscFlags = 0;
-	VPBufferDesc.StructureByteStride = 0;
+	VPBufferDesc.Usage					= D3D11_USAGE_DYNAMIC;
+	VPBufferDesc.ByteWidth				= sizeof(cPerFrameBuffer);
+	VPBufferDesc.BindFlags				= D3D11_BIND_CONSTANT_BUFFER;
+	VPBufferDesc.CPUAccessFlags			= D3D11_CPU_ACCESS_WRITE;
+	VPBufferDesc.MiscFlags				= 0;
+	VPBufferDesc.StructureByteStride	= 0;
 
 	gHR = gDevice->CreateBuffer(&VPBufferDesc, nullptr, &gPerFrameBuffer);
 	if (FAILED(gHR)) {
@@ -222,12 +216,12 @@ void CreatePerObjectConstantBuffer()
 	XMStoreFloat4x4(&ObjectBufferData.World, world);
 
 	D3D11_BUFFER_DESC WBufferDesc;
-	WBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	WBufferDesc.ByteWidth = sizeof(cPerObjectBuffer);
-	WBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	WBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	WBufferDesc.MiscFlags = 0;
-	WBufferDesc.StructureByteStride = 0;
+	WBufferDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	WBufferDesc.ByteWidth			= sizeof(cPerObjectBuffer);
+	WBufferDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+	WBufferDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	WBufferDesc.MiscFlags			= 0;
+	WBufferDesc.StructureByteStride	= 0;
 
 	gHR = gDevice->CreateBuffer(&WBufferDesc, nullptr, &gPerObjectBuffer);
 	if (FAILED(gHR)) {
@@ -238,12 +232,12 @@ void CreatePerObjectConstantBuffer()
 void CreateMaterialConstantBuffer() 
 {
 	D3D11_BUFFER_DESC materialBufferDesc;
-	materialBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	materialBufferDesc.ByteWidth = sizeof(cMaterialBuffer);
-	materialBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	materialBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	materialBufferDesc.MiscFlags = 0;
-	materialBufferDesc.StructureByteStride = 0;
+	materialBufferDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	materialBufferDesc.ByteWidth			= sizeof(cMaterialBuffer);
+	materialBufferDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+	materialBufferDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	materialBufferDesc.MiscFlags			= 0;
+	materialBufferDesc.StructureByteStride	= 0;
 
 	// check if the creation failed for any reason
 	HRESULT hr = 0;
@@ -260,12 +254,12 @@ void CreateLightConstantBuffer()
 {
 	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC lightBufferDesc;
-	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	lightBufferDesc.ByteWidth = sizeof(cLightBuffer);
-	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	lightBufferDesc.MiscFlags = 0;
-	lightBufferDesc.StructureByteStride = 0;
+	lightBufferDesc.Usage				= D3D11_USAGE_DYNAMIC;
+	lightBufferDesc.ByteWidth			= sizeof(cLightBuffer);
+	lightBufferDesc.BindFlags			= D3D11_BIND_CONSTANT_BUFFER;
+	lightBufferDesc.CPUAccessFlags		= D3D11_CPU_ACCESS_WRITE;
+	lightBufferDesc.MiscFlags			= 0;
+	lightBufferDesc.StructureByteStride	= 0;
 
 	// check if the creation failed for any reason
 	HRESULT hr = 0;
@@ -289,23 +283,18 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 0.0f, 1.0f, -2.0f, 1.0f };
-	XMFLOAT4 light_color = Colors::White;
-	float c_att = 0.2f;
-	float l_att = 0.5f;
-	float q_att = 0.009f;
-	float amb = 0.01f;
+	XMFLOAT4 light_position = { 2.0f, 0.0f, 4.0f, 1.0f };
+	XMFLOAT4 light_color	= Colors::White;
+	float c_att	= 0.2f;
+	float l_att	= 0.5f;
+	float q_att	= 0.009f;
+	float amb	= 0.01f;
 	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
 
 	gLightBufferData.Lights[0] = test_light;
 	XMStoreFloat4(&gLightBufferData.cameraPositionWS, CAMERA_STARTING_POS);
-	gLightBufferData.globalAmbient = { 0.1f, 0.1f, 0.1f, 1.0f };
+	gLightBufferData.globalAmbient = { 0.04f, 0.04f, 0.04f, 1.0f };
 }
-
-// REMOVE FROM HERE ---------------------------------------------------------------------------------
-
-
-// REMOVE TO HERE ---------------------------------------------------------------------------------
 
 void CreateShaders()
 {
@@ -605,9 +594,9 @@ void CreateTriangleData()
 
 	D3D11_BUFFER_DESC bufferDesc;
 	memset(&bufferDesc, 0, sizeof(bufferDesc));
-	bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	bufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth = sizeof(triangleVertices);
+	bufferDesc.BindFlags	= D3D11_BIND_VERTEX_BUFFER;
+	bufferDesc.Usage		= D3D11_USAGE_DEFAULT;
+	bufferDesc.ByteWidth	= sizeof(triangleVertices);
 
 	D3D11_SUBRESOURCE_DATA data;
 	data.pSysMem = triangleVertices;
@@ -617,8 +606,8 @@ void CreateTriangleData()
 void SetViewport()
 {
 	D3D11_VIEWPORT vp;
-	vp.Width = (FLOAT)SCREEN_WIDTH;
-	vp.Height = (FLOAT)SCREEN_HEIGHT;
+	vp.Width	= (FLOAT)SCREEN_WIDTH;
+	vp.Height	= (FLOAT)SCREEN_HEIGHT;
 	vp.MinDepth = 0.0f;
 	vp.MaxDepth = 1.0f;
 	vp.TopLeftX = 0.f;
@@ -709,8 +698,8 @@ void RenderFirstPass()
 	//Clear the render targets
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::fBlack);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::fBlack);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fWhite);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::fLightSteelBlue);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fLightSteelBlue);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -744,7 +733,6 @@ void RenderFirstPass()
 
 // LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
 
-	
 	// update per-object buffer to spin cube
 	static float rotation = 0.0f;
 	rotation += CUBE_ROTATION_SPEED;
@@ -815,6 +803,16 @@ void RenderLastPass()
 
 	gDeviceContext->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
 
+	// Move light up and down
+	static int lightYMovement = 249;
+	lightYMovement	= (lightYMovement + 1) % 1000;
+	float yMovement	= (lightYMovement < 500) ? -0.01f : 0.01f;
+	XMMATRIX yMove	= XMMatrixTranslation(0.0f, yMovement, 0.0f);
+
+	XMVECTOR lightPos = XMLoadFloat4(&gLightBufferData.Lights[0].PositionWS);
+	lightPos = XMVector4Transform(lightPos, yMove);
+	XMStoreFloat4(&gLightBufferData.Lights[0].PositionWS, lightPos);
+
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
 	gDeviceContext->Map(gLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightBufferPtr);
@@ -834,7 +832,6 @@ void Render()
 	RenderFirstPass();
 	RenderLastPass();
 }
-
 
 void CreateAllConstantBuffers() {
 	CreatePerFrameConstantBuffer();
@@ -885,7 +882,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gVertexLayout->Release();
 		gVertexShader->Release();
 		gPixelShader->Release();
-		gGeometryShader->Release();
+		gGeometryShader	->Release();
 		gDepthStecilView->Release();
 		gDepthStencilTexture->Release();
 		gBackbufferRTV->Release();
@@ -900,12 +897,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 HWND InitWindow(HINSTANCE hInstance)
 {
-	WNDCLASSEX wcex = { 0 };
-	wcex.cbSize = sizeof(WNDCLASSEX);
-	wcex.style = CS_HREDRAW | CS_VREDRAW;
-	wcex.lpfnWndProc = WndProc;
-	wcex.hInstance = hInstance;
-	wcex.lpszClassName = L"BTH_D3D_DEMO";
+	WNDCLASSEX wcex		= { 0 };
+	wcex.cbSize			= sizeof(WNDCLASSEX);
+	wcex.style			= CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc	= WndProc;
+	wcex.hInstance		= hInstance;
+	wcex.lpszClassName	= L"BTH_D3D_DEMO";
 	if (!RegisterClassEx(&wcex))
 		return false;
 
@@ -950,14 +947,14 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
 
 	// fill the swap chain description struct
-	scd.BufferCount = 1;                                    // one back buffer
-	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;     // use 32-bit color
-	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;      // how swap chain is to be used
-	scd.OutputWindow = wndHandle;                           // the window to be used
-	scd.SampleDesc.Count = 1;                               // how many multisamples
-	scd.Windowed = TRUE;                                    // windowed/full-screen mode
+	scd.BufferCount			= 1;                               // one back buffer
+	scd.BufferDesc.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;      // use 32-bit color
+	scd.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT; // how swap chain is to be used
+	scd.OutputWindow		= wndHandle;                       // the window to be used
+	scd.SampleDesc.Count	= 1;                               // how many multisamples
+	scd.Windowed			= TRUE;                            // windowed/full-screen mode
 
-															// create a device, device context and swap chain using the information in the scd struct
+	// create a device, device context and swap chain using the information in the scd struct
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
@@ -987,16 +984,16 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 
 	D3D11_TEXTURE2D_DESC bthTexDesc;
 	ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
-	bthTexDesc.Width = BTH_IMAGE_WIDTH;
-	bthTexDesc.Height = BTH_IMAGE_HEIGHT;
-	bthTexDesc.MipLevels = bthTexDesc.ArraySize = 1;
-	bthTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	bthTexDesc.SampleDesc.Count = 1;
-	bthTexDesc.SampleDesc.Quality = 0;
-	bthTexDesc.Usage = D3D11_USAGE_DEFAULT;
-	bthTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	bthTexDesc.MiscFlags = 0;
-	bthTexDesc.CPUAccessFlags = 0;
+	bthTexDesc.Width				= BTH_IMAGE_WIDTH;
+	bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
+	bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
+	bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	bthTexDesc.SampleDesc.Count		= 1;
+	bthTexDesc.SampleDesc.Quality	= 0;
+	bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
+	bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
+	bthTexDesc.MiscFlags			= 0;
+	bthTexDesc.CPUAccessFlags		= 0;
 
 	ID3D11Texture2D *pTexture = NULL;
 
@@ -1008,10 +1005,10 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
 	ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
-	resourceViewDesc.Format = bthTexDesc.Format;
-	resourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	resourceViewDesc.Texture2D.MipLevels = bthTexDesc.MipLevels;
-	resourceViewDesc.Texture2D.MostDetailedMip = 0;
+	resourceViewDesc.Format						= bthTexDesc.Format;
+	resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
+	resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
+	resourceViewDesc.Texture2D.MostDetailedMip	= 0;
 	gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
 
 	pTexture->Release();
