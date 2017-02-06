@@ -22,7 +22,7 @@ const LONG SCREEN_WIDTH = 2*640;
 const LONG SCREEN_HEIGHT = 2*480;
 const int MAX_LIGHTS = 8;
 const int NR_OF_OBJECTS = 1;
-const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, 4.0f, 1.0f);
+const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(1.0f, 1.0f, 2.0f, 1.0f);
 float CUBE_ROTATION_SPEED = 0.01f;
 
 HWND InitWindow(HINSTANCE hInstance);
@@ -174,7 +174,7 @@ namespace Materials
 //--------------------- Create Constant Buffers ----------------------------------------
 void CreatePerFrameConstantBuffer()
 {
-	float aspect_ratio = (float)SCREEN_WIDTH / SCREEN_HEIGHT;
+	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 	float degrees_field_of_view = 90.0f;
 	float near_plane = 0.1f;
 	float far_plane = 20.f;
@@ -840,6 +840,8 @@ void RenderFirstPass()
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	gDeviceContext->Map(gPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
+	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
+	gDeviceContext->Unmap(gPerFrameBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
 
 // LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
