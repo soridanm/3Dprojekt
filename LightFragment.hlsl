@@ -97,18 +97,25 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float3 to_light	= normalize(Lights[0].light_positionWS.xyz - positionWS); // vector from light source to surface
 	float3 to_camera	= normalize(camera_positionWS.xyz - positionWS); // vectore from surface to camera
 	float3 reflection = reflect(-to_light, normal); // vector of reflected light after light hits surface
+	float distance1 = distance(Lights[0].light_positionWS, positionWS);
+	//float distance2 = distance * distance;
 
 	// Diffuse part
-	float3 diffuse_factor = specularValues.rgb * diffuseColor * max(dot(to_light, normal), 0.0);
+	float diffuse_coefficient = max(dot(to_light, normal), 0.0);
+	float3 diffuse_component = diffuse_coefficient * diffuseColor * Lights[0].color;
 
 	// Specular part
-	float3 specular_factor = specularValues.rgb * pow(max(dot(reflection, to_camera), 0.0), specularValues.a);
+	/* specular_coefficient = 0.0 if the light is behind the surface */
+	float3 specular_coefficient = diffuse_coefficient > 0.0 ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
+	float3 specular_component = specular_coefficient * specularValues.rgb * Lights[0].color;
 
 	// ambient part
-	float3 ambient_component = Lights[0].ambient_coefficient * diffuseColor;
+	float3 ambient_component =  Lights[0].ambient_coefficient * Lights[0].color * diffuseColor; // light intesities
 
+	float attenuation = 1.0 /
+		(Lights[0].constant_attenuation + distance1 * (Lights[0].linear_attenuation + distance1 * Lights[0].quadratic_attenuation));
 
-	float3 final_color = saturate(ambient_component + diffuse_factor + specular_factor);
+	float3 final_color = saturate(ambient_component + attenuation * (diffuse_component + specular_component));
 
 // LOOP OVER LIGHTS TO HERE ---------------------------------------------------------------------------
 
@@ -125,7 +132,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 r = 2.0*dot(normal - light_ray)*normal - light_ray;
 	//float3 specular_light = 2.0*float3(1.0,1.0,1.0)*dot(r, )
 
-	float3 finalColor = positionWS;
+	float3 finalColor = final_color;
 
 	return float4(finalColor, 1.0);
 }

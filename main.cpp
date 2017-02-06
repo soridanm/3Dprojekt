@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------
 // TODO: 
-//	Bind shaders, Reorganize, merge constant buffers into one
+//	viewprojection as single matrix instead of two seperate ones
 // TODO?:
 //	Turn global constants into getFunctions()
 //--------------------------------------------------------------------------------------
@@ -22,7 +22,7 @@ const LONG SCREEN_WIDTH = 2*640;
 const LONG SCREEN_HEIGHT = 2*480;
 const int MAX_LIGHTS = 8;
 const int NR_OF_OBJECTS = 1;
-const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(1.0f, 1.0f, 2.0f, 1.0f);
+const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, 2.0f, 1.0f);
 float CUBE_ROTATION_SPEED = 0.01f;
 
 HWND InitWindow(HINSTANCE hInstance);
@@ -156,6 +156,9 @@ namespace Colors
 	static const XMFLOAT4 White			= { 1.0f, 1.0f, 1.0f, 1.0f };
 	static const XMFLOAT4 Black			= { 0.0f, 0.0f, 0.0f, 1.0f };
 	static const XMFLOAT4 LightSteelBlue	= { 0.69f, 0.77f, 0.87f, 1.0f };
+	static const XMFLOAT4 Red			= { 1.0f, 0.0f, 0.0f, 1.0f };
+	static const XMFLOAT4 Green			= { 0.0f, 1.0f, 0.0f, 1.0f };
+	static const XMFLOAT4 Blue			= { 0.0f, 0.0f, 1.0f, 1.0f };
 	static const float fWhite[4]			= { 1.0f, 1.0f, 1.0f, 1.0f };
 	static const float fBlack[4]			= { 0.0f, 0.0f, 0.0f, 1.0f };
 	static const float fLightSteelBlue[4]	= { 0.69f, 0.77f, 0.87f, 1.0f };
@@ -165,6 +168,7 @@ namespace Materials
 {
 	static const materialStruct Black_plastic = materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
 	static const materialStruct Black_rubber	= materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
+	static const materialStruct White_metal	= materialStruct(1.0f, 1.0f, 1.0f, 410.0f);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -285,7 +289,7 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 0.0f, 0.0f, 2.0f, 1.0f };
+	XMFLOAT4 light_position = { 0.0f, 1.0f, -2.0f, 1.0f };
 	XMFLOAT4 light_color = Colors::White;
 	float c_att = 0.2f;
 	float l_att = 0.5f;
@@ -300,112 +304,6 @@ void setLights()
 
 // REMOVE FROM HERE ---------------------------------------------------------------------------------
 
-// https://msdn.microsoft.com/en-us/library/windows/desktop/ff476898(v=vs.85).aspx
-ID3D11Buffer* gExampleBuffer = nullptr; // NEW
-struct valuesFromCpu {					// NEW
-	float value1;						// NEW
-	float value2;						// NEW
-	float value3;						// NEW
-	float value4;						// NEW
-};
-valuesFromCpu globalValues{ 0.0f, 0.0f, 0.0f, 0.0f }; // NEW
-
-void CreateConstantBufferExample() // NEW
-{
-	// initialize the description of the buffer.
-	D3D11_BUFFER_DESC exampleBufferDesc;
-	exampleBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	exampleBufferDesc.ByteWidth = sizeof(valuesFromCpu);
-	exampleBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	exampleBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	exampleBufferDesc.MiscFlags = 0;
-	exampleBufferDesc.StructureByteStride = 0;
-
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = gDevice->CreateBuffer(&exampleBufferDesc, nullptr, &gExampleBuffer);
-	if (FAILED(hr))
-	{
-		// handle the error, could be fatal or a warning...
-		exit(-1);
-	}
-}
-
-ID3D11Buffer* gWorldBuffer = nullptr;
-struct valuesToWorld {
-	XMFLOAT4X4 worldMatrix;
-};
-void CreateConstantBufferWorld() // NEW
-{
-	// initialize the description of the buffer.
-	D3D11_BUFFER_DESC worldBufferDesc;
-	worldBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	worldBufferDesc.ByteWidth = sizeof(valuesToWorld);
-	worldBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	worldBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	worldBufferDesc.MiscFlags = 0;
-	worldBufferDesc.StructureByteStride = 0;
-
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = gDevice->CreateBuffer(&worldBufferDesc, nullptr, &gWorldBuffer);
-	if (FAILED(hr))
-	{
-		// handle the error, could be fatal or a warning...
-		exit(-1);
-	}
-}
-
-ID3D11Buffer* gViewBuffer = nullptr;
-struct valuesToView {
-	XMFLOAT4X4 viewMatrix;
-};
-void CreateConstantBufferView() // NEW
-{
-	// initialize the description of the buffer.
-	D3D11_BUFFER_DESC viewBufferDesc;
-	viewBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	viewBufferDesc.ByteWidth = sizeof(valuesToView);
-	viewBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	viewBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	viewBufferDesc.MiscFlags = 0;
-	viewBufferDesc.StructureByteStride = 0;
-
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = gDevice->CreateBuffer(&viewBufferDesc, nullptr, &gViewBuffer);
-	if (FAILED(hr))
-	{
-		// handle the error, could be fatal or a warning...
-		exit(-1);
-	}
-}
-
-ID3D11Buffer* gProjectionBuffer = nullptr;
-struct valuesToProject {
-	XMFLOAT4X4 projectionMatrix;
-};
-
-void CreateConstantBufferProjection() // NEW
-{
-	// initialize the description of the buffer.
-	D3D11_BUFFER_DESC projectionBufferDesc;
-	projectionBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	projectionBufferDesc.ByteWidth = sizeof(valuesToProject);
-	projectionBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	projectionBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	projectionBufferDesc.MiscFlags = 0;
-	projectionBufferDesc.StructureByteStride = 0;
-
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = gDevice->CreateBuffer(&projectionBufferDesc, nullptr, &gProjectionBuffer);
-	if (FAILED(hr))
-	{
-		// handle the error, could be fatal or a warning...
-		exit(-1);
-	}
-}
 
 // REMOVE TO HERE ---------------------------------------------------------------------------------
 
@@ -812,7 +710,7 @@ void RenderFirstPass()
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::fBlack);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::fBlack);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fBlack);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fWhite);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -841,13 +739,12 @@ void RenderFirstPass()
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	gDeviceContext->Map(gPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
 	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
-	gDeviceContext->Unmap(gPerFrameBuffer, 0);
+	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
 
 // LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
 
-	SetMaterial(Materials::Black_plastic);
-
+	
 	// update per-object buffer to spin cube
 	static float rotation = 0.0f;
 	rotation += CUBE_ROTATION_SPEED;
@@ -864,11 +761,12 @@ void RenderFirstPass()
 	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
 
 	// Map material properties buffer
-	D3D11_MAPPED_SUBRESOURCE materialBufferPtr;
-	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialBufferPtr);
+	SetMaterial(Materials::Black_plastic);
+	D3D11_MAPPED_SUBRESOURCE materialPtr;
+	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
+	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
-
-
 
 	// draw geometry
 	gDeviceContext->Draw(36, 0);//number of vertices to draw
