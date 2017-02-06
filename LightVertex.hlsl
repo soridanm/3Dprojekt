@@ -9,7 +9,7 @@ struct VS_OUT
 	float2 TexCoord	: TEXCOORD;
 };
 
-// Generates a full screen triangle
+// Generates a full screen triangle using vertexID which goes from 0 to 2
 VS_OUT VS_main( in uint vertexID : SV_VertexID ) 
 {
 	VS_OUT output = (VS_OUT)0;

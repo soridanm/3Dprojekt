@@ -3,14 +3,11 @@
 Texture2D DiffuseMap		: register(t0);
 SamplerState AnisoSampler	: register(s0);
 
-
-
 struct materialStruct
 {
 	float3 specularAlbedo;
 	float specularPower;
 };
-
 
 cbuffer materialProperties	: register(b0)
 {
@@ -19,18 +16,18 @@ cbuffer materialProperties	: register(b0)
 
 struct PS_IN
 {
-	float4 PositionCS : SV_Position;
-	float2 TexCoord	: TEXCOORD;
-	float3 NormalWS	: NORMALWS;
-	float3 PositionWS	: POSITIONWS;
+	float4 PositionCS		: SV_Position;
+	float2 TexCoord		: TEXCOORD;
+	float3 NormalWS		: NORMALWS;
+	float3 PositionWS		: POSITIONWS;
 };
 
 struct PS_OUT
 {
-	float4 Normal		: SV_Target0; // x-y-z-
-	float4 Position		: SV_Target1; // x-y-z-
-	float4 DiffuseAlbedo	: SV_Target2; // Diffuse Albedo RBG
-	float4 SpecularAlbedo	: SV_Target3; // Specular Albedo RBG, specularPower
+	float4 Normal		: SV_Target0; // x-y-z-unused
+	float4 Position		: SV_Target1; // x-y-z-unused
+	float4 DiffuseAlbedo	: SV_Target2; // r-g-b-unused
+	float4 SpecularAlbedo	: SV_Target3; // r-g-b-specularPower
 };
 
 

@@ -22,7 +22,7 @@ const LONG SCREEN_WIDTH = 2*640;
 const LONG SCREEN_HEIGHT = 2*480;
 const int MAX_LIGHTS = 8;
 const int NR_OF_OBJECTS = 1;
-const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 0.0f, 2.0f, 1.0f);
+const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, 4.0f, 1.0f);
 float CUBE_ROTATION_SPEED = 0.01f;
 
 HWND InitWindow(HINSTANCE hInstance);
@@ -65,6 +65,8 @@ struct gGraphicsBufferStruct {
 	ID3D11ShaderResourceView* shaderResourceView = nullptr;
 }; gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
 
+
+
 /*--------------------------------------------------------------------------------------
 *			Constant Buffers
 --------------------------------------------------------------------------------------*/
@@ -73,7 +75,9 @@ ID3D11Buffer* gPerObjectBuffer = nullptr;
 
 struct cPerFrameBuffer
 {
-	XMFLOAT4X4 ViewProjection;
+	//XMFLOAT4X4 ViewProjection;
+	XMFLOAT4X4 View;
+	XMFLOAT4X4 Projection;
 }; cPerFrameBuffer VPBufferData;
 
 struct cPerObjectBuffer
@@ -112,14 +116,14 @@ struct Light
 		float l_att = 0.0f, 
 		float q_att = 0.0f, 
 		float amb = 0.0f)
-		: Position(pos), 
+		: PositionWS(pos), 
 		Color(col),
 		constantAttenuation(c_att), 
 		linearAttenuation(l_att), 
 		quadraticAttenuation(q_att),
 		ambientCoefficient(amb) 
 	{}
-	XMFLOAT4 Position;
+	XMFLOAT4 PositionWS;
 	XMFLOAT4 Color;
 	float constantAttenuation;
 	float linearAttenuation;
@@ -129,11 +133,11 @@ struct Light
 
 struct cLightBuffer 
 {
-	cLightBuffer() :
-		cameraPosition(0.0f, 0.0f, 0.0f, 1.0f),
+	cLightBuffer() 
+		: cameraPositionWS(0.0f, 0.0f, 0.0f, 1.0f),
 		globalAmbient(0.2f, 0.2f, 0.2f, 1.0f)
 	{}
-	XMFLOAT4 cameraPosition;
+	XMFLOAT4 cameraPositionWS;
 	XMFLOAT4 globalAmbient;
 	Light Lights[MAX_LIGHTS];
 }; cLightBuffer gLightBufferData;
@@ -177,7 +181,7 @@ void CreatePerFrameConstantBuffer()
 
 	//camera, look at, up
 	XMVECTOR camera = CAMERA_STARTING_POS;
-	XMVECTOR look_at = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR look_at = XMVectorSet(0.0f, 0.0f, 0.0f, 1.0f);
 	XMVECTOR up = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	XMMATRIX view = XMMatrixTranspose(XMMatrixLookAtLH(camera, look_at, up));
@@ -185,10 +189,13 @@ void CreatePerFrameConstantBuffer()
 	XMMATRIX projection = XMMatrixTranspose(XMMatrixPerspectiveFovLH(
 		XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
 
-	XMMATRIX viewProjection = view * projection;
+	//XMMATRIX viewProjection = view * projection;
 
 	// Store the matrix in the constant buffer
-	XMStoreFloat4x4(&VPBufferData.ViewProjection, viewProjection);
+	//XMStoreFloat4x4(&VPBufferData.ViewProjection, viewProjection);
+
+	XMStoreFloat4x4(&VPBufferData.Projection, projection);
+	XMStoreFloat4x4(&VPBufferData.View, view);
 
 	D3D11_BUFFER_DESC VPBufferDesc;
 	VPBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -250,7 +257,7 @@ void CreateLightConstantBuffer()
 	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC lightBufferDesc;
 	lightBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	lightBufferDesc.ByteWidth = sizeof(gLightBufferData);
+	lightBufferDesc.ByteWidth = sizeof(cLightBuffer);
 	lightBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 	lightBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	lightBufferDesc.MiscFlags = 0;
@@ -275,10 +282,11 @@ void SetMaterial(materialStruct matprop)
 	gMaterialBufferData.material = matprop;
 }
 
+// Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 0.0f, -1.0f, 4.0f, 1.0f };
-	XMFLOAT4 light_color = Colors::Black;
+	XMFLOAT4 light_position = { 0.0f, 0.0f, 2.0f, 1.0f };
+	XMFLOAT4 light_color = Colors::White;
 	float c_att = 0.2f;
 	float l_att = 0.5f;
 	float q_att = 0.009f;
@@ -286,7 +294,7 @@ void setLights()
 	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
 
 	gLightBufferData.Lights[0] = test_light;
-	XMStoreFloat4(&gLightBufferData.cameraPosition, CAMERA_STARTING_POS);
+	XMStoreFloat4(&gLightBufferData.cameraPositionWS, CAMERA_STARTING_POS);
 	gLightBufferData.globalAmbient = { 0.1f, 0.1f, 0.1f, 1.0f };
 }
 
@@ -788,15 +796,16 @@ void initGraphicsBuffer()
 //TODO: move as much out of render loop as possible. Will need a loop to loop through all ojects in the future
 void RenderFirstPass()
 {
-	//set render targets
 	ID3D11RenderTargetView* renderTargets[] =
 	{
 		gGraphicsBuffer[0].renderTargetView, /* Normal */
-		gGraphicsBuffer[1].renderTargetView, /* Position */
+		gGraphicsBuffer[1].renderTargetView, /* PositionWS */
 		gGraphicsBuffer[2].renderTargetView, /* Diffuse */
 		gGraphicsBuffer[3].renderTargetView, /* Specular */
 
 	};
+
+	//set render targets
 	gDeviceContext->OMSetRenderTargets(GBUFFER_COUNT, renderTargets, gDepthStecilView);
 
 	//Clear the render targets
@@ -824,7 +833,7 @@ void RenderFirstPass()
 
 	// set textures and constant buffers
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
-	gDeviceContext->PSGetConstantBuffers(0, 1, &gMaterialBuffer);
+	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// set constant buffers
 
@@ -834,6 +843,8 @@ void RenderFirstPass()
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
 
 // LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
+
+	SetMaterial(Materials::Black_plastic);
 
 	// update per-object buffer to spin cube
 	static float rotation = 0.0f;
@@ -848,12 +859,14 @@ void RenderFirstPass()
 	// Unmap constant buffer so that we can use it again in the GPU
 	gDeviceContext->Unmap(gPerObjectBuffer, 0);
 	// set resource to Geometry Shader
-	gDeviceContext->GSGetConstantBuffers(1, 1, &gPerObjectBuffer);
+	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
 
 	// Map material properties buffer
 	D3D11_MAPPED_SUBRESOURCE materialBufferPtr;
 	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialBufferPtr);
-	gDeviceContext->PSGetConstantBuffers(0, 1, &gMaterialBuffer);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+
+
 
 	// draw geometry
 	gDeviceContext->Draw(36, 0);//number of vertices to draw
@@ -876,10 +889,8 @@ void RenderLastPass()
 	// set the render target as the back buffer
 	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
 
-
-	const uintptr_t n0 = 0;
-
 	/* Full screen triangle is created in Vertex shader so no input buffer needed */
+	const uintptr_t n0 = 0;
 	gDeviceContext->IASetInputLayout(nullptr);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	gDeviceContext->IASetVertexBuffers(0, 0, 
@@ -888,17 +899,11 @@ void RenderLastPass()
 		reinterpret_cast<const UINT *>(&n0)
 		);
 
-	int test = 1;
-	if (gFullScreenTriangleShader == nullptr) {
-		exit(-1);
-	}
-
 	gDeviceContext->VSSetShader(gFullScreenTriangleShader, nullptr, 0);
 	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->PSSetShader(gLightPixelShader, nullptr, 0);
-
 
 	ID3D11ShaderResourceView* GBufferTextureViews[] =
 	{
@@ -910,18 +915,12 @@ void RenderLastPass()
 
 	gDeviceContext->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
 
-
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
 	gDeviceContext->Map(gLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightBufferPtr);
 	memcpy(LightBufferPtr.pData, &gLightBufferData, sizeof(cLightBuffer));
 	gDeviceContext->Unmap(gLightBuffer, 0);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gLightBuffer);
-
-
-
-
-
 
 	// Clear screen
 	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, Colors::fWhite);
@@ -930,22 +929,19 @@ void RenderLastPass()
 	gDeviceContext->Draw(3, 0);
 }
 
-//TODO: rewrite with first- and last-pass, 
 void Render()
 {
 	RenderFirstPass();
 	RenderLastPass();
 }
 
-// TODO: rewrite witht the new buffers
-void CreateAllBuffers() {
-	CreateConstantBufferExample();
-	CreateConstantBufferWorld();
-	CreateConstantBufferView();
-	CreateConstantBufferProjection();
+
+void CreateAllConstantBuffers() {
+	CreatePerFrameConstantBuffer();
+	CreatePerObjectConstantBuffer();
+	CreateMaterialConstantBuffer();
+	CreateLightConstantBuffer();
 }
-
-
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -962,12 +958,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
+		CreateAllConstantBuffers();
 
-		CreateMaterialConstantBuffer();
+		initGraphicsBuffer(); // Create G-Buffer
 
-		CreateLightConstantBuffer();
-
-		CreateAllBuffers();
+		setLights();
 
 		ShowWindow(wndHandle, nCmdShow);
 
@@ -1045,6 +1040,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
 
+// CreateRnederTargetView and OMSetRenderTargets are probably unnecessary here
 HRESULT CreateDirect3DContext(HWND wndHandle)
 {
 	// create a struct to hold information about the swap chain
@@ -1088,10 +1084,6 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 		// set the render target as the back buffer
 		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, NULL);
 	}
-
-
-	initGraphicsBuffer();
-
 
 	D3D11_TEXTURE2D_DESC bthTexDesc;
 	ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));

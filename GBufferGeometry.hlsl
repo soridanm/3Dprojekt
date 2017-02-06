@@ -9,29 +9,31 @@
 
 cbuffer PER_FRAME			: register(b0)
 {
-	float4x4 viewProjection;
+	//float4x4 viewProjection;
+	float4x4 view;
+	float4x4 projection;
 };
 
 cbuffer PER_OBJECT		: register(b1)
 {
-	float4x4 world;
+	float4x4 worldMatrix;
 };
 
 // REWRITE END ------------------------------------
 
 // REMOVE FROM HERE ---------------------------------
-cbuffer WORLDMATRIX		: register(b1) 
-{
-	float4x4 worldMatrix;
-};
-cbuffer VIEWMATRIX		: register (b2) 
-{
-	float4x4 viewMatrix;
-};
-cbuffer PROJECTIONMATRIX	: register (b3) 
-{
-	float4x4 projectionMatrix;
-};
+//cbuffer WORLDMATRIX		: register(b1) 
+//{
+//	float4x4 worldMatrix;
+//};
+//cbuffer VIEWMATRIX		: register (b2) 
+//{
+//	float4x4 viewMatrix;
+//};
+//cbuffer PROJECTIONMATRIX	: register (b3) 
+//{
+//	float4x4 projectionMatrix;
+//};
 // REMOVE TO HERE ---------------------------------
 
 
@@ -62,15 +64,12 @@ struct GS_OUT
 //	//float3 Color:COLOR;
 //};
 
-
-
 [maxvertexcount(6)]
 void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream) 
 {
 	GS_OUT output = (GS_OUT)0;
 
-	//calculate ViewProjection matrix
-	matrix VP = mul(viewMatrix, projectionMatrix);
+	float4x4 viewProjection = mul(view, projection);
 
 	//calculate and transpose normal
 	float3 vect1 = input[0].Position.xyz - input[1].Position.xyz;
@@ -86,7 +85,7 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 		output.PositionWS = mul(input[i].Position, worldMatrix).xyz;
 
 		// Calculate clip-space position
-		output.PositionCS = mul(float4(output.PositionWS, 1.0), VP);
+		output.PositionCS = mul(float4(output.PositionWS, 1.0), viewProjection);
 
 		// Pass along the texture coordinates
 		output.TexCoord = input[i].TexCoord;
