@@ -1,7 +1,3 @@
-//struct VS_IN
-//{
-//	uint vertexID	: SV_VertexID;
-//};
 
 struct VS_OUT
 {
