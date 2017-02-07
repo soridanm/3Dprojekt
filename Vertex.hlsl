@@ -23,7 +23,7 @@ struct VS_IN
 	float3 Pos : POSITION;
 	float2 Texcoord : TEXCOORD;
 	//float3 Color:COLOR;
-	float4 Normal:NORMAL;
+	float3 Normal:NORMAL;
 };
 
 struct VS_OUT
@@ -42,7 +42,7 @@ VS_OUT VS_main(VS_IN input)
 	output.Pos=float4(input.Pos,1.0f);
 	//output.Pos = mul(float4(input.Pos, 1.0f),mul(worldMatrix,mul(viewMatrix,projectionMatrix)));
 	output.Texcoord = input.Texcoord;
-	output.Normal = input.Normal;
+	output.Normal = float4(input.Normal,0.0f);
 //	output.Color=input.Color;
 
 	return output;

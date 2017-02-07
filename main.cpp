@@ -247,7 +247,7 @@ void CreateShaders()
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{"NORMAL",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,20,D3D11_INPUT_PER_VERTEX_DATA,0}
+		{"NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,20,D3D11_INPUT_PER_VERTEX_DATA,0}
 	};
 
 
@@ -599,10 +599,10 @@ bool LoadHeightMap(char* filename, HeightMapInfo &hminfo) {
 
 struct Vertex {
 	Vertex() {}
-	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz,float na) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz,na) {}
+	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
 	XMFLOAT3 pos;
 	XMFLOAT2 texCoord;
-	XMFLOAT4 normal;
+	XMFLOAT3 normal;
 };
 void CreateWorld() {
 	//creating what is needed for the heightmap
@@ -619,7 +619,7 @@ void CreateWorld() {
 	for (DWORD i = 0; i < rows; i++) {
 		for (DWORD j = 0; j < columns; j++) {
 			v[i*columns + j].pos = hminfo.heightMap[i*columns + j];
-			v[i*columns + j].normal = XMFLOAT4(0.0f, 1.0f, 0.0f,0.0f);
+			v[i*columns + j].normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
 		}
 	}
 
@@ -628,19 +628,19 @@ void CreateWorld() {
 	for (DWORD j = 0; j < rows - 1; j++) {
 		for (DWORD i = 0; i < columns - 1; i++) {
 			indices[k] = i*columns + j;//bottom left
-			v[i*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 1.0f);
-			indices[k + 2] = (1 + i)*columns + j;//top left
-			v[(1 + i)*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
-			indices[k + 1] = i*columns + j + 1;//bottom right
-			v[i*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
+			v[i*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 1.0f)/rows);
+			indices[k + 1] = (1 + i)*columns + j;//top left
+			v[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 0.0f)/rows);
+			indices[k + 2] = i*columns + j + 1;//bottom right
+			v[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 1.0f)/rows);
 
 
-			indices[k + 5] = (1 + i)*columns + j + 1;//top right
-			v[(1 + i)*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 0.0f);
+			indices[k + 3] = (1 + i)*columns + j + 1;//top right
+			v[(1 + i)*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 0.0f)/rows);
 			indices[k + 4] = i*columns + j + 1;//bottom right
-			v[i*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
-			indices[k + 3] = (1 + i)*columns + j;//top left
-			v[(1 + i)*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
+			v[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 1.0f)/rows);
+			indices[k + 5] = (1 + i)*columns + j;//top left
+			v[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 0.0f)/rows);
 
 			k += 6;
 			texUIndex++;
@@ -686,7 +686,6 @@ void CreateWorld() {
 			v[i].normal.x = XMVectorGetX(normalSum);
 			v[i].normal.y = XMVectorGetY(normalSum);
 			v[i].normal.z = XMVectorGetZ(normalSum);
-			v[i].normal.w = XMVectorGetW(normalSum);
 			normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 			facesUsing = 0;
 		}
@@ -726,7 +725,7 @@ void Render(double time)
 
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
-	UINT32 squareVertexSize = sizeof(float) * 9;
+	UINT32 squareVertexSize = sizeof(float) * 8;
 
 	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
