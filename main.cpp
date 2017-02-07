@@ -8,6 +8,7 @@
 #include <DirectXMath.h>
 #include "bth_image.h"
 #include <Windows.h>
+#include <vector>
 
 #include<dinput.h>
 #pragma comment(lib,"dinput8.lib")
@@ -42,6 +43,18 @@ int gFrame_count = 0, gFPS = 0;
 _int64 gFrame_time_old = 0;
 double gFrame_time;
 
+//ints for storing info about heightmap
+int gNumber_faces = 0;
+int gNumber_vertices = 0;
+
+XMMATRIX Scale;
+XMMATRIX Translation;
+
+struct HeightMapInfo {
+	int worldWidth;
+	int worldHeight;
+	XMFLOAT3 *heightMap;
+};
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -59,6 +72,10 @@ ID3D11Texture2D* gDepthStencilBuffer = NULL;
 
 
 ID3D11Buffer* gVertexBuffer = nullptr;
+
+ID3D11Buffer* gSquareIndexBuffer = nullptr;
+ID3D11Buffer* gSquareVertBuffer = nullptr;
+
 
 ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11VertexShader* gVertexShader = nullptr;
@@ -159,6 +176,32 @@ ID3D11Buffer* gProjectionBuffer = nullptr;
 struct valuesToProject {
 	XMFLOAT4X4 projectionMatrix;
 };
+ID3D11Buffer* gCamBuffer = nullptr;
+struct valuesToCam {
+	XMFLOAT3 campos;
+};
+void CreateConstantBufferCampos() // NEW
+{
+	// initialize the description of the buffer.
+	D3D11_BUFFER_DESC camposBufferDesc;
+	camposBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	camposBufferDesc.ByteWidth = sizeof(valuesToProject);
+	camposBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	camposBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	camposBufferDesc.MiscFlags = 0;
+	camposBufferDesc.StructureByteStride = 0;
+
+	// check if the creation failed for any reason
+	HRESULT hr = 0;
+	hr = gDevice->CreateBuffer(&camposBufferDesc, nullptr, &gCamBuffer);
+	if (FAILED(hr))
+	{
+		// handle the error, could be fatal or a warning...
+		exit(-1);
+	}
+}
+
+
 void CreateConstantBufferProjection() // NEW
 {
 	// initialize the description of the buffer.
@@ -204,6 +247,7 @@ void CreateShaders()
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{"NORMAL",0,DXGI_FORMAT_R32G32B32A32_FLOAT,0,20,D3D11_INPUT_PER_VERTEX_DATA,0}
 	};
 
 
@@ -508,6 +552,172 @@ void UpdateCamera() {
 
 }
 
+bool LoadHeightMap(char* filename, HeightMapInfo &hminfo) {
+	FILE *fileptr;
+	BITMAPFILEHEADER bitmapFileH;
+	BITMAPINFOHEADER bitmapInfoh;
+	int imageSize, index;
+	unsigned char height;
+
+	//open and load file
+	fileptr = fopen(filename, "rb");
+	if (fileptr == NULL) {
+		return false;
+	}
+		fread(&bitmapFileH, sizeof(BITMAPFILEHEADER), 1, fileptr);
+		fread(&bitmapInfoh, sizeof(BITMAPINFOHEADER), 1, fileptr);
+
+		//size of the image
+		hminfo.worldWidth = bitmapInfoh.biWidth;
+		hminfo.worldHeight = bitmapInfoh.biHeight;
+		imageSize = hminfo.worldWidth*hminfo.worldHeight * 3;
+
+		//read values from file into array for generation
+		unsigned char* bitmapImage = new unsigned char[imageSize];
+		fseek(fileptr, bitmapFileH.bfOffBits, SEEK_SET);
+		fread(bitmapImage, 1, imageSize, fileptr);
+		fclose(fileptr);
+
+		//create array for storing heightvalues, since greyscale only first value relevant, then skip 2
+		hminfo.heightMap = new XMFLOAT3[hminfo.worldWidth*hminfo.worldHeight];
+		int offset = 0;
+		float smoothingValue = 10.0f;
+
+		for (int j = 0; j < hminfo.worldHeight; j++) {
+			for (int i = 0; i < hminfo.worldWidth; i++) {
+				height = bitmapImage[offset];
+				index = (hminfo.worldHeight*j) + i;
+
+				hminfo.heightMap[index] = XMFLOAT3(i, (float)height / smoothingValue, j);
+				offset += 3;
+			}
+		}
+		delete[] bitmapImage;
+		bitmapImage = 0;
+		return true;
+}
+
+struct Vertex {
+	Vertex() {}
+	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz,float na) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz,na) {}
+	XMFLOAT3 pos;
+	XMFLOAT2 texCoord;
+	XMFLOAT4 normal;
+};
+void CreateWorld() {
+	//creating what is needed for the heightmap
+	HeightMapInfo hminfo;
+	LoadHeightMap("heightmap.bmp", hminfo);
+	int columns = hminfo.worldWidth;
+	int rows = hminfo.worldHeight;
+
+	gNumber_vertices = rows*columns;
+	gNumber_faces = (rows - 1)*(columns - 1) * 2;
+
+	std::vector<Vertex> v(gNumber_vertices);
+
+	for (DWORD i = 0; i < rows; i++) {
+		for (DWORD j = 0; j < columns; j++) {
+			v[i*columns + j].pos = hminfo.heightMap[i*columns + j];
+			v[i*columns + j].normal = XMFLOAT4(0.0f, 1.0f, 0.0f,0.0f);
+		}
+	}
+
+	std::vector<DWORD> indices(gNumber_faces * 3);
+	int k = 0, texUIndex = 0, texVIndex = 0;
+	for (DWORD j = 0; j < rows - 1; j++) {
+		for (DWORD i = 0; i < columns - 1; i++) {
+			indices[k] = i*columns + j;//bottom left
+			v[i*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 1.0f);
+			indices[k + 2] = (1 + i)*columns + j;//top left
+			v[(1 + i)*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
+			indices[k + 1] = i*columns + j + 1;//bottom right
+			v[i*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
+
+
+			indices[k + 5] = (1 + i)*columns + j + 1;//top right
+			v[(1 + i)*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 0.0f);
+			indices[k + 4] = i*columns + j + 1;//bottom right
+			v[i*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
+			indices[k + 3] = (1 + i)*columns + j;//top left
+			v[(1 + i)*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
+
+			k += 6;
+			texUIndex++;
+		}
+		texUIndex = 0;
+		texVIndex++;
+	}
+
+	std::vector<XMFLOAT3> tempNormal;
+	XMFLOAT3 unnormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float vecX, vecY, vecZ;
+	XMVECTOR edge1 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR edge2 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < gNumber_faces; i++) {
+		vecX = v[indices[(i * 3)]].pos.x - v[indices[(i * 3) + 2]].pos.x;
+		vecY = v[indices[(i * 3)]].pos.y - v[indices[(i * 3) + 2]].pos.y;
+		vecZ = v[indices[(i * 3)]].pos.z - v[indices[(i * 3) + 2]].pos.z;
+		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
+
+		vecX = v[indices[(i * 3)+2]].pos.x - v[indices[(i * 3) + 1]].pos.x;
+		vecY = v[indices[(i * 3)+2]].pos.y - v[indices[(i * 3) + 1]].pos.y;
+		vecZ = v[indices[(i * 3)+2]].pos.z - v[indices[(i * 3) + 1]].pos.z;
+		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
+
+		XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
+		tempNormal.push_back(unnormalized);
+	}
+	XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	int facesUsing = 0;
+	float tx, ty, tz;
+	for (int i = 0; i < gNumber_vertices; i++) {
+		for (int j = 0; j < gNumber_faces; j++) {
+			if (indices[j * 3] == i || indices[(j * 3) + 1] == i || indices[(j * 3) + 2] == i) {
+				tx = XMVectorGetX(normalSum) + tempNormal[j].x;
+				ty= XMVectorGetY(normalSum) + tempNormal[j].y;
+				tz = XMVectorGetZ(normalSum) + tempNormal[j].z;
+
+				normalSum = XMVectorSet(tx, ty, tz, 0.0f);
+				facesUsing++;
+			}
+			normalSum = normalSum / facesUsing;
+			normalSum = XMVector3Normalize(normalSum);
+			v[i].normal.x = XMVectorGetX(normalSum);
+			v[i].normal.y = XMVectorGetY(normalSum);
+			v[i].normal.z = XMVectorGetZ(normalSum);
+			v[i].normal.w = XMVectorGetW(normalSum);
+			normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+			facesUsing = 0;
+		}
+	}
+
+	D3D11_BUFFER_DESC indexBufferDesc;
+	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexBufferDesc.ByteWidth = sizeof(DWORD)*gNumber_faces * 3;
+	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexBufferDesc.CPUAccessFlags = 0;
+	indexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &indices[0];
+	gDevice->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
+
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex)*gNumber_vertices;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertexBufferData;
+	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+	vertexBufferData.pSysMem = &v[0];
+	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
+
+}
 void Render(double time)
 {
 	float clearColor[] = { 0.1f, 0.1f, 0.1f, 1 }; //background color
@@ -516,8 +726,13 @@ void Render(double time)
 
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
+	UINT32 squareVertexSize = sizeof(float) * 9;
 
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
+
+
+	//	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -549,6 +764,7 @@ void Render(double time)
 	rotation += 1.0f*time;
 	XMMATRIX W = XMMatrixRotationY(rotation);
 	XMMATRIX WT = XMMatrixTranspose(W);
+
 	memcpy(dataPtr1.pData, &WT, sizeof(valuesToWorld));
 	gDeviceContext->Unmap(gWorldBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(1, 1, &gWorldBuffer);
@@ -577,21 +793,28 @@ void Render(double time)
 	gDeviceContext->Map(gProjectionBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr3);
 	float fov = 0.45f*XM_PI;
 	float ar = SCREEN_WIDTH / SCREEN_HEIGHT;
-	float closer = 0.1f;
-	float further = 20.0f;
+	float closer = 1.0f;
+	float further = 1000.0f;
 	XMMATRIX P = XMMatrixPerspectiveFovLH(fov, ar, closer, further);
 	XMMATRIX PT = XMMatrixTranspose(P);
 	memcpy(dataPtr3.pData, &PT, sizeof(valuesToProject));
 	gDeviceContext->Unmap(gProjectionBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(3, 1, &gProjectionBuffer);
 
+	D3D11_MAPPED_SUBRESOURCE dataPtr4;
+	gDeviceContext->Map(gCamBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &dataPtr4);
+	XMFLOAT3 CP = XMFLOAT3(XMVectorGetX(CAM_POS),XMVectorGetY(CAM_POS),XMVectorGetZ(CAM_POS));
+	memcpy(dataPtr4.pData, &CP, sizeof(valuesToCam));
+	gDeviceContext->Unmap(gCamBuffer, 0);
+	gDeviceContext->GSSetConstantBuffers(4, 1, &gCamBuffer);
 
 	// clear screen
 	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, clearColor);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	// draw geometry
-	gDeviceContext->Draw(36, 0);//number of vertices to draw
+	//gDeviceContext->Draw(36, 0);//number of vertices to draw
+	gDeviceContext->DrawIndexed(gNumber_faces * 3, 0, 0);
 }
 
 void DetectInput(double time,HWND hwnd) {
@@ -608,7 +831,7 @@ void DetectInput(double time,HWND hwnd) {
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 	}
 	//all the different movements
-	float speed = 15.0f*time;
+	float speed = 45.0f*time;
 	if (keyboardState[DIK_A] & 0x80) {
 		gMoveLR -= speed;
 	}
@@ -650,11 +873,13 @@ void DetectInput(double time,HWND hwnd) {
 	UpdateCamera();
 }
 
+
 void CreateAllBuffers() {
 	CreateConstantBufferExample();
 	CreateConstantBufferWorld();
 	CreateConstantBufferView();
 	CreateConstantBufferProjection();
+	CreateConstantBufferCampos();
 }
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
 {
@@ -672,11 +897,15 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		CreateShaders(); //4. Skapa vertex- och pixel-shaders
 
-		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
+	//	CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
+
+		CreateWorld();
 
 		CreateAllBuffers();
 
 		ShowWindow(wndHandle, nCmdShow);
+
+
 
 		while (WM_QUIT != msg.message)
 		{
@@ -705,11 +934,12 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		DIKeyboard->Unacquire();
 		DIMouse->Unacquire();
 		DirectInput->Release();
-		gVertexBuffer->Release();
+		//gVertexBuffer->Release();
 		gVertexLayout->Release();
 		gVertexShader->Release();
 		gPixelShader->Release();
 		gGeometryShader->Release();
+		gSquareIndexBuffer->Release();
 		gDepthStecilView->Release();
 		gDepthStencilBuffer->Release();
 		gBackbufferRTV->Release();
