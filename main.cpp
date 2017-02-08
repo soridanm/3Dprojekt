@@ -44,8 +44,8 @@ _int64 gFrame_time_old = 0;
 double gFrame_time;
 
 //ints for storing info about heightmap
-int gNumber_faces = 0;
-int gNumber_vertices = 0;
+int NUMBER_OF_FACES = 0;
+int NUMBER_OF_VERTICES = 0;
 
 XMMATRIX Scale;
 XMMATRIX Translation;
@@ -583,6 +583,7 @@ bool LoadHeightMap(char* filename, HeightMapInfo &hminfo) {
 		int offset = 0;
 		float smoothingValue = 10.0f;
 
+		//stores the height values and their respective position
 		for (int j = 0; j < hminfo.worldHeight; j++) {
 			for (int i = 0; i < hminfo.worldWidth; i++) {
 				height = bitmapImage[offset];
@@ -611,36 +612,37 @@ void CreateWorld() {
 	int columns = hminfo.worldWidth;
 	int rows = hminfo.worldHeight;
 
-	gNumber_vertices = rows*columns;
-	gNumber_faces = (rows - 1)*(columns - 1) * 2;
+	NUMBER_OF_VERTICES = rows*columns;
+	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
 
-	std::vector<Vertex> v(gNumber_vertices);
+	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
 
 	for (DWORD i = 0; i < rows; i++) {
 		for (DWORD j = 0; j < columns; j++) {
-			v[i*columns + j].pos = hminfo.heightMap[i*columns + j];
-			v[i*columns + j].normal = XMFLOAT3(0.0f, 1.0f, 0.0f);
+			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
+			mapVertex[i*columns + j].normal = XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
 		}
 	}
 
-	std::vector<DWORD> indices(gNumber_faces * 3);
+	//assigns uv-coordinates as well as setting the order they will be drawn in 
+	std::vector<DWORD> drawOrder(NUMBER_OF_FACES * 3);
 	int k = 0, texUIndex = 0, texVIndex = 0;
 	for (DWORD j = 0; j < rows - 1; j++) {
 		for (DWORD i = 0; i < columns - 1; i++) {
-			indices[k] = i*columns + j;//bottom left
-			v[i*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 1.0f)/rows);
-			indices[k + 1] = (1 + i)*columns + j;//top left
-			v[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 0.0f)/rows);
-			indices[k + 2] = i*columns + j + 1;//bottom right
-			v[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 1.0f)/rows);
+			drawOrder[k] = i*columns + j;//bottom left
+			mapVertex[i*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 1.0f)/rows);
+			drawOrder[k + 1] = (1 + i)*columns + j;//top left
+			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 0.0f)/rows);
+			drawOrder[k + 2] = i*columns + j + 1;//bottom right
+			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 1.0f)/rows);
 
 
-			indices[k + 3] = (1 + i)*columns + j + 1;//top right
-			v[(1 + i)*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 0.0f)/rows);
-			indices[k + 4] = i*columns + j + 1;//bottom right
-			v[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 1.0f)/rows);
-			indices[k + 5] = (1 + i)*columns + j;//top left
-			v[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 0.0f)/rows);
+			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
+			mapVertex[(1 + i)*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 0.0f)/rows);
+			drawOrder[k + 4] = i*columns + j + 1;//bottom right
+			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f)/rows, (texVIndex + 1.0f)/rows);
+			drawOrder[k + 5] = (1 + i)*columns + j;//top left
+			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f)/rows, (texVIndex + 0.0f)/rows);
 
 			k += 6;
 			texUIndex++;
@@ -649,44 +651,47 @@ void CreateWorld() {
 		texVIndex++;
 	}
 
+	//calculates the normal for each face
 	std::vector<XMFLOAT3> tempNormal;
-	XMFLOAT3 unnormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	XMFLOAT3 nonNormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
 	float vecX, vecY, vecZ;
 	XMVECTOR edge1 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	XMVECTOR edge2 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	for (int i = 0; i < gNumber_faces; i++) {
-		vecX = v[indices[(i * 3)]].pos.x - v[indices[(i * 3) + 2]].pos.x;
-		vecY = v[indices[(i * 3)]].pos.y - v[indices[(i * 3) + 2]].pos.y;
-		vecZ = v[indices[(i * 3)]].pos.z - v[indices[(i * 3) + 2]].pos.z;
+	for (int i = 0; i < NUMBER_OF_FACES; i++) {
+		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
+		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
+		vecZ = mapVertex[drawOrder[(i * 3)]].pos.z - mapVertex[drawOrder[(i * 3) + 2]].pos.z;
 		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
 
-		vecX = v[indices[(i * 3)+2]].pos.x - v[indices[(i * 3) + 1]].pos.x;
-		vecY = v[indices[(i * 3)+2]].pos.y - v[indices[(i * 3) + 1]].pos.y;
-		vecZ = v[indices[(i * 3)+2]].pos.z - v[indices[(i * 3) + 1]].pos.z;
+		vecX = mapVertex[drawOrder[(i * 3)+2]].pos.x - mapVertex[drawOrder[(i * 3) + 1]].pos.x;
+		vecY = mapVertex[drawOrder[(i * 3)+2]].pos.y - mapVertex[drawOrder[(i * 3) + 1]].pos.y;
+		vecZ = mapVertex[drawOrder[(i * 3)+2]].pos.z - mapVertex[drawOrder[(i * 3) + 1]].pos.z;
 		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
 
-		XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
-		tempNormal.push_back(unnormalized);
+		XMStoreFloat3(&nonNormalized, XMVector3Cross(edge1, edge2));
+		tempNormal.push_back(nonNormalized);
 	}
-	XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
+	//calculates the average normal in order to make the world smooth
+	XMVECTOR averageNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	int facesUsing = 0;
 	float tx, ty, tz;
-	for (int i = 0; i < gNumber_vertices; i++) {
-		for (int j = 0; j < gNumber_faces; j++) {
-			if (indices[j * 3] == i || indices[(j * 3) + 1] == i || indices[(j * 3) + 2] == i) {
-				tx = XMVectorGetX(normalSum) + tempNormal[j].x;
-				ty= XMVectorGetY(normalSum) + tempNormal[j].y;
-				tz = XMVectorGetZ(normalSum) + tempNormal[j].z;
+	for (int i = 0; i < NUMBER_OF_VERTICES; i++) {
+		for (int j = 0; j < NUMBER_OF_FACES; j++) {
+			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+				tx = XMVectorGetX(averageNormal) + tempNormal[j].x;
+				ty= XMVectorGetY(averageNormal) + tempNormal[j].y;
+				tz = XMVectorGetZ(averageNormal) + tempNormal[j].z;
 
-				normalSum = XMVectorSet(tx, ty, tz, 0.0f);
+				averageNormal = XMVectorSet(tx, ty, tz, 0.0f);
 				facesUsing++;
 			}
-			normalSum = normalSum / facesUsing;
-			normalSum = XMVector3Normalize(normalSum);
-			v[i].normal.x = XMVectorGetX(normalSum);
-			v[i].normal.y = XMVectorGetY(normalSum);
-			v[i].normal.z = XMVectorGetZ(normalSum);
-			normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+			averageNormal = averageNormal / facesUsing;
+			averageNormal = XMVector3Normalize(averageNormal);
+			mapVertex[i].normal.x = XMVectorGetX(averageNormal);
+			mapVertex[i].normal.y = XMVectorGetY(averageNormal);
+			mapVertex[i].normal.z = XMVectorGetZ(averageNormal);
+			averageNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 			facesUsing = 0;
 		}
 	}
@@ -694,19 +699,19 @@ void CreateWorld() {
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(DWORD)*gNumber_faces * 3;
+	indexBufferDesc.ByteWidth = sizeof(DWORD)*NUMBER_OF_FACES * 3;
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
 
 	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &indices[0];
+	iinitData.pSysMem = &drawOrder[0];
 	gDevice->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
 
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
 	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(Vertex)*gNumber_vertices;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex)*NUMBER_OF_VERTICES;
 	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.CPUAccessFlags = 0;
 	vertexBufferDesc.MiscFlags = 0;
@@ -813,7 +818,7 @@ void Render(double time)
 
 	// draw geometry
 	//gDeviceContext->Draw(36, 0);//number of vertices to draw
-	gDeviceContext->DrawIndexed(gNumber_faces * 3, 0, 0);
+	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
 }
 
 void DetectInput(double time,HWND hwnd) {

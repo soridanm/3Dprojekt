@@ -21,7 +21,7 @@ float4 PS_main(VS_OUT input) : SV_Target
 	float4 finalLight = float4(s*angle, 0.0f);
 	//finalLight = float4(input.worldPos.y, input.worldPos.y , input.worldPos.y , 0.0f);
 	//return float4(s, 1.0f);
-	//return finalLight;
-	return input.Normal;
+	return finalLight;
+	//return input.Normal;
 	//return float4(input.Normal.xyz,1.0f);
 };
