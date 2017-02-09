@@ -30,16 +30,16 @@ const int NR_OF_OBJECTS			= 1;
 float CUBE_ROTATION_SPEED		= 0.01f;
 float LIGHT_ROTATION_SPEED		= 0.001f;
 //---------------Camera default values------------------------------------
-const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, 2.0f, 1.0f);
+const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
 XMVECTOR CAM_POS = CAMERA_STARTING_POS;
-XMVECTOR CAM_TARGET = XMVectorZero();
+XMVECTOR CAM_TARGET =XMVectorZero();
 XMVECTOR CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 XMVECTOR CAM_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 XMVECTOR CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 XMVECTOR DEFAULT_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 XMVECTOR DEFAULT_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-float MOVE_LR = 0, MOVE_BF = 0, MOVE_UD = 0, CAM_YAW = 0, CAM_PITCH = 0;
+float MOVE_LR = 0.0f, MOVE_BF = 0.0f, MOVE_UD = 0.0f, CAM_YAW = 0.0f, CAM_PITCH = 0.0f,SPEED=15.0f;
 
 
 //--------------Timer values---------------
@@ -947,24 +947,30 @@ void DetectInput(double time, HWND hwnd) {
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 	}
 	//all the different movements
-	float speed = 45.0f*time;
+	if (keyboardState[DIK_LSHIFT] & 0x80) {
+		SPEED = 45.0f;
+	}
+	if (keyboardState[DIK_LCONTROL] & 0x80) {
+		SPEED = 15.0f;
+	}
+	
 	if (keyboardState[DIK_A] & 0x80) {
-		MOVE_LR -= speed;
+		MOVE_LR -= SPEED*time;
 	}
 	if (keyboardState[DIK_D] & 0x80) {
-		MOVE_LR += speed;
+		MOVE_LR += SPEED*time;
 	}
 	if (keyboardState[DIK_W] & 0x80) {
-		MOVE_BF += speed;
+		MOVE_BF += SPEED*time;
 	}
 	if (keyboardState[DIK_S] & 0x80) {
-		MOVE_BF -= speed;
+		MOVE_BF -= SPEED*time;
 	}
 	if (keyboardState[DIK_SPACE] & 0x80) {
-		MOVE_UD += speed;
+		MOVE_UD += SPEED*time;
 	}
 	if (keyboardState[DIK_C] & 0x80) {
-		MOVE_UD -= speed;
+		MOVE_UD -= SPEED*time;
 	}
 
 	//mouse movement do change camera directions
@@ -984,7 +990,6 @@ void DetectInput(double time, HWND hwnd) {
 		CAM_PITCH = 0.0f;
 		CAM_YAW = 0.0f;
 	}
-
 	MOUSE_LAST_STATE = mouse_current_state;
 	UpdateCamera();
 }
