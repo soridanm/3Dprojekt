@@ -917,7 +917,14 @@ void UpdateCamera() {
 	//trnsforms the cameras directions
 	CAM_RIGHT = XMVector3TransformCoord(DEFAULT_RIGHT, YRotation_CAM_directions);
 	CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
-	CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
+
+	//Camera follows the planes
+	//CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
+
+	//freelook camera
+	CAM_FORWARD = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT));
+
+
 
 	//transforms the cameras position
 	CAM_POS += MOVE_LR*CAM_RIGHT;
