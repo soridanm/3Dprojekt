@@ -317,7 +317,7 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 2.0f, 0.0f, 4.0f, 1.0f };
+	XMFLOAT4 light_position = { 2.0f, 0.0f, -4.0f, 1.0f };
 	XMFLOAT4 light_color	= Colors::White;
 	float c_att	= 0.2f;
 	float l_att	= 0.5f;
