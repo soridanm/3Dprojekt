@@ -155,6 +155,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bth_image.h" />
+    <ClInclude Include="grass_texture.h" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="known_issues.txt" />

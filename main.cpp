@@ -9,6 +9,7 @@
 #include "bth_image.h"
 #include <Windows.h>
 #include <vector>
+#include "grass_texture.h"
 
 #include<dinput.h>
 #pragma comment(lib,"dinput8.lib")
@@ -81,6 +82,9 @@ ID3D11InputLayout* gVertexLayout = nullptr;
 ID3D11VertexShader* gVertexShader = nullptr;
 ID3D11PixelShader* gPixelShader = nullptr;
 ID3D11GeometryShader* gGeometryShader = nullptr;
+
+ID3D11ShaderResourceView* gGrassTexture;
+ID3D11SamplerState* gGrassTexSamplerState;
 
 ID3D11ShaderResourceView* gTextureView = nullptr;
 
@@ -718,7 +722,7 @@ void CreateWorld() {
 
 	D3D11_SUBRESOURCE_DATA vertexBufferData;
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-	vertexBufferData.pSysMem = &v[0];
+	vertexBufferData.pSysMem = &mapVertex[0];
 	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
 
 }
@@ -1086,36 +1090,69 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 		gDepthStecilView);     // Depth stencil view for the render target
 
 
-	D3D11_TEXTURE2D_DESC bthTexDesc;
-	ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
-	bthTexDesc.Width = BTH_IMAGE_WIDTH;
-	bthTexDesc.Height = BTH_IMAGE_HEIGHT;
-	bthTexDesc.MipLevels = bthTexDesc.ArraySize = 1;
-	bthTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	bthTexDesc.SampleDesc.Count = 1;
-	bthTexDesc.SampleDesc.Quality = 0;
-	bthTexDesc.Usage = D3D11_USAGE_DEFAULT;
-	bthTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
-	bthTexDesc.MiscFlags = 0;
-	bthTexDesc.CPUAccessFlags = 0;
+	//D3D11_TEXTURE2D_DESC bthTexDesc;
+	//ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
+	//bthTexDesc.Width = BTH_IMAGE_WIDTH;
+	//bthTexDesc.Height = BTH_IMAGE_HEIGHT;
+	//bthTexDesc.MipLevels = bthTexDesc.ArraySize = 1;
+	//bthTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	//bthTexDesc.SampleDesc.Count = 1;
+	//bthTexDesc.SampleDesc.Quality = 0;
+	//bthTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	//bthTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	//bthTexDesc.MiscFlags = 0;
+	//bthTexDesc.CPUAccessFlags = 0;
+
+	//ID3D11Texture2D *pTexture = NULL;
+
+	//D3D11_SUBRESOURCE_DATA data;
+	//ZeroMemory(&data, sizeof(data));
+	//data.pSysMem = (void*)BTH_IMAGE_DATA;
+	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	//gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
+
+	//D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
+	//ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
+	//resourceViewDesc.Format = bthTexDesc.Format;
+	//resourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	//resourceViewDesc.Texture2D.MipLevels = bthTexDesc.MipLevels;
+	//resourceViewDesc.Texture2D.MostDetailedMip = 0;
+	//gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
+
+	//pTexture->Release();
+
+
+	D3D11_TEXTURE2D_DESC worldTexDesc;
+	ZeroMemory(&worldTexDesc, sizeof(worldTexDesc));
+	worldTexDesc.Width = GRASS_IMAGE_WIDTH;
+	worldTexDesc.Height = GRASS_IMAGE_HEIGHT;
+	worldTexDesc.MipLevels = worldTexDesc.ArraySize = 1;
+	worldTexDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	worldTexDesc.SampleDesc.Count = 1;
+	worldTexDesc.SampleDesc.Quality = 0;
+	worldTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	worldTexDesc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+	worldTexDesc.MiscFlags = 0;
+	worldTexDesc.CPUAccessFlags = 0;
 
 	ID3D11Texture2D *pTexture = NULL;
 
 	D3D11_SUBRESOURCE_DATA data;
 	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
+	data.pSysMem = (void*)GRASS_IMAGE_DATA;
+	data.SysMemPitch = GRASS_IMAGE_WIDTH * 4 * sizeof(char);
+	gDevice->CreateTexture2D(&worldTexDesc, &data, &pTexture);
 
 	D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
 	ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
-	resourceViewDesc.Format = bthTexDesc.Format;
+	resourceViewDesc.Format = worldTexDesc.Format;
 	resourceViewDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-	resourceViewDesc.Texture2D.MipLevels = bthTexDesc.MipLevels;
+	resourceViewDesc.Texture2D.MipLevels = worldTexDesc.MipLevels;
 	resourceViewDesc.Texture2D.MostDetailedMip = 0;
 	gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
 
 	pTexture->Release();
+
 
 	return hr;
 }
