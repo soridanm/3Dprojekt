@@ -16,6 +16,7 @@
 #include <vector>
 #include <fstream>
 #include <istream>
+#include <sstream> //looks like this is needed?
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
@@ -624,8 +625,9 @@ std::vector<int> meshSubsetTexture;
 std::vector<ID3D11ShaderResourceView*> meshSRV;
 std::vector<std::wstring> textureNameArray;
 
-
+// TODO: write description of what thsi function does
 // TODO: une std::getline instead
+// Description (not complete): if no vertex normals are included in the .obj file then they will be computed
 bool LoadObjectModel(std::wstring filename,
 	ID3D11Buffer** vertBuff,
 	ID3D11Buffer** indexBuff,
@@ -683,50 +685,165 @@ bool LoadObjectModel(std::wstring filename,
 
 	wchar_t checkChar;        //The variable we will use to store one char from file at a time
 	std::wstring face;        //Holds the string containing our face vertices
-	int vIndex = 0;            //Keep track of our vertex index count
+	int vIndex = 0;           //Keep track of our vertex index count
 	int triangleCount = 0;    //Total Triangles
 	int totalVerts = 0;
 	int meshTriangles = 0;
 
-
-	if (fileIn)
+	//TODO: improve with an error message or something
+	if (!fileIn)	//Early exit if the file doesn't open
+		exit(-1);
+	
+	while (fileIn)
 	{
-		while (fileIn)
+		checkChar = fileIn.get();			//get the next char
+
+		switch (checkChar)
 		{
-			checkChar = fileIn.get(); // get the next char
-
-			switch (checkChar)
-			{
-			case '#': // Comment line
-				while (checkChar != '\n') // Keep reading chars until the line ends
-					checkChar = fileIn.get();
-				break;
-			case 'v': // Get verte descriptions
+		case '#':							//Comment line
+			while (checkChar != '\n')		//Keep reading chars until the line ends
 				checkChar = fileIn.get();
-				if (checkChar == ' ') // v - vertex position
-				{ 
-					float vx, vy, vz;
-					fileIn >> vx >> vy >> vz; // store the next three floats
-					vertPos.push_back(XMFLOAT3(vx, vy, (isRHCoordSys) ? vz * -1.0f : vz)); // invert Z axiz if the OBJ is RH
-				}
-				else if (checkChar == 't')
-				{
-
-				}
-			case 'm':
-
-			case 's':
-
-			case 'g':
-
-			case 'f':
+			break;
+		case 'v': // Get vertex descriptions
+			checkChar = fileIn.get();
+			if (checkChar == ' ')			//v - vertex position
+			{ 
+				float vx, vy, vz;
+				fileIn >> vx >> vy >> vz;	//store the vertex positions
+				vertPos.push_back(XMFLOAT3(vx, vy, (isRHCoordSys) ? vz * -1.0f : vz));		//invert Z-axiz if the OBJ is RH
 			}
+			if (checkChar == 't')			//vt - vertex texture coordinates
+			{
+				float vu, vv;
+				fileIn >> vu >> vv;			//store the uv-coordinates
+				vertTexCoord.push_back(XMFLOAT2(vu, (isRHCoordSys) ? 1.0f - vv : vv));		//Reverse the v-axis if the OBJ is RH
+				hasTexCoord = true;
+			}
+			if (checkChar == 'n')			//vn - vertex normal
+			{
+				float vnx, vny, vnz;
+				fileIn >> vnx >> vny >> vnz; //store the normal values
+				vertNorm.push_back(XMFLOAT3(vnx, vny, (isRHCoordSys) ? vnz * -1.0f : vnz)); //Invert the z-axiz if the OBJ is RH
+				hasNorm = true;
+			}
+			break;
+		case 'g':							//g - group
+			checkChar = fileIn.get();
+			if (checkChar == ' ')
+			{
+				subsetIndexStart.push_back(vIndex);
+				subsetCount++;
+			}
+			break;
+
+		/* Breaks faces with more than three sides into multiple triangles */
+		case 'f':							//f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
+			checkChar = fileIn.get();
+			if (checkChar == ' ')
+			{
+				face = L"";				//clear the temporary wide string which will be used to store the line
+				std::wstring VertDef;	//holds one vertex definition at a time
+				triangleCount = 0;
+
+				checkChar = fileIn.get();
+				while (checkChar != '\n')	//read through the whole line
+				{
+					face += checkChar;		//add every char to the face string
+					checkChar = fileIn.get();
+					if (checkChar == ' ')
+						triangleCount++;	//increase triangle count if it's a space
+				}
+
+				//check for space at the end of our face string
+				if (face[face.length() - 1] == ' ')
+					triangleCount--;
+				triangleCount -= 1; //every vertex in the face after the first two are new faces
+
+				std::wstringstream ss(face);
+				if (face.length() > 0) // if the line isn't just simply 'f '
+				{
+					int firstVIndex, lastVIndex; // first and last vertice's index
+
+					for (int i = 0; i < 3; i++) //First three vertices
+					{
+						ss >> VertDef; //get one vertex definition [vPos/vTexCoord/vNorm]
+						std::wstring vertPart;
+						int whichPart = 0; //vPos = 0, vTexCoord = 1, vNorm = 2
+						//Parse the string
+						for (int j = 0; i < VertDef.length(); j++)
+						{
+							if (VertDef[j] != '/')		//if there's no divider add char to vertPart
+								vertPart += VertDef[j];
+							//If the current char is a divider or the last character in the string
+							if (VertDef[j] == '/' || j == VertDef.length() - 1)
+							{
+								std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
+
+								if (whichPart == 0) //if vPos
+								{
+									wstringToInt >> vertPosIndexTemp;
+									vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+
+									//check if the vert pos was the only thing specified
+									if (j == VertDef.length() - 1)
+									{
+										vertNormIndexTemp = 0;
+										vertTCIndexTemp = 0;
+									}
+								} //end if vPos
+								else if (whichPart == 1) //if vTexCoord
+								{
+									if (vertPart != L"") //check if there is a tex coord
+									{
+										wstringToInt >> vertTCIndexTemp;
+										vertTCIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+									}
+									else //if there is no tex coord 0 will be default index
+										vertTCIndexTemp = 0;
+
+									//if the current char is the second to last in the string then there must be no normal so a default normal is set to index 0
+									if (j == VertDef.length() - 1)
+										vertNormIndexTemp = 0;
+
+								} //end if vTexCoord
+								else if (whichPart == 2) //if vNorm
+								{
+									wstringToInt >> vertNormIndexTemp;
+									vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+								} //end if vNorm
+
+								vertPart = L"";
+								whichPart++;
+							} //end if current char is a divider or the last char in the string
+						} //end for j-loop
+						
+						  //TODO: storing the face
+
+					} //end for i-loop
+				} //end if the line isn't empty
+			}
+
+		case 'm':							//mtllib - material library filename
+			for (int i = 0; i < 6; i++) {	//loop over 'tllib '
+				checkChar = fileIn.get();
+			}
+			fileIn >> meshMatLib;			//store the material library file name 
+			break;
+		case 'u':							//usemtl - which material to use
+			for (int i = 0; i < 6; i++) {	//loop over 'semtl '
+				checkChar = fileIn.get();
+			}
+			meshMaterialsTemp = L"";					//Clear the temporary wide string
+			fileIn >> meshMaterialsTemp;				//store the material name as a wide string
+			meshMaterials.push_back(meshMaterialsTemp); //store it in a vectore of wide strings
+			break;
+		case 's':
+
+		default:
+			break;
 		}
 	}
-	else
-	{
-		exit(-1);
-	}
+
 
 }
 
