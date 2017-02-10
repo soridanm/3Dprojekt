@@ -11,6 +11,12 @@
 #include "bth_image.h"
 #include <Windows.h>
 
+// for reading obj
+#include <string> //might not be necessary
+#include <vector>
+#include <fstream>
+#include <istream>
+
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 
@@ -602,6 +608,129 @@ void CreateTriangleData()
 	data.pSysMem = triangleVertices;
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 }
+
+//---------------------- Load objects ------------------------------------------
+
+
+ID3D11BlendState* Transparency;
+
+ID3D11Buffer* meshVertBuff;
+ID3D11Buffer* meshIndexBuff;
+XMMATRIX meshWorld;
+int meshSubsets = 0;
+std::vector<int> meshSubsetIndexStart;
+std::vector<int> meshSubsetTexture;
+
+std::vector<ID3D11ShaderResourceView*> meshSRV;
+std::vector<std::wstring> textureNameArray;
+
+
+// TODO: une std::getline instead
+bool LoadObjectModel(std::wstring filename,
+	ID3D11Buffer** vertBuff,
+	ID3D11Buffer** indexBuff,
+	std::vector<int>& subsetIndexStart,
+	std::vector<int>& sunsetMaterialArray,
+	std::vector<materialStruct>& material,
+	int& subsetCount,
+	bool isRHCoordSys,		//needed?
+	bool computeNormals)	//needed?
+{
+	// Presentation version
+	/*std::string myFile("myFile.obj"), special;
+	std::string line2;
+	std::ifstream file(myFile);
+	std::istringstream inputString;
+	struct VertexPos { float x, y, z; };
+	std::vector<VertexPos> verticies;
+	VertexPos vtx;
+	while (std::getline(file, line2))
+	{
+		inputString.str(line2);
+		if (line2.substr(0, 2) == "v ")
+		{
+			inputString >> special >> vtx.x >> vtx.y >> vtx.z;
+			verticies.push_back(vtx);
+		}
+	}
+	file.close();*/
+	// End Presentation version
+
+	std::wifstream fileIn(filename.c_str());    //Open file
+	std::wstring meshMatLib;                    //String to hold our obj material library filename
+
+		//Arrays to store our model's information
+	std::vector<DWORD> indices;
+	std::vector<XMFLOAT3> vertPos;
+	std::vector<XMFLOAT3> vertNorm;
+	std::vector<XMFLOAT2> vertTexCoord;
+	std::vector<std::wstring> meshMaterials;
+
+	//Vertex definition indices
+	std::vector<int> vertPosIndex;
+	std::vector<int> vertNormIndex;
+	std::vector<int> vertTCIndex;
+
+	//Make sure we have a default if no tex coords or normals are defined
+	bool hasTexCoord = false;
+	bool hasNorm = false;
+
+	//Temp variables to store into vectors
+	std::wstring meshMaterialsTemp;
+	int vertPosIndexTemp;
+	int vertNormIndexTemp;
+	int vertTCIndexTemp;
+
+	wchar_t checkChar;        //The variable we will use to store one char from file at a time
+	std::wstring face;        //Holds the string containing our face vertices
+	int vIndex = 0;            //Keep track of our vertex index count
+	int triangleCount = 0;    //Total Triangles
+	int totalVerts = 0;
+	int meshTriangles = 0;
+
+
+	if (fileIn)
+	{
+		while (fileIn)
+		{
+			checkChar = fileIn.get(); // get the next char
+
+			switch (checkChar)
+			{
+			case '#': // Comment line
+				while (checkChar != '\n') // Keep reading chars until the line ends
+					checkChar = fileIn.get();
+				break;
+			case 'v': // Get verte descriptions
+				checkChar = fileIn.get();
+				if (checkChar == ' ') // v - vertex position
+				{ 
+					float vx, vy, vz;
+					fileIn >> vx >> vy >> vz; // store the next three floats
+					vertPos.push_back(XMFLOAT3(vx, vy, (isRHCoordSys) ? vz * -1.0f : vz)); // invert Z axiz if the OBJ is RH
+				}
+				else if (checkChar == 't')
+				{
+
+				}
+			case 'm':
+
+			case 's':
+
+			case 'g':
+
+			case 'f':
+			}
+		}
+	}
+	else
+	{
+		exit(-1);
+	}
+
+}
+
+
 
 void SetViewport()
 {

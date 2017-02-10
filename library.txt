@@ -31,6 +31,10 @@ http://www.neatware.com/lbstudio/web/hlsl.html
  Phong lighting
  http://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
 
+ Parsing .obj files
+ https://www.braynzarsoft.net/viewtutorial/q16390-22-loading-static-3d-models-obj-format
+
+
 ----------------------------------------------------------------------------
  * * * * * * * * * * * * * * * Trivial stuff * * * * * * * * * * * * * * * 
 ----------------------------------------------------------------------------
