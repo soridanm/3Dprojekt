@@ -625,8 +625,8 @@ std::vector<int> meshSubsetTexture;
 std::vector<ID3D11ShaderResourceView*> meshSRV;
 std::vector<std::wstring> textureNameArray;
 
-// TODO: write description of what thsi function does
-// TODO: une std::getline instead
+// TODO: write description of all the things this function does
+// TODO? use std::getline instead
 // Description (not complete): if no vertex normals are included in the .obj file then they will be computed
 bool LoadObjectModel(std::wstring filename,
 	ID3D11Buffer** vertBuff,
@@ -770,7 +770,7 @@ bool LoadObjectModel(std::wstring filename,
 						std::wstring vertPart;
 						int whichPart = 0; //vPos = 0, vTexCoord = 1, vNorm = 2
 						//Parse the string
-						for (int j = 0; i < VertDef.length(); j++)
+						for (int j = 0; j < VertDef.length(); j++)
 						{
 							if (VertDef[j] != '/')		//if there's no divider add char to vertPart
 								vertPart += VertDef[j];
@@ -808,6 +808,7 @@ bool LoadObjectModel(std::wstring filename,
 								} //end if vTexCoord
 								else if (whichPart == 2) //if vNorm
 								{
+									//std::wistringstream wstringToInt(vertPart);
 									wstringToInt >> vertNormIndexTemp;
 									vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
 								} //end if vNorm
@@ -818,11 +819,163 @@ bool LoadObjectModel(std::wstring filename,
 						} //end for j-loop
 						
 						  //TODO: storing the face
+						//check to make sure there's at least one subset
+						if (subsetCount == 0)
+						{
+							subsetIndexStart.push_back(vIndex); //start index for this subset
+							subsetCount++;
+						}
+						//avoid duplicate vertices
+						bool vertAlreadyExists = false;
+						if (totalVerts >= 3) //make sure there's at least one triangle to check
+						{
+							//loop through all the verticies
+							for (int iCheck = 0; iCheck < totalVerts; iCheck)
+							{
+								//if the vertex position and tex coord in memory are the same as the ones currently being read then 
+								// this faces vertex index is set to the vertex's value in memory. 
+								if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
+								{
+									if (vertTCIndexTemp == vertTCIndex[iCheck])
+									{
+										indices.push_back(iCheck);	//set the index for this vertex
+										vertAlreadyExists = true;
+									}
+								}
+							} //end loop through verticies
+						} //end duplicate test
 
+						if (!vertAlreadyExists)
+						{
+							vertPosIndex.push_back(vertPosIndexTemp);
+							vertTCIndex.push_back(vertTCIndexTemp);
+							vertNormIndex.push_back(vertNormIndexTemp);
+							totalVerts++;						//new vertex created
+							indices.push_back(totalVerts - 1);	//set index for this vertex
+						}
+
+						//make sure the rest of the triangles use the first vertex
+						if (i == 0)
+						{
+							firstVIndex = indices[vIndex];		//the first vertex index of this face
+						}
+
+						//if this was the last vertex in the first triangle the next triangle will use it as well
+						if (i == 2)
+						{
+							lastVIndex = indices[vIndex];		//the last vertex index of this triangle
+						}
+						vIndex++; //increment index count
 					} //end for i-loop
+					meshTriangles++; //one triangle down
+
+					//convert the face to more than one triangle in case the face has more than three vertexes
+					for (int l = 0; l < triangleCount - 1; ++l)
+					{
+						//first vertex of this triangle (the very first vertex of the face too)
+						indices.push_back(firstVIndex); //set index for this vertex
+						vIndex++;
+
+						//second vertex of this triangle (the last vertex used in the tri before this one)
+						indices.push_back(lastVIndex); //set index for this vertex
+						vIndex++;
+
+						//get the third vertex for this triangle
+						ss >> VertDef;
+
+						std::wstring vertPart;
+						int whichPart = 0;
+
+						//TODO: see if this duplicate code can be eliminated
+						//parse this string (same procedure as in the for i-loop)
+						for (int j = 0; j < VertDef.length(); j++)
+						{
+							if (VertDef[j] != '/')		//if there's no divider add char to vertPart
+								vertPart += VertDef[j];
+							//If the current char is a divider or the last character in the string
+							if (VertDef[j] == '/' || j == VertDef.length() - 1)
+							{
+								std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
+
+								if (whichPart == 0) //if vPos
+								{
+									wstringToInt >> vertPosIndexTemp;
+									vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+
+														   //check if the vert pos was the only thing specified
+									if (j == VertDef.length() - 1)
+									{
+										vertNormIndexTemp = 0;
+										vertTCIndexTemp = 0;
+									}
+								} //end if vPos
+								else if (whichPart == 1) //if vTexCoord
+								{
+									if (vertPart != L"") //check if there is a tex coord
+									{
+										wstringToInt >> vertTCIndexTemp;
+										vertTCIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+									}
+									else //if there is no tex coord 0 will be default index
+										vertTCIndexTemp = 0;
+
+									//if the current char is the second to last in the string then there must be no normal so a default normal is set to index 0
+									if (j == VertDef.length() - 1)
+										vertNormIndexTemp = 0;
+
+								} //end if vTexCoord
+								else if (whichPart == 2) //if vNorm
+								{
+									//std::wistringstream wstringToInt(vertPart);
+									wstringToInt >> vertNormIndexTemp;
+									vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+								} //end if vNorm
+
+								vertPart = L"";
+								whichPart++;
+							} //end if current char is a divider or the last char in the string
+						} //end for j-loop
+
+						//check for duplicate vertices
+						bool vertAlreadyExists = false;
+						if (totalVerts >= 3) //make sure there's at least one triangle to check
+						{
+							//loop through all the verticies
+							for (int iCheck = 0; iCheck < totalVerts; iCheck)
+							{
+								//if the vertex position and tex coord in memory are the same as the ones currently being read then 
+								// this faces vertex index is set to the vertex's value in memory. 
+								if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
+								{
+									if (vertTCIndexTemp == vertTCIndex[iCheck])
+									{
+										indices.push_back(iCheck);	//set the index for this vertex
+										vertAlreadyExists = true;
+									}
+								}
+							} //end loop through verticies
+						} //end duplicate test
+
+						if (!vertAlreadyExists)
+						{
+							vertPosIndex.push_back(vertPosIndexTemp);
+							vertTCIndex.push_back(vertTCIndexTemp);
+							vertNormIndex.push_back(vertNormIndexTemp);
+							totalVerts++;						//new vertex created
+							indices.push_back(totalVerts - 1);	//set index for this vertex
+						}
+
+						//set the second vertex for the next triangle to the last vertex
+						lastVIndex = indices[vIndex]; //the last vertex index of this triangle
+
+						meshTriangles++; //new triangle defined
+						vIndex++;
+
+					} //end for l-loop
+
 				} //end if the line isn't empty
 			}
-
+			break;
 		case 'm':							//mtllib - material library filename
 			for (int i = 0; i < 6; i++) {	//loop over 'tllib '
 				checkChar = fileIn.get();
