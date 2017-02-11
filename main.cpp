@@ -1,5 +1,6 @@
 //--------------------------------------------------------------------------------------
 // TODO: 
+//  rewrite material functions with more values
 //	viewprojection as single matrix instead of two seperate ones
 // TODO?:
 //	Turn global constants into getFunctions()
@@ -97,10 +98,13 @@ ID3D11Buffer* gMaterialBuffer = nullptr;
 
 struct materialStruct
 {
-	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f) 
+	/*materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f) 
 		: specularAlbedo(r, g, b), specularPower(specPow) 
-	{}
-	XMFLOAT3 specularAlbedo;
+	{}*/
+	XMFLOAT4 diffuseColor;
+	std::wstring matName; 
+	int texArrayIndex;
+	bool hasTexture;
 	float specularPower;
 };
 
@@ -997,6 +1001,52 @@ bool LoadObjectModel(std::wstring filename,
 		}
 	}
 
+	subsetIndexStart.push_back(vIndex); //set index start
+
+	//make sure the first subset does not contain "0" indices. Can happen if "g" is defined at the very top of the file
+	if (subsetIndexStart[1] == 0)
+	{
+		subsetIndexStart.erase(subsetIndexStart.begin() + 1);
+		meshSubsets--;
+	}
+
+	//set default tex coords and norms if those are not specified in the file
+	if (!hasNorm)
+		vertNorm.push_back(XMFLOAT3(0.0f, 0.0f, 0.0f));
+	if (!hasTexCoord)
+		vertTexCoord.push_back(XMFLOAT2(0.0f, 0.0f));
+
+	//close the obj file and open the mtl file (if it exists)
+	fileIn.close();
+	fileIn.open(meshMatLib.c_str());
+
+	std::wstring lastStringRead;
+	int matCount = material.size(); //total materials
+
+	bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
+
+	if (!fileIn) //early exit if the material fiel doesn't open
+		exit(-1);
+	while (fileIn)
+	{
+		checkChar = fileIn.get();
+
+		switch (checkChar)
+		{
+		case '#': //comment
+			while (checkChar != '\n')
+				checkChar = fileIn.get();
+			break;
+		case 'K': //Diffuse color
+			checkChar = fileIn.get();
+			if (checkChar == 'd')
+			{
+				checkChar = fileIn.get(); //read over space
+				
+			}
+			break;
+		}
+	}
 
 }
 
