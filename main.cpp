@@ -1,8 +1,11 @@
 //--------------------------------------------------------------------------------------
 // TODO: 
+//  Make sure camera position updates in the LightFragment shader when the camera is moved
+//  Flat-/Smooth-Shading toggle per object
+//  Rewrite everything with classes instead
 //  rewrite material functions with more values
 //	viewprojection as single matrix instead of two seperate ones
-// TODO?:
+// TODO?
 //	Turn global constants into getFunctions()
 //--------------------------------------------------------------------------------------
 #include <windows.h>
@@ -18,6 +21,8 @@
 #include <fstream>
 #include <istream>
 #include <sstream> //looks like this is needed?
+
+
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
@@ -63,6 +68,25 @@ ID3D11PixelShader* gLightPixelShader			= nullptr;
 
 ID3D11RenderTargetView* gBackbufferRTV			= nullptr;
 
+
+/*--------------------------------------------------------------------------------------
+*			Vertex
+--------------------------------------------------------------------------------------*/
+struct Vertex
+{
+	Vertex() 
+	{}
+	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) 
+		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) 
+	{}
+
+	XMFLOAT3 pos;
+	XMFLOAT2 texCoord;
+	XMFLOAT3 normal;
+	//float x, y, z;
+	//float u, v;
+};
+
 /*--------------------------------------------------------------------------------------
 *			G-Buffer
 --------------------------------------------------------------------------------------*/
@@ -94,18 +118,23 @@ struct cPerObjectBuffer
 }; cPerObjectBuffer ObjectBufferData;
 
 //------------------ Material (GBufferFragment.hlsl) -----------------------------------
+// Since all objects will be textured the diffuse and ambient values will not be implemented in the materialStruct
+//
 ID3D11Buffer* gMaterialBuffer = nullptr;
 
 struct materialStruct
 {
-	/*materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f) 
-		: specularAlbedo(r, g, b), specularPower(specPow) 
-	{}*/
-	XMFLOAT4 diffuseColor;
-	std::wstring matName; 
+	materialStruct(std::wstring n = L"no name", float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, int texInd = 0) 
+		: specularColor(r, g, b), specularPower(specPow), texArrayIndex(texInd)
+	{}
+	std::wstring matName;	
+	//XMFLOAT3 ambientColor;
+	//XMFLOAT3 diffuseColor;
+	XMFLOAT3 specularColor; //Ks
+	float specularPower;	//NS
+	//bool hasTexture;
 	int texArrayIndex;
-	bool hasTexture;
-	float specularPower;
+	int trash, trash2, trash3;
 };
 
 struct cMaterialBuffer
@@ -114,6 +143,8 @@ struct cMaterialBuffer
 	{}
 	materialStruct material;
 }; cMaterialBuffer gMaterialBufferData;
+
+std::vector<materialStruct> materialVector;
 
 //------------------ Lights (LightFragment.hlsl) ---------------------------------------
 ID3D11Buffer* gLightBuffer = nullptr;
@@ -177,8 +208,8 @@ namespace Colors
 
 namespace Materials
 {
-	static const materialStruct Black_plastic	= materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
-	static const materialStruct Black_rubber	= materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
+	static const materialStruct Black_plastic	= materialStruct(L"Black plastic",	0.5f, 0.5f, 0.5f, 1.0f, 32.0f);
+	static const materialStruct Black_rubber	= materialStruct(L"Black rubber",	0.4f, 0.4f, 0.4f, 1.0f, 10.0f);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -430,13 +461,9 @@ void CreateShaders()
 
 void CreateTriangleData()
 {
-	struct TriangleVertex
-	{
-		float x, y, z;
-		float u, v;
-	};
+	
 
-	TriangleVertex triangleVertices[36] =
+	Vertex triangleVertices[36] =
 	{
 		//front
 				//lower left corner
@@ -636,7 +663,7 @@ bool LoadObjectModel(std::wstring filename,
 	ID3D11Buffer** vertBuff,
 	ID3D11Buffer** indexBuff,
 	std::vector<int>& subsetIndexStart,
-	std::vector<int>& sunsetMaterialArray,
+	std::vector<int>& subsetMaterialArray,
 	std::vector<materialStruct>& material,
 	int& subsetCount,
 	bool isRHCoordSys,		//needed?
@@ -1016,6 +1043,10 @@ bool LoadObjectModel(std::wstring filename,
 	if (!hasTexCoord)
 		vertTexCoord.push_back(XMFLOAT2(0.0f, 0.0f));
 
+
+//----------------------------------------- Material -------------------------------------------------------------------
+// Does not take ambient and diffuse color into account since all objects will be textured.
+
 	//close the obj file and open the mtl file (if it exists)
 	fileIn.close();
 	fileIn.open(meshMatLib.c_str());
@@ -1023,7 +1054,7 @@ bool LoadObjectModel(std::wstring filename,
 	std::wstring lastStringRead;
 	int matCount = material.size(); //total materials
 
-	bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
+	//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
 
 	if (!fileIn) //early exit if the material fiel doesn't open
 		exit(-1);
@@ -1039,15 +1070,168 @@ bool LoadObjectModel(std::wstring filename,
 			break;
 		case 'K': //Diffuse color
 			checkChar = fileIn.get();
-			if (checkChar == 'd')
+			if (checkChar == 's') // Ks - specular color
 			{
 				checkChar = fileIn.get(); //read over space
-				
+
+				fileIn >> materialVector[matCount - 1].specularColor.x;
+				fileIn >> materialVector[matCount - 1].specularColor.y;
+				fileIn >> materialVector[matCount - 1].specularColor.z;
 			}
+			break;
+		case 'N':
+			checkChar = fileIn.get();
+			if (checkChar == 's')
+			{
+				checkChar = fileIn.get(); //read over space
+
+				fileIn >> materialVector[matCount - 1].specularPower;
+			}
+			break;
+		case 'm': // map_Kd - texture file
+			char word[] = "ap_Kd ";
+			bool test = true;
+			for (int i = 0; i < 6; i++) {	//loop over 'ap_Kd '
+				checkChar = fileIn.get();
+				if (checkChar != word[i])
+					test = false;
+			}
+			if (test)
+			{
+				std::wstring fileNamePath;
+
+				bool texFilePathEnd = false;
+				while (!texFilePathEnd)
+				{
+					checkChar = fileIn.get();
+
+					fileNamePath += checkChar;
+
+					if (checkChar == '.')
+					{
+						for (int i = 0; i < 3; ++i)
+							fileNamePath += fileIn.get();
+
+						texFilePathEnd = true;
+					}
+				}
+				//check if this texture has already been loaded
+				bool alreadyLoaded = false;
+				for (int i = 0; i < textureNameArray.size(); ++i)
+				{
+					if (fileNamePath == textureNameArray[i])
+					{
+						alreadyLoaded = true;
+						materialVector[matCount - 1].texArrayIndex = i;
+					}
+				}
+				//load the texture
+				if (!alreadyLoaded)
+				{
+					ID3D11ShaderResourceView* tempMeshSRV;
+					// TODO: D3DX11CreateShaderResourceViewFromFile
+
+					if (SUCCEEDED(gHR))
+					{
+						textureNameArray.push_back(fileNamePath.c_str());
+						materialVector[matCount - 1].texArrayIndex = meshSRV.size();
+						meshSRV.push_back(tempMeshSRV);
+					}
+				}
+			}
+			break;
+		case 'n': //newmtl - declare new material
+			char word[] = "ewmtl ";
+			bool test = true;
+			for (int i = 0; i < 6; i++)
+			{
+				checkChar = fileIn.get();
+				if (checkChar != word[i])
+					test = false;
+			}
+			if (test)
+			{
+				materialStruct tempMat;
+				materialVector.push_back(tempMat);
+				fileIn >> materialVector[matCount].matName;
+				materialVector[matCount].texArrayIndex = 0;
+				matCount++;
+			}
+			break;
+		default:
 			break;
 		}
 	}
 
+	//set the subset material to the index value of its material in the material array
+	for (int i = 0; i < meshSubsets; ++i)
+	{
+		bool hasMat = false;
+		for (int j = 0; j < materialVector.size(); ++j)
+		{
+			if (meshMaterials[i] == materialVector[j].matName)
+			{
+				subsetMaterialArray.push_back(j);
+				hasMat = true;
+			}
+		}
+		if (!hasMat)
+			subsetMaterialArray.push_back(0); //use first material in array 
+	}
+
+	//create vertices
+	std::vector<Vertex> verticies;
+	Vertex tempVert;
+
+	//store the verticies from the file in a vector
+	for (int j = 0; j < totalVerts; ++j)
+	{
+		tempVert.pos		= vertPos[vertPosIndex[j]];
+		tempVert.texCoord	= vertTexCoord[vertTCIndex[j]];
+		tempVert.normal		= vertNorm[vertNormIndex[j]];
+
+		verticies.push_back(tempVert);
+	}
+
+	//Compute face normals
+	if (computeNormals)
+	{
+		std::vector<XMFLOAT3> tempNormal;
+
+		//normalized and unnormalized normals
+		XMFLOAT3 unnormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+		//used to get the vectors (sides) from the position of the verticies
+		float vecX, vecY, vecZ;
+
+		//two edges of a triangle
+		XMVECTOR edge1 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		XMVECTOR edge2 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+
+		//compute face normals
+		for (int i = 0; i < meshTriangles; ++i)
+		{
+			//get the vector describing one edge of the triangle (edge 0,2)
+			vecX = verticies[indices[(i * 3)]].pos.x - verticies[indices[(i * 3) + 2]].pos.x;
+			vecX = verticies[indices[(i * 3)]].pos.y - verticies[indices[(i * 3) + 2]].pos.y;
+			vecX = verticies[indices[(i * 3)]].pos.z - verticies[indices[(i * 3) + 2]].pos.z;
+			edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f); //first edge
+														 
+			//get the vector describing one edge of the triangle (edge 2,1)
+			vecX = verticies[indices[(i * 3) + 2]].pos.x - verticies[indices[(i * 3) + 1]].pos.x;
+			vecX = verticies[indices[(i * 3) + 2]].pos.y - verticies[indices[(i * 3) + 1]].pos.y;
+			vecX = verticies[indices[(i * 3) + 2]].pos.z - verticies[indices[(i * 3) + 1]].pos.z;
+			edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f); //second edge
+
+			//Cross multiply to get the un-normalized face normal
+			XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
+			tempNormal.push_back(unnormalized); //save unnormalized normal (for normal averaging)
+		}
+	}
+
+	//compute normals (vertex normals - normal averaging)
+
+	//create vertex and index buffers
 }
 
 
