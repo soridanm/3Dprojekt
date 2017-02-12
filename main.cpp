@@ -1,6 +1,6 @@
 //--------------------------------------------------------------------------------------
 // TODO: 
-//  Make sure camera position updates in the LightFragment shader when the camera is moved
+//  Make sure camera position updates in the LightFragment shader when the camera is moved 
 //  Flat-/Smooth-Shading toggle per object
 //  Rewrite everything with classes instead
 //  rewrite material functions with more values
