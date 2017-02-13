@@ -23,8 +23,8 @@ using namespace DirectX;
 
 const double MATH_PI			= 3.14159265358;
 const UINT GBUFFER_COUNT		= 4;
-const LONG SCREEN_WIDTH			= 2*640;
-const LONG SCREEN_HEIGHT		= 2*480;
+const LONG SCREEN_WIDTH         = 1920;//2*640;
+const LONG SCREEN_HEIGHT        = 1080;//2*480;
 const int MAX_LIGHTS			= 8;
 const int NR_OF_OBJECTS			= 1;
 float CUBE_ROTATION_SPEED		= 0.01f;
@@ -49,6 +49,15 @@ int FRAME_COUNT = 0, FPS = 0;
 _int64 FRAME_TIME_OLD = 0;
 double FRAME_TIME;
 
+//---------------------Heightmap values-----------------------------
+int NUMBER_OF_FACES = 0;
+int NUMBER_OF_VERTICES = 0;
+
+struct HeightMapInfo {
+	int worldWidth;
+	int worldHeight;
+	XMFLOAT3 *heightMap;
+};
 
 HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -75,6 +84,10 @@ ID3D11DepthStencilView* gDepthStecilView		= nullptr;
 ID3D11Texture2D* gDepthStencilTexture			= nullptr;
 
 // First Pass
+
+ID3D11Buffer* gSquareIndexBuffer = nullptr;
+ID3D11Buffer* gSquareVertBuffer = nullptr;
+
 ID3D11Buffer* gVertexBuffer						= nullptr;
 ID3D11InputLayout* gVertexLayout				= nullptr;
 ID3D11VertexShader* gVertexShader				= nullptr;
@@ -317,7 +330,7 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 2.0f, 0.0f, -4.0f, 1.0f };
+	XMFLOAT4 light_position = { 2.0f, 200.0f, -4.0f, 1.0f };
 	XMFLOAT4 light_color	= Colors::White;
 	float c_att	= 0.2f;
 	float l_att	= 0.5f;
@@ -357,6 +370,7 @@ void CreateShaders()
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",0,DXGI_FORMAT_R32G32B32_FLOAT,0,20,D3D11_INPUT_PER_VERTEX_DATA,0 }
 	};
 
 	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
@@ -711,7 +725,7 @@ void initGraphicsBuffer()
 		&depthStencilViewDesc, // Depth stencil desc
 		&gDepthStecilView);  // [out] Depth stencil view
 
-	//Relese
+	//Release
 }
 
 //TODO: move as much out of render loop as possible. Will need a loop to loop through all ojects in the future
@@ -739,9 +753,11 @@ void RenderFirstPass()
 
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
+	UINT32 squareVertexSize = sizeof(float) * 8;
 
 	// Set Vertex Shader input
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -795,7 +811,8 @@ void RenderFirstPass()
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// draw geometry
-	gDeviceContext->Draw(36, 0);//number of vertices to draw
+	//gDeviceContext->Draw(36, 0);//number of vertices to draw
+	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
 
 // LOOP OVER OBJECTS TO HERE -----------------------------------------------------------------
 
@@ -863,6 +880,177 @@ void RenderLastPass()
 
 	// Draw full screen triangle
 	gDeviceContext->Draw(3, 0);
+}
+
+bool LoadHeightMap(char* filename, HeightMapInfo &hminfo) {
+	FILE *fileptr;
+	BITMAPFILEHEADER bitmapFileH;
+	BITMAPINFOHEADER bitmapInfoh;
+	int imageSize, index;
+	unsigned char height;
+
+	//open and load file
+	fileptr = fopen(filename, "rb");
+	if (fileptr == NULL) {
+		return false;
+	}
+	fread(&bitmapFileH, sizeof(BITMAPFILEHEADER), 1, fileptr);
+	fread(&bitmapInfoh, sizeof(BITMAPINFOHEADER), 1, fileptr);
+
+	//size of the image
+	hminfo.worldWidth = bitmapInfoh.biWidth;
+	hminfo.worldHeight = bitmapInfoh.biHeight;
+	imageSize = hminfo.worldWidth*hminfo.worldHeight * 3;
+
+	//read values from file into array for generation
+	unsigned char* bitmapImage = new unsigned char[imageSize];
+	fseek(fileptr, bitmapFileH.bfOffBits, SEEK_SET);
+	fread(bitmapImage, 1, imageSize, fileptr);
+	fclose(fileptr);
+
+	//create array for storing heightvalues, since greyscale only first value relevant, then skip 2
+	hminfo.heightMap = new XMFLOAT3[hminfo.worldWidth*hminfo.worldHeight];
+	int offset = 0;
+	float smoothingValue = 10.0f;
+
+	//stores the height values and their respective position
+	for (int j = 0; j < hminfo.worldHeight; j++) {
+		for (int i = 0; i < hminfo.worldWidth; i++) {
+			height = bitmapImage[offset];
+			index = (hminfo.worldHeight*j) + i;
+
+			hminfo.heightMap[index] = XMFLOAT3(i, (float)height / smoothingValue, j);
+			offset += 3;
+		}
+	}
+	delete[] bitmapImage;
+	bitmapImage = 0;
+	return true;
+}
+
+struct Vertex {
+	Vertex() {}
+	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
+	XMFLOAT3 pos;
+	XMFLOAT2 texCoord;
+	XMFLOAT3 normal;
+};
+void CreateWorld() {
+	//creating what is needed for the heightmap
+	HeightMapInfo hminfo;
+	LoadHeightMap("heightmap.bmp", hminfo);
+	int columns = hminfo.worldWidth;
+	int rows = hminfo.worldHeight;
+
+	NUMBER_OF_VERTICES = rows*columns;
+	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
+
+	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
+
+	for (DWORD i = 0; i < rows; i++) {
+		for (DWORD j = 0; j < columns; j++) {
+			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
+			mapVertex[i*columns + j].normal = XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
+		}
+	}
+
+	//assigns uv-coordinates as well as setting the order they will be drawn in 
+	std::vector<DWORD> drawOrder(NUMBER_OF_FACES * 3);
+	int k = 0, texUIndex = 0, texVIndex = 0;
+	for (DWORD j = 0; j < rows - 1; j++) {
+		for (DWORD i = 0; i < columns - 1; i++) {
+			drawOrder[k] = i*columns + j;//bottom left
+			mapVertex[i*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 1.0f) / rows);
+			drawOrder[k + 1] = (1 + i)*columns + j;//top left
+			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 0.0f) / rows);
+			drawOrder[k + 2] = i*columns + j + 1;//bottom right
+			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 1.0f) / rows);
+
+
+			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
+			mapVertex[(1 + i)*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 0.0f) / rows);
+			drawOrder[k + 4] = i*columns + j + 1;//bottom right
+			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 1.0f) / rows);
+			drawOrder[k + 5] = (1 + i)*columns + j;//top left
+			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 0.0f) / rows);
+
+			k += 6;
+			texUIndex++;
+		}
+		texUIndex = 0;
+		texVIndex++;
+	}
+
+	//calculates the normal for each face
+	std::vector<XMFLOAT3> tempNormal;
+	XMFLOAT3 nonNormalized = XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float vecX, vecY, vecZ;
+	XMVECTOR edge1 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	XMVECTOR edge2 = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	for (int i = 0; i < NUMBER_OF_FACES; i++) {
+		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
+		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
+		vecZ = mapVertex[drawOrder[(i * 3)]].pos.z - mapVertex[drawOrder[(i * 3) + 2]].pos.z;
+		edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
+
+		vecX = mapVertex[drawOrder[(i * 3) + 2]].pos.x - mapVertex[drawOrder[(i * 3) + 1]].pos.x;
+		vecY = mapVertex[drawOrder[(i * 3) + 2]].pos.y - mapVertex[drawOrder[(i * 3) + 1]].pos.y;
+		vecZ = mapVertex[drawOrder[(i * 3) + 2]].pos.z - mapVertex[drawOrder[(i * 3) + 1]].pos.z;
+		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
+
+		XMStoreFloat3(&nonNormalized, XMVector3Cross(edge1, edge2));
+		tempNormal.push_back(nonNormalized);
+	}
+
+	//calculates the average normal in order to make the world smooth
+	XMVECTOR averageNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	int facesUsing = 0;
+	float tx, ty, tz;
+	for (int i = 0; i < NUMBER_OF_VERTICES; i++) {
+		for (int j = 0; j < NUMBER_OF_FACES; j++) {
+			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+				tx = XMVectorGetX(averageNormal) + tempNormal[j].x;
+				ty = XMVectorGetY(averageNormal) + tempNormal[j].y;
+				tz = XMVectorGetZ(averageNormal) + tempNormal[j].z;
+
+				averageNormal = XMVectorSet(tx, ty, tz, 0.0f);
+				facesUsing++;
+			}
+			averageNormal = averageNormal / facesUsing;
+			averageNormal = XMVector3Normalize(averageNormal);
+			mapVertex[i].normal.x = XMVectorGetX(averageNormal);
+			mapVertex[i].normal.y = XMVectorGetY(averageNormal);
+			mapVertex[i].normal.z = XMVectorGetZ(averageNormal);
+			averageNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+			facesUsing = 0;
+		}
+	}
+
+	D3D11_BUFFER_DESC indexBufferDesc;
+	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexBufferDesc.ByteWidth = sizeof(DWORD)*NUMBER_OF_FACES * 3;
+	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexBufferDesc.CPUAccessFlags = 0;
+	indexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &drawOrder[0];
+	gDevice->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
+
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex)*NUMBER_OF_VERTICES;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertexBufferData;
+	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+	vertexBufferData.pSysMem = &mapVertex[0];
+	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
+
 }
 
 void Render()
@@ -1025,6 +1213,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		CreateTriangleData(); //5. Definiera triangelvertiser, 6. Skapa vertex buffer, 7. Skapa input layout
 
+		CreateWorld();
+
 		CreateAllConstantBuffers();
 
 		initGraphicsBuffer(); // Create G-Buffer
@@ -1056,7 +1246,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 				gSwapChain->Present(1, 0); //9. Växla front- och back-buffer
 			}
 		}
-
+		gSwapChain->SetFullscreenState(false, NULL);
 		DIKeyboard->Unacquire();
 		DIMouse->Unacquire();
 		DirectInput->Release();
@@ -1133,8 +1323,8 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	scd.BufferDesc.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;      // use 32-bit color
 	scd.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT; // how swap chain is to be used
 	scd.OutputWindow		= wndHandle;                       // the window to be used
-	scd.SampleDesc.Count	= 1;                               // how many multisamples
-	scd.Windowed			= TRUE;                            // windowed/full-screen mode
+	scd.SampleDesc.Count	= 4;                               // how many multisamples
+	scd.Windowed			= FALSE;                            // windowed/full-screen mode
 
 	// create a device, device context and swap chain using the information in the scd struct
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
