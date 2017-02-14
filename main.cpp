@@ -5,6 +5,7 @@
 //  Rewrite everything with classes instead
 //  rewrite material functions with more values
 //	viewprojection as single matrix instead of two seperate ones
+//  merge the material and perObject buffers
 // TODO?
 //	Turn global constants into getFunctions()
 //--------------------------------------------------------------------------------------
@@ -134,7 +135,8 @@ struct materialStruct
 	float specularPower;	//NS
 	//bool hasTexture;
 	int texArrayIndex;
-	int trash, trash2, trash3;
+	bool hasTexture;
+	int trash, trash2;
 };
 
 struct cMaterialBuffer
@@ -365,6 +367,7 @@ void CreateShaders()
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0}
 	};
 
 	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &gVertexLayout);
@@ -459,187 +462,6 @@ void CreateShaders()
 	pPS2->Release();
 }
 
-void CreateTriangleData()
-{
-	
-
-	Vertex triangleVertices[36] =
-	{
-		//front
-				//lower left corner
-			-0.5f, -0.5f, -0.5f,	//v0 pos
-			0.0f, 1.0f,	//v0 texcoord
-		//	1.0f,0.0f,0.0f,//color
-
-			//upper left corner
-			-0.5f, 0.5f, -0.5f,	//v1
-			0.0f, 0.0f, 	//v1 texcoord
-		//	0.0f,1.0f,0.0f,//color
-
-			//lower right corner
-			0.5f, -0.5f, -0.5f, //v2
-			1.0f, 1.0f,	//v2 texcoord
-		//	0.0f,0.0f,1.0f,//color
-
-			//upper right corner
-			0.5f,0.5f,-0.5f,//v3
-			1.0f,0.0f,//v3 texcoord
-		 // 1.0f,0.0f,1.0f,//color
-
-
-		 //lower right corner
-		 0.5f, -0.5f, -0.5f, //v2
-		 1.0f, 1.0f,	//v2 texcoord
-
-		 //upper left corner
-		 -0.5f, 0.5f, -0.5f,	//v1
-		 0.0f, 0.0f, 	//v1 texcoord
-
-
-		 //left side
-
-		//lower left corner
-		-0.5f, -0.5f, 0.5f,	//v0 pos
-		0.0f, 1.0f,	//v0 texcoord
-
-		//upper left corner
-		-0.5f, 0.5f, 0.5f,	//v1
-		0.0f, 0.0f, 	//v1 texcoord
-
-		//lower right corner
-		-0.5f, -0.5f, -0.5f, //v2
-		1.0f, 1.0f,	//v2 texcoord
-
-		//upper right corner
-		-0.5f,0.5f,-0.5f,//v3
-		1.0f,0.0f,//v3 texcoord
-
-		//lower right corner
-		-0.5f, -0.5f, -0.5f, //v2
-		1.0f, 1.0f,	//v2 texcoord
-
-		//upper left corner
-		-0.5f, 0.5f, 0.5f,	//v1
-		0.0f, 0.0f, //v1 texcoord
-
-		 //right side
-
-		//lower left corner
-		0.5f, -0.5f, -0.5f,
-		0.0f, 1.0f,
-
-		//upper left corner
-		0.5f, 0.5f, -0.5f,
-		0.0f, 0.0f,
-
-		//lower right corner
-		0.5f, -0.5f, 0.5f,
-		1.0f, 1.0f,
-
-		//upper right corner
-		0.5f,0.5f,0.5f,
-		1.0f,0.0f,
-
-		//lower right corner
-		0.5f, -0.5f, 0.5f,
-		1.0f, 1.0f,
-
-		//upper left corner
-		0.5f, 0.5f, -0.5f,
-		0.0f, 0.0f,
-
-		//top
-
-		//lower left corner
-		-0.5f, 0.5f, -0.5f,
-		0.0f, 1.0f,
-
-		//upper left corner
-		-0.5f, 0.5f, 0.5f,
-		0.0f, 0.0f,
-
-		//lower right corner
-		0.5f, 0.5f, -0.5f,
-		1.0f, 1.0f,
-
-		//upper right corner
-		0.5f,0.5f,0.5f,
-		1.0f,0.0f,
-
-		//lower right corner
-		0.5f,0.5f, -0.5f,
-		1.0f, 1.0f,
-
-		//upper left corner
-		-0.5f, 0.5f, 0.5f,
-		0.0f, 0.0f,
-
-
-			//bottom
-
-			//lower left corner
-			-0.5f, -0.5f, 0.5f,
-			0.0f, 1.0f,
-
-			//upper left corner
-			-0.5f, -0.5f, -0.5f,
-			0.0f, 0.0f,
-
-			//lower right corner
-			0.5f, -0.5f, 0.5f,
-			1.0f, 1.0f,
-
-			//upper right corner
-			0.5f, -0.5f, -0.5f,
-			1.0f, 0.0f,
-
-			//lower right corner
-			0.5f, -0.5f, 0.5f,
-			1.0f, 1.0f,
-
-			//upper left corner
-			-0.5f, -0.5f, -0.5f,
-			0.0f, 0.0f,
-
-			//back
-
-			//lower left corner
-			0.5f, -0.5f, 0.5f,
-			0.0f, 1.0f,
-
-			//upper left corner
-			0.5f, 0.5f, 0.5f,
-			0.0f, 0.0f,
-
-			//lower right corner
-			-0.5f, -0.5f, 0.5f,
-			1.0f, 1.0f,
-
-			//upper right corner
-			-0.5f, 0.5f, 0.5f,
-			1.0f, 0.0f,
-
-			//lower right corner
-			-0.5f, -0.5f, 0.5f,
-			1.0f, 1.0f,
-
-			//upper left corner
-			0.5f, 0.5f, 0.5f,
-			0.0f, 0.0f,
-
-
-	};
-
-	D3D11_BUFFER_DESC bufferDesc;
-	memset(&bufferDesc, 0, sizeof(bufferDesc));
-	bufferDesc.BindFlags	= D3D11_BIND_VERTEX_BUFFER;
-	bufferDesc.Usage		= D3D11_USAGE_DEFAULT;
-	bufferDesc.ByteWidth	= sizeof(triangleVertices);
-
-	D3D11_SUBRESOURCE_DATA data;
-	data.pSysMem = triangleVertices;
-	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
-}
 
 //---------------------- Load objects ------------------------------------------
 
@@ -656,8 +478,9 @@ std::vector<int> meshSubsetTexture;
 std::vector<ID3D11ShaderResourceView*> meshSRV;
 std::vector<std::wstring> textureNameArray;
 
-// TODO: write description of all the things this function does
-// TODO? use std::getline instead
+// TODO: Implement support for textures. Write description of all the things this function does.
+// TODO? fix retriangulation of concave faces. 
+// TODO?? use std::getline instead
 // Description (not complete): if no vertex normals are included in the .obj file then they will be computed
 bool LoadObjectModel(std::wstring filename,
 	ID3D11Buffer** vertBuff,
@@ -669,26 +492,6 @@ bool LoadObjectModel(std::wstring filename,
 	bool isRHCoordSys,		//needed?
 	bool computeNormals)	//needed?
 {
-	// Presentation version
-	/*std::string myFile("myFile.obj"), special;
-	std::string line2;
-	std::ifstream file(myFile);
-	std::istringstream inputString;
-	struct VertexPos { float x, y, z; };
-	std::vector<VertexPos> verticies;
-	VertexPos vtx;
-	while (std::getline(file, line2))
-	{
-		inputString.str(line2);
-		if (line2.substr(0, 2) == "v ")
-		{
-			inputString >> special >> vtx.x >> vtx.y >> vtx.z;
-			verticies.push_back(vtx);
-		}
-	}
-	file.close();*/
-	// End Presentation version
-
 	std::wifstream fileIn(filename.c_str());    //Open file
 	std::wstring meshMatLib;                    //String to hold our obj material library filename
 
@@ -724,7 +527,7 @@ bool LoadObjectModel(std::wstring filename,
 	//TODO: improve with an error message or something
 	if (!fileIn)	//Early exit if the file doesn't open
 		exit(-1);
-	
+
 	while (fileIn)
 	{
 		checkChar = fileIn.get();			//get the next char
@@ -738,7 +541,7 @@ bool LoadObjectModel(std::wstring filename,
 		case 'v': // Get vertex descriptions
 			checkChar = fileIn.get();
 			if (checkChar == ' ')			//v - vertex position
-			{ 
+			{
 				float vx, vy, vz;
 				fileIn >> vx >> vy >> vz;	//store the vertex positions
 				vertPos.push_back(XMFLOAT3(vx, vy, (isRHCoordSys) ? vz * -1.0f : vz));		//invert Z-axiz if the OBJ is RH
@@ -767,7 +570,7 @@ bool LoadObjectModel(std::wstring filename,
 			}
 			break;
 
-		/* Breaks faces with more than three sides into multiple triangles */
+			/* Breaks faces with more than three sides into multiple triangles */
 		case 'f':							//f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
 			checkChar = fileIn.get();
 			if (checkChar == ' ')
@@ -848,7 +651,7 @@ bool LoadObjectModel(std::wstring filename,
 								whichPart++;
 							} //end if current char is a divider or the last char in the string
 						} //end for j-loop
-						
+
 						  //TODO: storing the face
 						//check to make sure there's at least one subset
 						if (subsetCount == 0)
@@ -1044,10 +847,10 @@ bool LoadObjectModel(std::wstring filename,
 		vertTexCoord.push_back(XMFLOAT2(0.0f, 0.0f));
 
 
-//----------------------------------------- Material -------------------------------------------------------------------
-// Does not take ambient and diffuse color into account since all objects will be textured.
+	//----------------------------------------- Material -------------------------------------------------------------------
+	// Does not take ambient and diffuse color into account since all objects will be textured.
 
-	//close the obj file and open the mtl file (if it exists)
+		//close the obj file and open the mtl file (if it exists)
 	fileIn.close();
 	fileIn.open(meshMatLib.c_str());
 
@@ -1055,6 +858,11 @@ bool LoadObjectModel(std::wstring filename,
 	int matCount = material.size(); //total materials
 
 	//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
+	std::wstring word_m = L"ap_Kd";
+	bool test_m = true;
+	std::wstring word_n = L"ewmtl ";
+	bool test_n = true;
+
 
 	if (!fileIn) //early exit if the material fiel doesn't open
 		exit(-1);
@@ -1089,14 +897,13 @@ bool LoadObjectModel(std::wstring filename,
 			}
 			break;
 		case 'm': // map_Kd - texture file
-			char word[] = "ap_Kd ";
-			bool test = true;
+			test_m = true;
 			for (int i = 0; i < 6; i++) {	//loop over 'ap_Kd '
 				checkChar = fileIn.get();
-				if (checkChar != word[i])
-					test = false;
+				if (checkChar != word_m[i])
+					test_m = false;
 			}
-			if (test)
+			if (test_m)
 			{
 				std::wstring fileNamePath;
 
@@ -1141,15 +948,14 @@ bool LoadObjectModel(std::wstring filename,
 			}
 			break;
 		case 'n': //newmtl - declare new material
-			char word[] = "ewmtl ";
-			bool test = true;
+			test_n = true;
 			for (int i = 0; i < 6; i++)
 			{
 				checkChar = fileIn.get();
-				if (checkChar != word[i])
-					test = false;
+				if (checkChar != word_n[i])
+					test_n = false;
 			}
-			if (test)
+			if (test_n)
 			{
 				materialStruct tempMat;
 				materialVector.push_back(tempMat);
@@ -1186,9 +992,9 @@ bool LoadObjectModel(std::wstring filename,
 	//store the verticies from the file in a vector
 	for (int j = 0; j < totalVerts; ++j)
 	{
-		tempVert.pos		= vertPos[vertPosIndex[j]];
-		tempVert.texCoord	= vertTexCoord[vertTCIndex[j]];
-		tempVert.normal		= vertNorm[vertNormIndex[j]];
+		tempVert.pos = vertPos[vertPosIndex[j]];
+		tempVert.texCoord = vertTexCoord[vertTCIndex[j]];
+		tempVert.normal = vertNorm[vertNormIndex[j]];
 
 		verticies.push_back(tempVert);
 	}
@@ -1213,27 +1019,279 @@ bool LoadObjectModel(std::wstring filename,
 		{
 			//get the vector describing one edge of the triangle (edge 0,2)
 			vecX = verticies[indices[(i * 3)]].pos.x - verticies[indices[(i * 3) + 2]].pos.x;
-			vecX = verticies[indices[(i * 3)]].pos.y - verticies[indices[(i * 3) + 2]].pos.y;
-			vecX = verticies[indices[(i * 3)]].pos.z - verticies[indices[(i * 3) + 2]].pos.z;
+			vecY = verticies[indices[(i * 3)]].pos.y - verticies[indices[(i * 3) + 2]].pos.y;
+			vecZ = verticies[indices[(i * 3)]].pos.z - verticies[indices[(i * 3) + 2]].pos.z;
 			edge1 = XMVectorSet(vecX, vecY, vecZ, 0.0f); //first edge
-														 
+
 			//get the vector describing one edge of the triangle (edge 2,1)
 			vecX = verticies[indices[(i * 3) + 2]].pos.x - verticies[indices[(i * 3) + 1]].pos.x;
-			vecX = verticies[indices[(i * 3) + 2]].pos.y - verticies[indices[(i * 3) + 1]].pos.y;
-			vecX = verticies[indices[(i * 3) + 2]].pos.z - verticies[indices[(i * 3) + 1]].pos.z;
+			vecY = verticies[indices[(i * 3) + 2]].pos.y - verticies[indices[(i * 3) + 1]].pos.y;
+			vecZ = verticies[indices[(i * 3) + 2]].pos.z - verticies[indices[(i * 3) + 1]].pos.z;
 			edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f); //second edge
 
 			//Cross multiply to get the un-normalized face normal
 			XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
 			tempNormal.push_back(unnormalized); //save unnormalized normal (for normal averaging)
-		}
-	}
+		} //end face normal loop
 
-	//compute normals (vertex normals - normal averaging)
+
+		//compute normals (vertex normals - normal averaging)
+		XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		int facesUsing = 0;
+		float tX, tY, tZ;
+
+		//loop through each vertex
+		for (int i = 0; i < totalVerts; ++i)
+		{
+			//check which triangles are using this vertex
+			for (int j = 0; j < meshTriangles; ++j)
+			{
+				if (indices[j * 3] == i || indices[(j * 3) + 1] == i || indices[(j * 3) + 2] == i)
+				{
+					tX = XMVectorGetX(normalSum) + tempNormal[j].x;
+					tY = XMVectorGetY(normalSum) + tempNormal[j].y;
+					tZ = XMVectorGetZ(normalSum) + tempNormal[j].z;
+
+					normalSum = XMVectorSet(tX, tY, tZ, 0.0f); //add the unnormalized face normal to the normal sum
+					facesUsing++;
+				}
+			} //end for j-loop
+
+			//divide the unnormalized normal by the number of faces sharing the vertex and the normalize it to get the actual normal
+			normalSum = XMVector3Normalize(normalSum / facesUsing);
+
+			//store it in the current vertex
+			XMStoreFloat3(&verticies[i].normal, normalSum);
+
+			//clear normalSum and facesUsing
+			normalSum = XMVectorZero();
+			facesUsing = 0;
+		} //end for i-loop
+	} //end computeNormals
 
 	//create vertex and index buffers
+
+	//index buffer
+	D3D11_BUFFER_DESC indexBufferDesc;
+	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+
+	indexBufferDesc.Usage		= D3D11_USAGE_DEFAULT;
+	indexBufferDesc.ByteWidth	= sizeof(DWORD) * meshTriangles * 3;
+	indexBufferDesc.BindFlags	= D3D11_BIND_INDEX_BUFFER;
+	indexBufferDesc.CPUAccessFlags	= 0;
+	indexBufferDesc.MiscFlags		= 0;
+
+	D3D11_SUBRESOURCE_DATA indicesData;
+
+	indicesData.pSysMem = &indices[0];
+	gDevice->CreateBuffer(&indexBufferDesc, &indicesData, indexBuff);
+
+	//vertex buffer
+
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+
+	vertexBufferDesc.Usage		= D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth	= sizeof(Vertex) * totalVerts;
+	vertexBufferDesc.BindFlags	= D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags		= 0;
+
+	D3D11_SUBRESOURCE_DATA vertexBufferData;
+
+	vertexBufferData.pSysMem = &verticies[0];
+	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, vertBuff);
+
+	return true;
 }
 
+void CreateTriangleData()
+{
+	
+	if (!LoadObjectModel(L"modelname.obj", &meshVertBuff, &meshIndexBuff, meshSubsetIndexStart, meshSubsetTexture, materialVector, meshSubsets, true, false))
+	{
+		exit(-1);
+	}
+
+	/*
+	//Vertex triangleVertices[36] =
+	//{
+	//	//front
+	//			//lower left corner
+	//		-0.5f, -0.5f, -0.5f,	//v0 pos
+	//		0.0f, 1.0f,	//v0 texcoord
+	//	//	1.0f,0.0f,0.0f,//color
+
+	//		//upper left corner
+	//		-0.5f, 0.5f, -0.5f,	//v1
+	//		0.0f, 0.0f, 	//v1 texcoord
+	//	//	0.0f,1.0f,0.0f,//color
+
+	//		//lower right corner
+	//		0.5f, -0.5f, -0.5f, //v2
+	//		1.0f, 1.0f,	//v2 texcoord
+	//	//	0.0f,0.0f,1.0f,//color
+
+	//		//upper right corner
+	//		0.5f,0.5f,-0.5f,//v3
+	//		1.0f,0.0f,//v3 texcoord
+	//	 // 1.0f,0.0f,1.0f,//color
+
+
+	//	 //lower right corner
+	//	 0.5f, -0.5f, -0.5f, //v2
+	//	 1.0f, 1.0f,	//v2 texcoord
+
+	//	 //upper left corner
+	//	 -0.5f, 0.5f, -0.5f,	//v1
+	//	 0.0f, 0.0f, 	//v1 texcoord
+
+
+	//	 //left side
+
+	//	//lower left corner
+	//	-0.5f, -0.5f, 0.5f,	//v0 pos
+	//	0.0f, 1.0f,	//v0 texcoord
+
+	//	//upper left corner
+	//	-0.5f, 0.5f, 0.5f,	//v1
+	//	0.0f, 0.0f, 	//v1 texcoord
+
+	//	//lower right corner
+	//	-0.5f, -0.5f, -0.5f, //v2
+	//	1.0f, 1.0f,	//v2 texcoord
+
+	//	//upper right corner
+	//	-0.5f,0.5f,-0.5f,//v3
+	//	1.0f,0.0f,//v3 texcoord
+
+	//	//lower right corner
+	//	-0.5f, -0.5f, -0.5f, //v2
+	//	1.0f, 1.0f,	//v2 texcoord
+
+	//	//upper left corner
+	//	-0.5f, 0.5f, 0.5f,	//v1
+	//	0.0f, 0.0f, //v1 texcoord
+
+	//	 //right side
+
+	//	//lower left corner
+	//	0.5f, -0.5f, -0.5f,
+	//	0.0f, 1.0f,
+
+	//	//upper left corner
+	//	0.5f, 0.5f, -0.5f,
+	//	0.0f, 0.0f,
+
+	//	//lower right corner
+	//	0.5f, -0.5f, 0.5f,
+	//	1.0f, 1.0f,
+
+	//	//upper right corner
+	//	0.5f,0.5f,0.5f,
+	//	1.0f,0.0f,
+
+	//	//lower right corner
+	//	0.5f, -0.5f, 0.5f,
+	//	1.0f, 1.0f,
+
+	//	//upper left corner
+	//	0.5f, 0.5f, -0.5f,
+	//	0.0f, 0.0f,
+
+	//	//top
+
+	//	//lower left corner
+	//	-0.5f, 0.5f, -0.5f,
+	//	0.0f, 1.0f,
+
+	//	//upper left corner
+	//	-0.5f, 0.5f, 0.5f,
+	//	0.0f, 0.0f,
+
+	//	//lower right corner
+	//	0.5f, 0.5f, -0.5f,
+	//	1.0f, 1.0f,
+
+	//	//upper right corner
+	//	0.5f,0.5f,0.5f,
+	//	1.0f,0.0f,
+
+	//	//lower right corner
+	//	0.5f,0.5f, -0.5f,
+	//	1.0f, 1.0f,
+
+	//	//upper left corner
+	//	-0.5f, 0.5f, 0.5f,
+	//	0.0f, 0.0f,
+
+
+	//		//bottom
+
+	//		//lower left corner
+	//		-0.5f, -0.5f, 0.5f,
+	//		0.0f, 1.0f,
+
+	//		//upper left corner
+	//		-0.5f, -0.5f, -0.5f,
+	//		0.0f, 0.0f,
+
+	//		//lower right corner
+	//		0.5f, -0.5f, 0.5f,
+	//		1.0f, 1.0f,
+
+	//		//upper right corner
+	//		0.5f, -0.5f, -0.5f,
+	//		1.0f, 0.0f,
+
+	//		//lower right corner
+	//		0.5f, -0.5f, 0.5f,
+	//		1.0f, 1.0f,
+
+	//		//upper left corner
+	//		-0.5f, -0.5f, -0.5f,
+	//		0.0f, 0.0f,
+
+	//		//back
+
+	//		//lower left corner
+	//		0.5f, -0.5f, 0.5f,
+	//		0.0f, 1.0f,
+
+	//		//upper left corner
+	//		0.5f, 0.5f, 0.5f,
+	//		0.0f, 0.0f,
+
+	//		//lower right corner
+	//		-0.5f, -0.5f, 0.5f,
+	//		1.0f, 1.0f,
+
+	//		//upper right corner
+	//		-0.5f, 0.5f, 0.5f,
+	//		1.0f, 0.0f,
+
+	//		//lower right corner
+	//		-0.5f, -0.5f, 0.5f,
+	//		1.0f, 1.0f,
+
+	//		//upper left corner
+	//		0.5f, 0.5f, 0.5f,
+	//		0.0f, 0.0f,
+
+
+	//};
+
+	//D3D11_BUFFER_DESC bufferDesc;
+	//memset(&bufferDesc, 0, sizeof(bufferDesc));
+	//bufferDesc.BindFlags	= D3D11_BIND_VERTEX_BUFFER;
+	//bufferDesc.Usage		= D3D11_USAGE_DEFAULT;
+	//bufferDesc.ByteWidth	= sizeof(triangleVertices);
+
+	//D3D11_SUBRESOURCE_DATA data;
+	//data.pSysMem = triangleVertices;
+	//gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
+	*/
+}
 
 
 void SetViewport()
@@ -1321,8 +1379,7 @@ void RenderFirstPass()
 		gGraphicsBuffer[0].renderTargetView, /* Normal */
 		gGraphicsBuffer[1].renderTargetView, /* PositionWS */
 		gGraphicsBuffer[2].renderTargetView, /* Diffuse */
-		gGraphicsBuffer[3].renderTargetView, /* Specular */
-
+		gGraphicsBuffer[3].renderTargetView  /* Specular */
 	};
 
 	//set render targets
@@ -1336,11 +1393,11 @@ void RenderFirstPass()
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
-	UINT32 vertexSize = sizeof(float) * 5;
+	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;
 
 	// Set Vertex Shader input
-	gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -1366,33 +1423,75 @@ void RenderFirstPass()
 
 // LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
 
-	// update per-object buffer to spin cube
-	static float rotation = 0.0f;
-	rotation += CUBE_ROTATION_SPEED;
+	for (int i = 0; i < meshSubsets; ++i)
+	{
+		gDeviceContext->IASetIndexBuffer(meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
+		gDeviceContext->IASetVertexBuffers(0, 1, &meshVertBuff, &vertexSize, &offset);
 
-	XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(rotation)));
+		//TODO: make std::vector of world matrixes for each object
+		//set world matrix for the object
+		XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(0.0f)));
 
-	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
-	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
-	// Unmap constant buffer so that we can use it again in the GPU
-	gDeviceContext->Unmap(gPerObjectBuffer, 0);
-	// set resource to Geometry Shader
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+		D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
+		gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+		// copy memory from CPU to GPU of the entire struct
+		memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
+		// Unmap constant buffer so that we can use it again in the GPU
+		gDeviceContext->Unmap(gPerObjectBuffer, 0);
+		// set resource to Geometry Shader
+		gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
 
-	// Map material properties buffer
-	SetMaterial(Materials::Black_plastic);
-	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+		//set material
+		gMaterialBufferData.material.specularColor	= materialVector[meshSubsetTexture[i]].specularColor;
+		gMaterialBufferData.material.specularPower	= materialVector[meshSubsetTexture[i]].specularPower;
+		gMaterialBufferData.material.matName		= materialVector[meshSubsetTexture[i]].matName;			//should probably be removed
+		
+		// REMOVE -------------------------------------------------------------------------
+		materialVector[meshSubsetTexture[i]].hasTexture = false;
+		// END REMOVE ---------------------------------------------------------------------
 
-	// draw geometry
-	gDeviceContext->Draw(36, 0);//number of vertices to draw
+		if (materialVector[meshSubsetTexture[i]].hasTexture)
+			gDeviceContext->PSSetShaderResources(0, 1, &gTextureView); // NOT IMPLEMENTED YET!
 
+		// Map material properties buffer
+		D3D11_MAPPED_SUBRESOURCE materialPtr;
+		gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+		memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
+		//gDeviceContext->Unmap(gPerFrameBuffer, 0);
+		gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+
+		int indexStart		= meshSubsetIndexStart[i];
+		int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
+		gDeviceContext->DrawIndexed(indexDrawAmount, indexStart, 0);
+	} //end object loop
 // LOOP OVER OBJECTS TO HERE -----------------------------------------------------------------
+
+	//// update per-object buffer to spin cube
+	//static float rotation = 0.0f;
+	//rotation += CUBE_ROTATION_SPEED;
+
+	//XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(rotation)));
+
+	//D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
+	//gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	//// copy memory from CPU to GPU of the entire struct
+	//memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
+	//// Unmap constant buffer so that we can use it again in the GPU
+	//gDeviceContext->Unmap(gPerObjectBuffer, 0);
+	//// set resource to Geometry Shader
+	//gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+
+	//// Map material properties buffer
+	//SetMaterial(Materials::Black_plastic);
+	//D3D11_MAPPED_SUBRESOURCE materialPtr;
+	//gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	//memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
+	////gDeviceContext->Unmap(gPerFrameBuffer, 0);
+	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+
+	//// draw geometry
+	//gDeviceContext->Draw(36, 0);//number of vertices to draw
+
 
 }
 
