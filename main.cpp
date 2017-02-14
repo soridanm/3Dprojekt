@@ -331,17 +331,17 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 100.0f, 400.0f, 100.0f, 1.0f };
+	XMFLOAT4 light_position = { 100.0f, 200.0f, 100.0f, 1.0f };
 	XMFLOAT4 light_color	= Colors::White;
 	float c_att	= 0.2f;
 	float l_att	= 0.5f;
-	float q_att	= 0.009f;
-	float amb	= 0.01f;
+	float q_att	= 0.09f;
+	float amb	= 0.1f;
 	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
 
 	gLightBufferData.Lights[0] = test_light;
 	XMStoreFloat4(&gLightBufferData.cameraPositionWS, CAMERA_STARTING_POS);
-	gLightBufferData.globalAmbient = { 0.18f, 0.18f, 0.18f, 1.0f };
+	gLightBufferData.globalAmbient = { 0.04f, 0.04f, 0.04f, 1.0f };
 }
 
 void CreateShaders()
