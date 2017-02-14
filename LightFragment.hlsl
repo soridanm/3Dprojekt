@@ -58,7 +58,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 	// Specular part
 	/* specular_coefficient = 0.0 if the light is behind the surface */
-	float3 specular_coefficient	= diffuse_coefficient > 0.0 ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
+	float specular_coefficient	= diffuse_coefficient > 0.0 ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
 	float3 specular_component	= specular_coefficient * specularValues.rgb * Lights[0].color;
 
 	// ambient part
@@ -76,6 +76,9 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = positionWS;
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
+
+	//float3 finalColor = diffuse_component;
+	//float3 finalColor = float3(specular_coefficient, specular_coefficient, specular_coefficient);
 
 	float3 finalColor = final_color;
 

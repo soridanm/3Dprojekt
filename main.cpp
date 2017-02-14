@@ -331,17 +331,17 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 100.0f, 400.0f, 100.0f, 1.0f };
+	XMFLOAT4 light_position = { 10.0f, 10.0f, 100.0f, 1.0f };
 	XMFLOAT4 light_color	= Colors::White;
-	float c_att	= 0.2f;
-	float l_att	= 0.5f;
-	float q_att	= 0.009f;
-	float amb	= 0.01f;
+	float c_att	= 1.0f;
+	float l_att	= 0.0001f;
+	float q_att	= 0.001f;
+	float amb	= 0.0001f;
 	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
 
 	gLightBufferData.Lights[0] = test_light;
 	XMStoreFloat4(&gLightBufferData.cameraPositionWS, CAMERA_STARTING_POS);
-	gLightBufferData.globalAmbient = { 0.18f, 0.18f, 0.18f, 1.0f };
+	gLightBufferData.globalAmbient = { 0.05f, 0.05f, 0.05f, 1.0f };
 }
 
 void CreateShaders()
@@ -748,7 +748,7 @@ void RenderFirstPass()
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[0].renderTargetView, Colors::fBlack);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::fLightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fLightSteelBlue);
+	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fBlack);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -868,7 +868,8 @@ void RenderLastPass()
 
 	XMVECTOR lightPos = XMLoadFloat4(&gLightBufferData.Lights[0].PositionWS);
 	lightPos = XMVector4Transform(lightPos, yMove);
-	XMStoreFloat4(&gLightBufferData.Lights[0].PositionWS, lightPos);
+	XMStoreFloat4(&gLightBufferData.Lights[0].PositionWS, CAM_POS);
+	XMStoreFloat4(&gLightBufferData.cameraPositionWS, CAM_POS);
 
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
@@ -1000,7 +1001,7 @@ void CreateWorld() {
 		vecZ = mapVertex[drawOrder[(i * 3) + 2]].pos.z - mapVertex[drawOrder[(i * 3) + 1]].pos.z;
 		edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f);
 
-		XMStoreFloat3(&nonNormalized, XMVector3Cross(edge1, edge2));
+		XMStoreFloat3(&nonNormalized, XMVector3Cross(edge2, edge1));
 		tempNormal.push_back(nonNormalized);
 	}
 
@@ -1018,14 +1019,14 @@ void CreateWorld() {
 				averageNormal = XMVectorSet(tx, ty, tz, 0.0f);
 				facesUsing++;
 			}
-			averageNormal = averageNormal / facesUsing;
-			averageNormal = XMVector3Normalize(averageNormal);
-			mapVertex[i].normal.x = XMVectorGetX(averageNormal);
-			mapVertex[i].normal.y = XMVectorGetY(averageNormal);
-			mapVertex[i].normal.z = XMVectorGetZ(averageNormal);
-			averageNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-			facesUsing = 0;
 		}
+		averageNormal = averageNormal / facesUsing;
+		averageNormal = XMVector3Normalize(averageNormal);
+		mapVertex[i].normal.x = XMVectorGetX(averageNormal);
+		mapVertex[i].normal.y = XMVectorGetY(averageNormal);
+		mapVertex[i].normal.z = XMVectorGetZ(averageNormal);
+		averageNormal = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		facesUsing = 0;
 	}
 
 	D3D11_BUFFER_DESC indexBufferDesc;
@@ -1325,8 +1326,8 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	scd.BufferDesc.Format	= DXGI_FORMAT_R8G8B8A8_UNORM;      // use 32-bit color
 	scd.BufferUsage			= DXGI_USAGE_RENDER_TARGET_OUTPUT; // how swap chain is to be used
 	scd.OutputWindow		= wndHandle;                       // the window to be used
-	scd.SampleDesc.Count	= 4;                               // how many multisamples
-	scd.Windowed			= FALSE;                            // windowed/full-screen mode
+	scd.SampleDesc.Count	= 1;                               // how many multisamples
+	scd.Windowed			= TRUE;                            // windowed/full-screen mode
 
 	// create a device, device context and swap chain using the information in the scd struct
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,

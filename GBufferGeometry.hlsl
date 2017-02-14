@@ -61,7 +61,7 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 		// Pass along the texture coordinates
 		output.TexCoord = input[i].TexCoord;
 
-		output.NormalWS = input[i].Normal;
+		output.NormalWS = normalize(mul(input[i].Normal, (float3x3)worldMatrix));
 		outStream.Append(output);
 	}
 	outStream.RestartStrip();
