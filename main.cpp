@@ -39,6 +39,7 @@ XMVECTOR CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 XMVECTOR DEFAULT_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 XMVECTOR DEFAULT_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+XMVECTOR DEFAULT_UP=XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 float MOVE_LR = 0.0f, MOVE_BF = 0.0f, MOVE_UD = 0.0f, CAM_YAW = 0.0f, CAM_PITCH = 0.0f,SPEED=15.0f;
 
 
@@ -330,7 +331,7 @@ void SetMaterial(materialStruct matprop)
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 2.0f, 200.0f, -4.0f, 1.0f };
+	XMFLOAT4 light_position = { 100.0f, 400.0f, 100.0f, 1.0f };
 	XMFLOAT4 light_color	= Colors::White;
 	float c_att	= 0.2f;
 	float l_att	= 0.5f;
@@ -340,7 +341,7 @@ void setLights()
 
 	gLightBufferData.Lights[0] = test_light;
 	XMStoreFloat4(&gLightBufferData.cameraPositionWS, CAMERA_STARTING_POS);
-	gLightBufferData.globalAmbient = { 0.04f, 0.04f, 0.04f, 1.0f };
+	gLightBufferData.globalAmbient = { 0.18f, 0.18f, 0.18f, 1.0f };
 }
 
 void CreateShaders()
@@ -757,6 +758,7 @@ void RenderFirstPass()
 
 	// Set Vertex Shader input
 	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -789,7 +791,7 @@ void RenderFirstPass()
 
 	// update per-object buffer to spin cube
 	static float rotation = 0.0f;
-	rotation += CUBE_ROTATION_SPEED;
+	//rotation += CUBE_ROTATION_SPEED;
 
 	XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(rotation)));
 
@@ -1104,14 +1106,14 @@ void UpdateCamera() {
 	XMMATRIX YRotation_CAM_directions = XMMatrixRotationY(CAM_YAW);
 	//trnsforms the cameras directions
 	CAM_RIGHT = XMVector3TransformCoord(DEFAULT_RIGHT, YRotation_CAM_directions);
-	CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
+	//CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
 
 	//Camera follows the planes
 	//CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
 
 	//freelook camera
 	CAM_FORWARD = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT));
-
+	CAM_UP = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_UP, CAM_ROT_MAT));
 
 
 	//transforms the cameras position
