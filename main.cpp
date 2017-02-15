@@ -6,6 +6,7 @@
 //  rewrite material functions with more values
 //	viewprojection as single matrix instead of two seperate ones
 //  merge the material and perObject buffers
+//  take using namespace DirectX out of global scope
 // TODO?
 //	Turn global constants into getFunctions()
 //--------------------------------------------------------------------------------------
@@ -482,6 +483,20 @@ std::vector<std::wstring> textureNameArray;
 // TODO? fix retriangulation of concave faces. 
 // TODO?? use std::getline instead
 // Description (not complete): if no vertex normals are included in the .obj file then they will be computed
+/*
+*			Supported data:
+* v	 - geometric verticies			(vx vy vz)
+* vt - vertex texture coordinates	(vu vv)
+* vn - vertex normal				(vnx vny vnz)
+* f	 - face							(v1 v2 ... vn), or (v1/vt1 ...), or (v1/vt1/vtn ...)
+* g	 - group						(groupname)
+* mtlib - material library filename (materiallibname.mtl)
+* usemtl - which material to use	(materialname)
+*
+*			Unsuported data:
+* vp - parameter space verticies in (u [,v] [,w]) form; free form geometry statement
+* l  - line
+*/
 bool LoadObjectModel(std::wstring filename,
 	ID3D11Buffer** vertBuff,
 	ID3D11Buffer** indexBuff,
@@ -489,8 +504,8 @@ bool LoadObjectModel(std::wstring filename,
 	std::vector<int>& subsetMaterialArray,
 	std::vector<materialStruct>& material,
 	int& subsetCount,
-	bool isRHCoordSys,		//needed?
-	bool computeNormals)	//needed?
+	bool isRHCoordSys,
+	bool computeNormals)
 {
 	std::wifstream fileIn(filename.c_str());    //Open file
 	std::wstring meshMatLib;                    //String to hold our obj material library filename
@@ -528,17 +543,20 @@ bool LoadObjectModel(std::wstring filename,
 	if (!fileIn)	//Early exit if the file doesn't open
 		exit(-1);
 
+	// .obj file
 	while (fileIn)
 	{
 		checkChar = fileIn.get();			//get the next char
-
 		switch (checkChar)
 		{
-		case '#':							//Comment line
+		case '#': //Comment line
+		{
 			while (checkChar != '\n')		//Keep reading chars until the line ends
 				checkChar = fileIn.get();
+		}
 			break;
-		case 'v': // Get vertex descriptions
+		case 'v': //Get vertex descriptions
+		{
 			checkChar = fileIn.get();
 			if (checkChar == ' ')			//v - vertex position
 			{
@@ -560,276 +578,277 @@ bool LoadObjectModel(std::wstring filename,
 				vertNorm.push_back(XMFLOAT3(vnx, vny, (isRHCoordSys) ? vnz * -1.0f : vnz)); //Invert the z-axiz if the OBJ is RH
 				hasNorm = true;
 			}
+		}
 			break;
-		case 'g':							//g - group
+		case 'g': //g - group
+		{
 			checkChar = fileIn.get();
 			if (checkChar == ' ')
 			{
 				subsetIndexStart.push_back(vIndex);
 				subsetCount++;
 			}
+		}
 			break;
-
-			/* Breaks faces with more than three sides into multiple triangles */
-		case 'f':							//f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
+		case 'f': //f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
+		{									//Breaks faces with more than three sides into multiple triangles
 			checkChar = fileIn.get();
-			if (checkChar == ' ')
-			{
-				face = L"";				//clear the temporary wide string which will be used to store the line
-				std::wstring VertDef;	//holds one vertex definition at a time
-				triangleCount = 0;
+			if (checkChar != ' ')	//early exit if the next character isn't a space
+				break;
 
+			face = L"";				//clear the temporary wide string which will be used to store the line
+			std::wstring VertDef;	//holds one vertex definition at a time
+			triangleCount = 0;
+
+			checkChar = fileIn.get();
+			while (checkChar != '\n')	//read through the whole line
+			{
+				face += checkChar;		//add every char to the face string
 				checkChar = fileIn.get();
-				while (checkChar != '\n')	//read through the whole line
+				if (checkChar == ' ')
+					triangleCount++;	//increase triangle count if it's a space
+			}
+
+			//check for space at the end of our face string
+			if (face[face.length() - 1] == ' ')
+				triangleCount--;
+			triangleCount -= 1; //every vertex in the face after the first two are new faces
+
+			std::wstringstream ss(face);
+			if (face.length() <= 0) // early exit if the line isn't just simply 'f '
+				break;
+
+			int firstVIndex, lastVIndex; // first and last vertice's index
+
+			for (int i = 0; i < 3; i++) //First three vertices
+			{
+				ss >> VertDef; //get one vertex definition [vPos/vTexCoord/vNorm]
+				std::wstring vertPart;
+				int whichPart = 0; //vPos = 0, vTexCoord = 1, vNorm = 2
+				//Parse the string
+				for (int j = 0; j < VertDef.length(); j++)
 				{
-					face += checkChar;		//add every char to the face string
-					checkChar = fileIn.get();
-					if (checkChar == ' ')
-						triangleCount++;	//increase triangle count if it's a space
+					if (VertDef[j] != '/')		//if there's no divider add char to vertPart
+						vertPart += VertDef[j];
+					//If the current char is a divider or the last character in the string
+					if (VertDef[j] == '/' || j == VertDef.length() - 1)
+					{
+						std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
+
+						if (whichPart == 0) //if vPos
+						{
+							wstringToInt >> vertPosIndexTemp;
+							vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+
+							//check if the vert pos was the only thing specified
+							if (j == VertDef.length() - 1)
+							{
+								vertNormIndexTemp = 0;
+								vertTCIndexTemp = 0;
+							}
+						} //end if vPos
+						else if (whichPart == 1) //if vTexCoord
+						{
+							if (vertPart != L"") //check if there is a tex coord
+							{
+								wstringToInt >> vertTCIndexTemp;
+								vertTCIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+							}
+							else //if there is no tex coord 0 will be default index
+								vertTCIndexTemp = 0;
+
+							//if the current char is the second to last in the string then there must be no normal so a default normal is set to index 0
+							if (j == VertDef.length() - 1)
+								vertNormIndexTemp = 0;
+
+						} //end if vTexCoord
+						else if (whichPart == 2) //if vNorm
+						{
+							//std::wistringstream wstringToInt(vertPart);
+							wstringToInt >> vertNormIndexTemp;
+							vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+						} //end if vNorm
+						vertPart = L"";
+						whichPart++;
+					} //end if current char is a divider or the last char in the string
+				} //end for j-loop
+
+				//check to make sure there's at least one subset
+				if (subsetCount == 0)
+				{
+					subsetIndexStart.push_back(vIndex); //start index for this subset
+					subsetCount++;
+				}
+				//avoid duplicate vertices
+				bool vertAlreadyExists = false;
+				if (totalVerts >= 3) //make sure there's at least one triangle to check
+				{
+					//loop through all the verticies
+					for (int iCheck = 0; iCheck < totalVerts; iCheck)
+					{
+						//if the vertex position and tex coord in memory are the same as the ones currently being read then 
+						// this faces vertex index is set to the vertex's value in memory. 
+						if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
+						{
+							if (vertTCIndexTemp == vertTCIndex[iCheck])
+							{
+								indices.push_back(iCheck);	//set the index for this vertex
+								vertAlreadyExists = true;
+							}
+						}
+					} //end loop through verticies
+				} //end duplicate test
+
+				if (!vertAlreadyExists)
+				{
+					vertPosIndex.push_back(vertPosIndexTemp);
+					vertTCIndex.push_back(vertTCIndexTemp);
+					vertNormIndex.push_back(vertNormIndexTemp);
+					totalVerts++;						//new vertex created
+					indices.push_back(totalVerts - 1);	//set index for this vertex
 				}
 
-				//check for space at the end of our face string
-				if (face[face.length() - 1] == ' ')
-					triangleCount--;
-				triangleCount -= 1; //every vertex in the face after the first two are new faces
-
-				std::wstringstream ss(face);
-				if (face.length() > 0) // if the line isn't just simply 'f '
+				//make sure the rest of the triangles use the first vertex
+				if (i == 0)
 				{
-					int firstVIndex, lastVIndex; // first and last vertice's index
+					firstVIndex = indices[vIndex];		//the first vertex index of this face
+				}
 
-					for (int i = 0; i < 3; i++) //First three vertices
+				//if this was the last vertex in the first triangle the next triangle will use it as well
+				if (i == 2)
+				{
+					lastVIndex = indices[vIndex];		//the last vertex index of this triangle
+				}
+				vIndex++; //increment index count
+			} //end for i-loop
+			meshTriangles++; //one triangle down
+
+			//convert the face to more than one triangle in case the face has more than three vertexes
+			for (int l = 0; l < triangleCount - 1; ++l)
+			{
+				//first vertex of this triangle (the very first vertex of the face too)
+				indices.push_back(firstVIndex); //set index for this vertex
+				vIndex++;
+
+				//second vertex of this triangle (the last vertex used in the tri before this one)
+				indices.push_back(lastVIndex); //set index for this vertex
+				vIndex++;
+
+				//get the third vertex for this triangle
+				ss >> VertDef;
+
+				std::wstring vertPart;
+				int whichPart = 0;
+
+				//TODO: see if this duplicate code can be eliminated
+				//parse this string (same procedure as in the for i-loop)
+				for (int j = 0; j < VertDef.length(); j++)
+				{
+					if (VertDef[j] != '/')		//if there's no divider add char to vertPart
+						vertPart += VertDef[j];
+					//If the current char is a divider or the last character in the string
+					if (VertDef[j] == '/' || j == VertDef.length() - 1)
 					{
-						ss >> VertDef; //get one vertex definition [vPos/vTexCoord/vNorm]
-						std::wstring vertPart;
-						int whichPart = 0; //vPos = 0, vTexCoord = 1, vNorm = 2
-						//Parse the string
-						for (int j = 0; j < VertDef.length(); j++)
+						std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
+
+						if (whichPart == 0) //if vPos
 						{
-							if (VertDef[j] != '/')		//if there's no divider add char to vertPart
-								vertPart += VertDef[j];
-							//If the current char is a divider or the last character in the string
-							if (VertDef[j] == '/' || j == VertDef.length() - 1)
+							wstringToInt >> vertPosIndexTemp;
+							vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+
+												   //check if the vert pos was the only thing specified
+							if (j == VertDef.length() - 1)
 							{
-								std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
-
-								if (whichPart == 0) //if vPos
-								{
-									wstringToInt >> vertPosIndexTemp;
-									vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
-
-									//check if the vert pos was the only thing specified
-									if (j == VertDef.length() - 1)
-									{
-										vertNormIndexTemp = 0;
-										vertTCIndexTemp = 0;
-									}
-								} //end if vPos
-								else if (whichPart == 1) //if vTexCoord
-								{
-									if (vertPart != L"") //check if there is a tex coord
-									{
-										wstringToInt >> vertTCIndexTemp;
-										vertTCIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
-									}
-									else //if there is no tex coord 0 will be default index
-										vertTCIndexTemp = 0;
-
-									//if the current char is the second to last in the string then there must be no normal so a default normal is set to index 0
-									if (j == VertDef.length() - 1)
-										vertNormIndexTemp = 0;
-
-								} //end if vTexCoord
-								else if (whichPart == 2) //if vNorm
-								{
-									//std::wistringstream wstringToInt(vertPart);
-									wstringToInt >> vertNormIndexTemp;
-									vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
-								} //end if vNorm
-
-								vertPart = L"";
-								whichPart++;
-							} //end if current char is a divider or the last char in the string
-						} //end for j-loop
-
-						  //TODO: storing the face
-						//check to make sure there's at least one subset
-						if (subsetCount == 0)
+								vertNormIndexTemp = 0;
+								vertTCIndexTemp = 0;
+							}
+						} //end if vPos
+						else if (whichPart == 1) //if vTexCoord
 						{
-							subsetIndexStart.push_back(vIndex); //start index for this subset
-							subsetCount++;
-						}
-						//avoid duplicate vertices
-						bool vertAlreadyExists = false;
-						if (totalVerts >= 3) //make sure there's at least one triangle to check
-						{
-							//loop through all the verticies
-							for (int iCheck = 0; iCheck < totalVerts; iCheck)
+							if (vertPart != L"") //check if there is a tex coord
 							{
-								//if the vertex position and tex coord in memory are the same as the ones currently being read then 
-								// this faces vertex index is set to the vertex's value in memory. 
-								if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
-								{
-									if (vertTCIndexTemp == vertTCIndex[iCheck])
-									{
-										indices.push_back(iCheck);	//set the index for this vertex
-										vertAlreadyExists = true;
-									}
-								}
-							} //end loop through verticies
-						} //end duplicate test
+								wstringToInt >> vertTCIndexTemp;
+								vertTCIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+							}
+							else //if there is no tex coord 0 will be default index
+								vertTCIndexTemp = 0;
 
-						if (!vertAlreadyExists)
+							//if the current char is the second to last in the string then there must be no normal so a default normal is set to index 0
+							if (j == VertDef.length() - 1)
+								vertNormIndexTemp = 0;
+
+						} //end if vTexCoord
+						else if (whichPart == 2) //if vNorm
 						{
-							vertPosIndex.push_back(vertPosIndexTemp);
-							vertTCIndex.push_back(vertTCIndexTemp);
-							vertNormIndex.push_back(vertNormIndexTemp);
-							totalVerts++;						//new vertex created
-							indices.push_back(totalVerts - 1);	//set index for this vertex
-						}
+							//std::wistringstream wstringToInt(vertPart);
+							wstringToInt >> vertNormIndexTemp;
+							vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
+						} //end if vNorm
 
-						//make sure the rest of the triangles use the first vertex
-						if (i == 0)
-						{
-							firstVIndex = indices[vIndex];		//the first vertex index of this face
-						}
+						vertPart = L"";
+						whichPart++;
+					} //end if current char is a divider or the last char in the string
+				} //end for j-loop
 
-						//if this was the last vertex in the first triangle the next triangle will use it as well
-						if (i == 2)
-						{
-							lastVIndex = indices[vIndex];		//the last vertex index of this triangle
-						}
-						vIndex++; //increment index count
-					} //end for i-loop
-					meshTriangles++; //one triangle down
-
-					//convert the face to more than one triangle in case the face has more than three vertexes
-					for (int l = 0; l < triangleCount - 1; ++l)
+				//check for duplicate vertices
+				bool vertAlreadyExists = false;
+				if (totalVerts >= 3) //make sure there's at least one triangle to check
+				{
+					//loop through all the verticies
+					for (int iCheck = 0; iCheck < totalVerts; iCheck)
 					{
-						//first vertex of this triangle (the very first vertex of the face too)
-						indices.push_back(firstVIndex); //set index for this vertex
-						vIndex++;
-
-						//second vertex of this triangle (the last vertex used in the tri before this one)
-						indices.push_back(lastVIndex); //set index for this vertex
-						vIndex++;
-
-						//get the third vertex for this triangle
-						ss >> VertDef;
-
-						std::wstring vertPart;
-						int whichPart = 0;
-
-						//TODO: see if this duplicate code can be eliminated
-						//parse this string (same procedure as in the for i-loop)
-						for (int j = 0; j < VertDef.length(); j++)
+						//if the vertex position and tex coord in memory are the same as the ones currently being read then 
+						// this faces vertex index is set to the vertex's value in memory. 
+						if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
 						{
-							if (VertDef[j] != '/')		//if there's no divider add char to vertPart
-								vertPart += VertDef[j];
-							//If the current char is a divider or the last character in the string
-							if (VertDef[j] == '/' || j == VertDef.length() - 1)
+							if (vertTCIndexTemp == vertTCIndex[iCheck])
 							{
-								std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
-
-								if (whichPart == 0) //if vPos
-								{
-									wstringToInt >> vertPosIndexTemp;
-									vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
-
-														   //check if the vert pos was the only thing specified
-									if (j == VertDef.length() - 1)
-									{
-										vertNormIndexTemp = 0;
-										vertTCIndexTemp = 0;
-									}
-								} //end if vPos
-								else if (whichPart == 1) //if vTexCoord
-								{
-									if (vertPart != L"") //check if there is a tex coord
-									{
-										wstringToInt >> vertTCIndexTemp;
-										vertTCIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
-									}
-									else //if there is no tex coord 0 will be default index
-										vertTCIndexTemp = 0;
-
-									//if the current char is the second to last in the string then there must be no normal so a default normal is set to index 0
-									if (j == VertDef.length() - 1)
-										vertNormIndexTemp = 0;
-
-								} //end if vTexCoord
-								else if (whichPart == 2) //if vNorm
-								{
-									//std::wistringstream wstringToInt(vertPart);
-									wstringToInt >> vertNormIndexTemp;
-									vertNormIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
-								} //end if vNorm
-
-								vertPart = L"";
-								whichPart++;
-							} //end if current char is a divider or the last char in the string
-						} //end for j-loop
-
-						//check for duplicate vertices
-						bool vertAlreadyExists = false;
-						if (totalVerts >= 3) //make sure there's at least one triangle to check
-						{
-							//loop through all the verticies
-							for (int iCheck = 0; iCheck < totalVerts; iCheck)
-							{
-								//if the vertex position and tex coord in memory are the same as the ones currently being read then 
-								// this faces vertex index is set to the vertex's value in memory. 
-								if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
-								{
-									if (vertTCIndexTemp == vertTCIndex[iCheck])
-									{
-										indices.push_back(iCheck);	//set the index for this vertex
-										vertAlreadyExists = true;
-									}
-								}
-							} //end loop through verticies
-						} //end duplicate test
-
-						if (!vertAlreadyExists)
-						{
-							vertPosIndex.push_back(vertPosIndexTemp);
-							vertTCIndex.push_back(vertTCIndexTemp);
-							vertNormIndex.push_back(vertNormIndexTemp);
-							totalVerts++;						//new vertex created
-							indices.push_back(totalVerts - 1);	//set index for this vertex
+								indices.push_back(iCheck);	//set the index for this vertex
+								vertAlreadyExists = true;
+							}
 						}
+					} //end loop through verticies
+				} //end duplicate test
 
-						//set the second vertex for the next triangle to the last vertex
-						lastVIndex = indices[vIndex]; //the last vertex index of this triangle
+				if (!vertAlreadyExists)
+				{
+					vertPosIndex.push_back(vertPosIndexTemp);
+					vertTCIndex.push_back(vertTCIndexTemp);
+					vertNormIndex.push_back(vertNormIndexTemp);
+					totalVerts++;						//new vertex created
+					indices.push_back(totalVerts - 1);	//set index for this vertex
+				}
 
-						meshTriangles++; //new triangle defined
-						vIndex++;
+				//set the second vertex for the next triangle to the last vertex
+				lastVIndex = indices[vIndex]; //the last vertex index of this triangle
 
-					} //end for l-loop
-
-				} //end if the line isn't empty
-			}
+				meshTriangles++; //new triangle defined
+				vIndex++;
+			} //end for l-loop
+		}
 			break;
-		case 'm':							//mtllib - material library filename
+		case 'm': //mtllib - material library filename
+		{
 			for (int i = 0; i < 6; i++) {	//loop over 'tllib '
 				checkChar = fileIn.get();
 			}
 			fileIn >> meshMatLib;			//store the material library file name 
+		}
 			break;
-		case 'u':							//usemtl - which material to use
+		case 'u': //usemtl - which material to use
+		{
 			for (int i = 0; i < 6; i++) {	//loop over 'semtl '
 				checkChar = fileIn.get();
 			}
 			meshMaterialsTemp = L"";					//Clear the temporary wide string
 			fileIn >> meshMaterialsTemp;				//store the material name as a wide string
 			meshMaterials.push_back(meshMaterialsTemp); //store it in a vectore of wide strings
+		}
 			break;
-		case 's':
-
 		default:
 			break;
-		}
-	}
+		} //end switch .obj file
+	} //end while .obj file
 
 	subsetIndexStart.push_back(vIndex); //set index start
 
@@ -854,29 +873,26 @@ bool LoadObjectModel(std::wstring filename,
 	fileIn.close();
 	fileIn.open(meshMatLib.c_str());
 
-	std::wstring lastStringRead;
+	std::wstring lastStringRead; // ????? This is never used
 	int matCount = material.size(); //total materials
 
 	//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
-	std::wstring word_m = L"ap_Kd";
-	bool test_m = true;
-	std::wstring word_n = L"ewmtl ";
-	bool test_n = true;
-
 
 	if (!fileIn) //early exit if the material fiel doesn't open
 		exit(-1);
 	while (fileIn)
 	{
 		checkChar = fileIn.get();
-
 		switch (checkChar)
 		{
 		case '#': //comment
+		{
 			while (checkChar != '\n')
 				checkChar = fileIn.get();
+		}
 			break;
 		case 'K': //Diffuse color
+		{
 			checkChar = fileIn.get();
 			if (checkChar == 's') // Ks - specular color
 			{
@@ -886,8 +902,10 @@ bool LoadObjectModel(std::wstring filename,
 				fileIn >> materialVector[matCount - 1].specularColor.y;
 				fileIn >> materialVector[matCount - 1].specularColor.z;
 			}
+		}
 			break;
 		case 'N':
+		{
 			checkChar = fileIn.get();
 			if (checkChar == 's')
 			{
@@ -895,65 +913,82 @@ bool LoadObjectModel(std::wstring filename,
 
 				fileIn >> materialVector[matCount - 1].specularPower;
 			}
+		}
 			break;
-		case 'm': // map_Kd - texture file
-			test_m = true;
-			for (int i = 0; i < 6; i++) {	//loop over 'ap_Kd '
+		case 'm': //map_Kd - texture file
+		{
+			std::wstring word_m = L"ap_Kd";
+			bool test_m = true;
+			//loop over "ap_Kd "
+			for (int i = 0; i < 6; i++)
+			{
 				checkChar = fileIn.get();
 				if (checkChar != word_m[i])
+				{
 					test_m = false;
+					break;
+				}
 			}
-			if (test_m)
+			if (!test_m) //early exit if the letter following 'm' aren't "ap_Kd "
+				break;
+
+			std::wstring fileNamePath;
+			bool texFilePathEnd = false;
+			//read the filename
+			while (!texFilePathEnd)
 			{
-				std::wstring fileNamePath;
+				checkChar = fileIn.get();
+				fileNamePath += checkChar;
 
-				bool texFilePathEnd = false;
-				while (!texFilePathEnd)
+				//stops reading after the filename extension (.png for example)
+				if (checkChar == '.')
 				{
-					checkChar = fileIn.get();
+					for (int i = 0; i < 3; ++i)
+						fileNamePath += fileIn.get();
 
-					fileNamePath += checkChar;
-
-					if (checkChar == '.')
-					{
-						for (int i = 0; i < 3; ++i)
-							fileNamePath += fileIn.get();
-
-						texFilePathEnd = true;
-					}
-				}
-				//check if this texture has already been loaded
-				bool alreadyLoaded = false;
-				for (int i = 0; i < textureNameArray.size(); ++i)
-				{
-					if (fileNamePath == textureNameArray[i])
-					{
-						alreadyLoaded = true;
-						materialVector[matCount - 1].texArrayIndex = i;
-					}
-				}
-				//load the texture
-				if (!alreadyLoaded)
-				{
-					ID3D11ShaderResourceView* tempMeshSRV;
-					// TODO: D3DX11CreateShaderResourceViewFromFile
-
-					if (SUCCEEDED(gHR))
-					{
-						textureNameArray.push_back(fileNamePath.c_str());
-						materialVector[matCount - 1].texArrayIndex = meshSRV.size();
-						meshSRV.push_back(tempMeshSRV);
-					}
+					texFilePathEnd = true;
 				}
 			}
+			//check if this texture has already been loaded
+			bool alreadyLoaded = false;
+			for (int i = 0; i < textureNameArray.size(); ++i)
+			{
+				if (fileNamePath == textureNameArray[i])
+				{
+					alreadyLoaded = true;
+					materialVector[matCount - 1].texArrayIndex = i;
+				}
+			}
+			//load the texture
+			if (!alreadyLoaded)
+			{
+				// TEXTURE SUPPORT NOT IPMLEMENTED YET
+
+				//ID3D11ShaderResourceView* tempMeshSRV;
+				//// TODO: D3DX11CreateShaderResourceViewFromFile
+
+				//if (SUCCEEDED(gHR))
+				//{
+				//	textureNameArray.push_back(fileNamePath.c_str());
+				//	materialVector[matCount - 1].texArrayIndex = meshSRV.size();
+				//	meshSRV.push_back(tempMeshSRV);
+				//}
+			}
+		}
 			break;
 		case 'n': //newmtl - declare new material
-			test_n = true;
+		{
+			std::wstring word_n = L"ewmtl ";
+			bool test_n = true;
+			//loop over "ewmtl "
 			for (int i = 0; i < 6; i++)
 			{
 				checkChar = fileIn.get();
 				if (checkChar != word_n[i])
+				{
 					test_n = false;
+					break;
+				}
 			}
 			if (test_n)
 			{
@@ -963,11 +998,12 @@ bool LoadObjectModel(std::wstring filename,
 				materialVector[matCount].texArrayIndex = 0;
 				matCount++;
 			}
+		}
 			break;
 		default:
 			break;
-		}
-	}
+		} //end switch .mtl file
+	} //end while .mtl file
 
 	//set the subset material to the index value of its material in the material array
 	for (int i = 0; i < meshSubsets; ++i)
@@ -982,7 +1018,7 @@ bool LoadObjectModel(std::wstring filename,
 			}
 		}
 		if (!hasMat)
-			subsetMaterialArray.push_back(0); //use first material in array 
+			subsetMaterialArray.push_back(0); //use first material in the array if the subset doesn't have a specified material
 	}
 
 	//create vertices
@@ -992,9 +1028,9 @@ bool LoadObjectModel(std::wstring filename,
 	//store the verticies from the file in a vector
 	for (int j = 0; j < totalVerts; ++j)
 	{
-		tempVert.pos = vertPos[vertPosIndex[j]];
-		tempVert.texCoord = vertTexCoord[vertTCIndex[j]];
-		tempVert.normal = vertNorm[vertNormIndex[j]];
+		tempVert.pos		= vertPos[vertPosIndex[j]];
+		tempVert.texCoord	= vertTexCoord[vertTCIndex[j]];
+		tempVert.normal		= vertNorm[vertNormIndex[j]];
 
 		verticies.push_back(tempVert);
 	}
@@ -1030,12 +1066,11 @@ bool LoadObjectModel(std::wstring filename,
 			edge2 = XMVectorSet(vecX, vecY, vecZ, 0.0f); //second edge
 
 			//Cross multiply to get the un-normalized face normal
-			XMStoreFloat3(&unnormalized, XMVector3Cross(edge1, edge2));
+			DirectX::XMStoreFloat3(&unnormalized, XMVector3Cross(edge2, edge1));
 			tempNormal.push_back(unnormalized); //save unnormalized normal (for normal averaging)
 		} //end face normal loop
 
-
-		//compute normals (vertex normals - normal averaging)
+		//compute vertex normals (normal averaging)
 		XMVECTOR normalSum = XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		int facesUsing = 0;
 		float tX, tY, tZ;
@@ -1055,21 +1090,21 @@ bool LoadObjectModel(std::wstring filename,
 					normalSum = XMVectorSet(tX, tY, tZ, 0.0f); //add the unnormalized face normal to the normal sum
 					facesUsing++;
 				}
-			} //end for j-loop
+			} //end for j-loop through each triangle
 
 			//divide the unnormalized normal by the number of faces sharing the vertex and the normalize it to get the actual normal
 			normalSum = XMVector3Normalize(normalSum / facesUsing);
 
 			//store it in the current vertex
-			XMStoreFloat3(&verticies[i].normal, normalSum);
+			DirectX::XMStoreFloat3(&verticies[i].normal, normalSum);
 
 			//clear normalSum and facesUsing
 			normalSum = XMVectorZero();
 			facesUsing = 0;
-		} //end for i-loop
+		} //end for i-loop through each vertex
 	} //end computeNormals
 
-	//create vertex and index buffers
+	//create vertex and index buffers -------------------------------------------------------------------------
 
 	//index buffer
 	D3D11_BUFFER_DESC indexBufferDesc;
@@ -1087,7 +1122,6 @@ bool LoadObjectModel(std::wstring filename,
 	gDevice->CreateBuffer(&indexBufferDesc, &indicesData, indexBuff);
 
 	//vertex buffer
-
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
 
@@ -1103,7 +1137,7 @@ bool LoadObjectModel(std::wstring filename,
 	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, vertBuff);
 
 	return true;
-}
+} //end LoadObjectModel
 
 void CreateTriangleData()
 {
