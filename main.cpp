@@ -4,6 +4,9 @@
 // TODO?:
 //	Turn global constants into getFunctions()
 //--------------------------------------------------------------------------------------
+
+#define DIRECTINPUT_VERSION 0x0800
+
 #include <windows.h>
 #include <d3d11.h>
 #include <d3dcompiler.h>
@@ -13,12 +16,14 @@
 #include <vector>
 #include <dinput.h>
 #include <WICTextureLoader.h>
+#include <objbase.h>
 
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
 #pragma comment(lib,"dinput8.lib")
 #pragma comment(lib,"dxguid.lib")
+#pragma comment(lib,"Ole32.lib")
 
 
 using namespace DirectX;
@@ -1124,11 +1129,14 @@ void UpdateCamera() {
 	//transforms the cameras position
 	CAM_POS += MOVE_LR*CAM_RIGHT;
 	CAM_POS += MOVE_BF*CAM_FORWARD;
-	//CAM_POS += MOVE_UD*CAM_UP;
-	int a= XMVectorGetX(CAM_POS), b = XMVectorGetZ(CAM_POS);
-	if (a > 0 && b > 0 && a < 200 && b < 200) {
-		CAM_POS = XMVectorSet(XMVectorGetX(CAM_POS), WORLD_HEIGHT[b][a] + 3, XMVectorGetZ(CAM_POS), 1.0f);
-	}
+	CAM_POS += MOVE_UD*CAM_UP;
+
+	//following terrain
+	//int a= XMVectorGetX(CAM_POS), b = XMVectorGetZ(CAM_POS);
+	//if (a > 0 && b > 0 && a < 200 && b < 200) {
+	//	CAM_POS = XMVectorSet(XMVectorGetX(CAM_POS), WORLD_HEIGHT[b][a] + 3, XMVectorGetZ(CAM_POS), 1.0f);
+	//}
+
 	MOVE_LR = 0.0f;
 	MOVE_BF = 0.0f;
 	MOVE_UD = 0.0f;
@@ -1364,39 +1372,41 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, NULL);
 	}
 
-	D3D11_TEXTURE2D_DESC bthTexDesc;
-	ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
-	bthTexDesc.Width				= BTH_IMAGE_WIDTH;
-	bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
-	bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
-	bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
-	bthTexDesc.SampleDesc.Count		= 1;
-	bthTexDesc.SampleDesc.Quality	= 0;
-	bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
-	bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
-	bthTexDesc.MiscFlags			= 0;
-	bthTexDesc.CPUAccessFlags		= 0;
+	//D3D11_TEXTURE2D_DESC bthTexDesc;
+	//ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
+	//bthTexDesc.Width				= BTH_IMAGE_WIDTH;
+	//bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
+	//bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
+	//bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	//bthTexDesc.SampleDesc.Count		= 1;
+	//bthTexDesc.SampleDesc.Quality	= 0;
+	//bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
+	//bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
+	//bthTexDesc.MiscFlags			= 0;
+	//bthTexDesc.CPUAccessFlags		= 0;
 
-	ID3D11Texture2D *pTexture = NULL;
+	//ID3D11Texture2D *pTexture = NULL;
 
-	D3D11_SUBRESOURCE_DATA data;
-	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
+	//D3D11_SUBRESOURCE_DATA data;
+	//ZeroMemory(&data, sizeof(data));
+	//data.pSysMem = (void*)BTH_IMAGE_DATA;
+	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	//gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
-	ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
-	resourceViewDesc.Format						= bthTexDesc.Format;
-	resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
-	resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
-	resourceViewDesc.Texture2D.MostDetailedMip	= 0;
-	gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
+	//D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
+	//ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
+	//resourceViewDesc.Format						= bthTexDesc.Format;
+	//resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
+	//resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
+	//resourceViewDesc.Texture2D.MostDetailedMip	= 0;
+	//gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
 
-	pTexture->Release();
+	//pTexture->Release();
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	//ID3D11Resource* texture;
-	//CreateWICTextureFromFile(gDevice,L"GRASSTEXTURE.BMP",&texture,&gTextureView);
+	ID3D11Resource* texture;
+	CreateWICTextureFromFile(gDevice,gDeviceContext, L"grass-free-texture.jpg",&texture,&gTextureView);
+
 	return hr;
 }
 
