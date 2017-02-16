@@ -32,7 +32,7 @@ const int NR_OF_OBJECTS			= 1;
 float CUBE_ROTATION_SPEED		= 0.01f;
 float LIGHT_ROTATION_SPEED		= 0.001f;
 //---------------Camera default values------------------------------------
-const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(0.0f, 1.0f, -2.0f, 1.0f);
+const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f);
 XMVECTOR CAM_POS = CAMERA_STARTING_POS;
 XMVECTOR CAM_TARGET =XMVectorZero();
 XMVECTOR CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -55,7 +55,7 @@ double FRAME_TIME;
 //---------------------Heightmap values-----------------------------
 int NUMBER_OF_FACES = 0;
 int NUMBER_OF_VERTICES = 0;
-
+float WORLD_HEIGHT[200][200];
 struct HeightMapInfo {
 	int worldWidth;
 	int worldHeight;
@@ -957,6 +957,7 @@ void CreateWorld() {
 		for (DWORD j = 0; j < columns; j++) {
 			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
 			mapVertex[i*columns + j].normal = XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
+			WORLD_HEIGHT[i][j] = hminfo.heightMap[i*columns + j].y;
 		}
 	}
 
@@ -1110,21 +1111,24 @@ void UpdateCamera() {
 	XMMATRIX YRotation_CAM_directions = XMMatrixRotationY(CAM_YAW);
 	//trnsforms the cameras directions
 	CAM_RIGHT = XMVector3TransformCoord(DEFAULT_RIGHT, YRotation_CAM_directions);
-	//CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
-
+	
 	//Camera follows the planes
-	//CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
+	CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
+	CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
 
 	//freelook camera
-	CAM_FORWARD = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT));
-	CAM_UP = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_UP, CAM_ROT_MAT));
+	//CAM_FORWARD = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT));
+	//CAM_UP = XMVector3Normalize(XMVector3TransformCoord(DEFAULT_UP, CAM_ROT_MAT));
 
 
 	//transforms the cameras position
 	CAM_POS += MOVE_LR*CAM_RIGHT;
 	CAM_POS += MOVE_BF*CAM_FORWARD;
-	CAM_POS += MOVE_UD*CAM_UP;
-
+	//CAM_POS += MOVE_UD*CAM_UP;
+	int a= XMVectorGetX(CAM_POS), b = XMVectorGetZ(CAM_POS);
+	if (a > 0 && b > 0 && a < 200 && b < 200) {
+		CAM_POS = XMVectorSet(XMVectorGetX(CAM_POS), WORLD_HEIGHT[b][a] + 3, XMVectorGetZ(CAM_POS), 1.0f);
+	}
 	MOVE_LR = 0.0f;
 	MOVE_BF = 0.0f;
 	MOVE_UD = 0.0f;
@@ -1360,39 +1364,39 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, NULL);
 	}
 
-	//D3D11_TEXTURE2D_DESC bthTexDesc;
-	//ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
-	//bthTexDesc.Width				= BTH_IMAGE_WIDTH;
-	//bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
-	//bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
-	//bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
-	//bthTexDesc.SampleDesc.Count		= 1;
-	//bthTexDesc.SampleDesc.Quality	= 0;
-	//bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
-	//bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
-	//bthTexDesc.MiscFlags			= 0;
-	//bthTexDesc.CPUAccessFlags		= 0;
+	D3D11_TEXTURE2D_DESC bthTexDesc;
+	ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
+	bthTexDesc.Width				= BTH_IMAGE_WIDTH;
+	bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
+	bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
+	bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	bthTexDesc.SampleDesc.Count		= 1;
+	bthTexDesc.SampleDesc.Quality	= 0;
+	bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
+	bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
+	bthTexDesc.MiscFlags			= 0;
+	bthTexDesc.CPUAccessFlags		= 0;
 
-	//ID3D11Texture2D *pTexture = NULL;
+	ID3D11Texture2D *pTexture = NULL;
 
-	//D3D11_SUBRESOURCE_DATA data;
-	//ZeroMemory(&data, sizeof(data));
-	//data.pSysMem = (void*)BTH_IMAGE_DATA;
-	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	//gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
+	D3D11_SUBRESOURCE_DATA data;
+	ZeroMemory(&data, sizeof(data));
+	data.pSysMem = (void*)BTH_IMAGE_DATA;
+	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
 
-	//D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
-	//ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
-	//resourceViewDesc.Format						= bthTexDesc.Format;
-	//resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
-	//resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
-	//resourceViewDesc.Texture2D.MostDetailedMip	= 0;
-	//gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
+	D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
+	ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
+	resourceViewDesc.Format						= bthTexDesc.Format;
+	resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
+	resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
+	resourceViewDesc.Texture2D.MostDetailedMip	= 0;
+	gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
 
-	//pTexture->Release();
+	pTexture->Release();
 
-	ID3D11Resource* texture;
-	CreateWICTextureFromFile(gDevice,L"GRASSTEXTURE.BMP",&texture,&gTextureView);
+	//ID3D11Resource* texture;
+	//CreateWICTextureFromFile(gDevice,L"GRASSTEXTURE.BMP",&texture,&gTextureView);
 	return hr;
 }
 
