@@ -17,6 +17,7 @@
 #include "bth_image.h"
 #include <Windows.h>
 
+
 // for reading obj
 #include <string> //might not be necessary
 #include <vector>
@@ -543,6 +544,7 @@ bool LoadObjectModel(std::wstring filename,
 	if (!fileIn)	//Early exit if the file doesn't open
 		exit(-1);
 
+	
 	// .obj file
 	while (fileIn)
 	{
@@ -587,6 +589,8 @@ bool LoadObjectModel(std::wstring filename,
 			{
 				subsetIndexStart.push_back(vIndex);
 				subsetCount++;
+				while (checkChar != '\n')		//Keep reading chars until the line ends
+					checkChar = fileIn.get();
 			}
 		}
 			break;
@@ -684,7 +688,7 @@ bool LoadObjectModel(std::wstring filename,
 				if (totalVerts >= 3) //make sure there's at least one triangle to check
 				{
 					//loop through all the verticies
-					for (int iCheck = 0; iCheck < totalVerts; iCheck)
+					for (int iCheck = 0; iCheck < totalVerts; ++iCheck)
 					{
 						//if the vertex position and tex coord in memory are the same as the ones currently being read then 
 						// this faces vertex index is set to the vertex's value in memory. 
@@ -829,21 +833,43 @@ bool LoadObjectModel(std::wstring filename,
 			break;
 		case 'm': //mtllib - material library filename
 		{
+			std::wstring word_m = L"tllib ";
+			bool test_m = true;
 			for (int i = 0; i < 6; i++) {	//loop over 'tllib '
 				checkChar = fileIn.get();
+				if (checkChar != word_m[i])
+				{
+					test_m = false;
+					break;
+				}
 			}
+			if (!test_m)
+				break;
 			fileIn >> meshMatLib;			//store the material library file name 
 		}
 			break;
 		case 'u': //usemtl - which material to use
 		{
+			std::wstring word_u = L"semtl ";
+			bool test_u = true;
 			for (int i = 0; i < 6; i++) {	//loop over 'semtl '
 				checkChar = fileIn.get();
+				if (checkChar != word_u[i])
+				{
+					test_u = false;
+					break;
+				}
 			}
+			if (!test_u)
+				break;
 			meshMaterialsTemp = L"";					//Clear the temporary wide string
 			fileIn >> meshMaterialsTemp;				//store the material name as a wide string
 			meshMaterials.push_back(meshMaterialsTemp); //store it in a vectore of wide strings
 		}
+			break;
+		case 's':
+			// TODO: add side case
+			hasTexCoord = hasTexCoord;
 			break;
 		default:
 			break;
@@ -1005,6 +1031,8 @@ bool LoadObjectModel(std::wstring filename,
 		} //end switch .mtl file
 	} //end while .mtl file
 
+
+
 	//set the subset material to the index value of its material in the material array
 	for (int i = 0; i < meshSubsets; ++i)
 	{
@@ -1142,7 +1170,7 @@ bool LoadObjectModel(std::wstring filename,
 void CreateTriangleData()
 {
 	
-	if (!LoadObjectModel(L"modelname.obj", &meshVertBuff, &meshIndexBuff, meshSubsetIndexStart, meshSubsetTexture, materialVector, meshSubsets, true, false))
+	if (!LoadObjectModel(L"cube_green_phong_12_tris_TRIANGULATED.obj", &meshVertBuff, &meshIndexBuff, meshSubsetIndexStart, meshSubsetTexture, materialVector, meshSubsets, false, false))
 	{
 		exit(-1);
 	}
@@ -1464,7 +1492,10 @@ void RenderFirstPass()
 
 		//TODO: make std::vector of world matrixes for each object
 		//set world matrix for the object
-		XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(0.0f)));
+
+		static float rotation = 0.0f;
+		rotation += CUBE_ROTATION_SPEED;
+		XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(rotation)));
 
 		D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
 		gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
@@ -1490,7 +1521,7 @@ void RenderFirstPass()
 		// Map material properties buffer
 		D3D11_MAPPED_SUBRESOURCE materialPtr;
 		gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-		memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
+		memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(gMaterialBufferData));
 		//gDeviceContext->Unmap(gPerFrameBuffer, 0);
 		gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
@@ -1644,7 +1675,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 		}
 
-		gVertexBuffer->Release();
+		//gVertexBuffer->Release();
 		gVertexLayout->Release();
 		gVertexShader->Release();
 		gPixelShader->Release();

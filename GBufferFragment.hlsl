@@ -36,7 +36,7 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	PS_OUT output = (PS_OUT)0;
 
 	// Sample the diffuse map
-	float3 diffuseAlbedo = DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
+	float3 diffuseAlbedo = float3(0.0, 1.0, 0.0);//DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
 
 	// Normalize the normal after interpolation
 	float3 normalWS	= normalize(input.NormalWS);
