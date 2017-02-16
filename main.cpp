@@ -12,6 +12,8 @@
 #include <Windows.h>
 #include <vector>
 #include <dinput.h>
+#include <WICTextureLoader.h>
+
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "d3dcompiler.lib")
@@ -102,6 +104,7 @@ ID3D11VertexShader* gFullScreenTriangleShader	= nullptr;
 ID3D11PixelShader* gLightPixelShader			= nullptr;
 
 ID3D11RenderTargetView* gBackbufferRTV			= nullptr;
+
 
 /*--------------------------------------------------------------------------------------
 *			G-Buffer
@@ -1357,37 +1360,39 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 		gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, NULL);
 	}
 
-	D3D11_TEXTURE2D_DESC bthTexDesc;
-	ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
-	bthTexDesc.Width				= BTH_IMAGE_WIDTH;
-	bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
-	bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
-	bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
-	bthTexDesc.SampleDesc.Count		= 1;
-	bthTexDesc.SampleDesc.Quality	= 0;
-	bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
-	bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
-	bthTexDesc.MiscFlags			= 0;
-	bthTexDesc.CPUAccessFlags		= 0;
+	//D3D11_TEXTURE2D_DESC bthTexDesc;
+	//ZeroMemory(&bthTexDesc, sizeof(bthTexDesc));
+	//bthTexDesc.Width				= BTH_IMAGE_WIDTH;
+	//bthTexDesc.Height				= BTH_IMAGE_HEIGHT;
+	//bthTexDesc.MipLevels			= bthTexDesc.ArraySize = 1;
+	//bthTexDesc.Format				= DXGI_FORMAT_R8G8B8A8_UNORM;
+	//bthTexDesc.SampleDesc.Count		= 1;
+	//bthTexDesc.SampleDesc.Quality	= 0;
+	//bthTexDesc.Usage				= D3D11_USAGE_DEFAULT;
+	//bthTexDesc.BindFlags			= D3D11_BIND_SHADER_RESOURCE;
+	//bthTexDesc.MiscFlags			= 0;
+	//bthTexDesc.CPUAccessFlags		= 0;
 
-	ID3D11Texture2D *pTexture = NULL;
+	//ID3D11Texture2D *pTexture = NULL;
 
-	D3D11_SUBRESOURCE_DATA data;
-	ZeroMemory(&data, sizeof(data));
-	data.pSysMem = (void*)BTH_IMAGE_DATA;
-	data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
-	gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
+	//D3D11_SUBRESOURCE_DATA data;
+	//ZeroMemory(&data, sizeof(data));
+	//data.pSysMem = (void*)BTH_IMAGE_DATA;
+	//data.SysMemPitch = BTH_IMAGE_WIDTH * 4 * sizeof(char);
+	//gDevice->CreateTexture2D(&bthTexDesc, &data, &pTexture);
 
-	D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
-	ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
-	resourceViewDesc.Format						= bthTexDesc.Format;
-	resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
-	resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
-	resourceViewDesc.Texture2D.MostDetailedMip	= 0;
-	gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
+	//D3D11_SHADER_RESOURCE_VIEW_DESC resourceViewDesc;
+	//ZeroMemory(&resourceViewDesc, sizeof(resourceViewDesc));
+	//resourceViewDesc.Format						= bthTexDesc.Format;
+	//resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
+	//resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
+	//resourceViewDesc.Texture2D.MostDetailedMip	= 0;
+	//gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
 
-	pTexture->Release();
+	//pTexture->Release();
 
+	ID3D11Resource* texture;
+	CreateWICTextureFromFile(gDevice,L"GRASSTEXTURE.BMP",&texture,&gTextureView);
 	return hr;
 }
 
