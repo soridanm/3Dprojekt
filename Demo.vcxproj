@@ -218,7 +218,7 @@
     <Text Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
-    <Image Include="grasstexture.bmp" />
+    <Image Include="grass-free-texture.jpg" />
     <Image Include="heightmap.bmp" />
   </ItemGroup>
   <ItemGroup>

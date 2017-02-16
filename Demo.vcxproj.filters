@@ -59,7 +59,7 @@
     <Image Include="heightmap.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="grasstexture.bmp">
+    <Image Include="grass-free-texture.jpg">
       <Filter>Source Files</Filter>
     </Image>
   </ItemGroup>
