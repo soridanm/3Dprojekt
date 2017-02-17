@@ -3,16 +3,21 @@
 Texture2D DiffuseMap		: register(t0);
 SamplerState AnisoSampler	: register(s0);
 
-struct materialStruct
+cbuffer MaterialBuffer		: register(b0)
 {
-	float3 specularAlbedo;
-	float specularPower;
+	float3 SpecularAlbedo;
+	float SpecularPower;
+	bool hasTexture;
+	int TexArrayIndex;
+
+	int padding;
+	int padding2;
 };
 
-cbuffer materialProperties	: register(b0)
-{
-	materialStruct Material;
-};
+//cbuffer materialProperties	: register(b0)
+//{
+//	materialStruct Material;
+//};
 
 struct PS_IN
 {
@@ -36,7 +41,7 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	PS_OUT output = (PS_OUT)0;
 
 	// Sample the diffuse map
-	float3 diffuseAlbedo = float3(0.0, 1.0, 0.0);//DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
+	float3 diffuseAlbedo = float3(0.7, 0.7, 0.7);//DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb;
 
 	// Normalize the normal after interpolation
 	float3 normalWS	= normalize(input.NormalWS);
@@ -45,7 +50,7 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	output.Normal			= float4(normalWS, 1.0);
 	output.Position			= float4(input.PositionWS, 1.0);
 	output.DiffuseAlbedo	= float4(diffuseAlbedo, 1.0);
-	output.SpecularAlbedo	= float4(Material.specularAlbedo, Material.specularPower);
+	output.SpecularAlbedo	= float4(SpecularAlbedo, SpecularPower);
 
 	return output;
 };

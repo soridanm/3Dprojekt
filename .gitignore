@@ -240,3 +240,5 @@ ModelManifest.xml
 
 # FAKE - F# Make
 .fake/
+/dragon.mtl
+/donut_red_lambert_20000_tris_TRIANGLULATED.mtl

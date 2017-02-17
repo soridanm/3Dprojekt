@@ -38,7 +38,7 @@ const LONG SCREEN_WIDTH			= 2*640;
 const LONG SCREEN_HEIGHT		= 2*480;
 const int MAX_LIGHTS			= 8;
 const int NR_OF_OBJECTS			= 1;
-const XMVECTOR CAMERA_STARTING_POS	= XMVectorSet(0.0f, 1.0f, 2.0f, 1.0f);
+const XMVECTOR CAMERA_STARTING_POS	= XMVectorSet(0.0f, 1.2f, 1.2f, 1.0f);
 float CUBE_ROTATION_SPEED		= 0.01f;
 float LIGHT_ROTATION_SPEED		= 0.001f;
 
@@ -125,28 +125,43 @@ struct cPerObjectBuffer
 //
 ID3D11Buffer* gMaterialBuffer = nullptr;
 
-struct materialStruct
-{
-	materialStruct(std::wstring n = L"no name", float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, int texInd = 0) 
-		: specularColor(r, g, b), specularPower(specPow), texArrayIndex(texInd)
-	{}
-	std::wstring matName;	
-	//XMFLOAT3 ambientColor;
-	//XMFLOAT3 diffuseColor;
-	XMFLOAT3 specularColor; //Ks
-	float specularPower;	//NS
-	//bool hasTexture;
-	int texArrayIndex;
-	bool hasTexture;
-	int trash, trash2;
-};
+//struct materialStruct
+//{
+//	materialStruct(/*std::wstring n = L"no name",*/ float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, int texInd = 0) 
+//		: specularColor(r, g, b), specularPower(specPow), texArrayIndex(texInd)
+//	{}
+//	//std::wstring matName;	
+//	//XMFLOAT3 ambientColor;
+//	//XMFLOAT3 diffuseColor;
+//	XMFLOAT3 specularColor; //Ks
+//	float specularPower;	//NS
+//	//bool hasTexture;
+//	int texArrayIndex;
+//	bool hasTexture;
+//	int trash, trash2;
+//}; materialStruct cMatStruct;
 
 struct cMaterialBuffer
 {
-	cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat) 
+	cMaterialBuffer(float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, bool hasTex = false, int texInd = 0)
+		: SpecularColor(r, g, b), SpecularPower(specPow), HasTexture(hasTex), TexArrIndex(texInd), padding(0), padding2(0)
 	{}
-	materialStruct material;
+	XMFLOAT3 SpecularColor;
+	float SpecularPower;
+	bool HasTexture;
+	int TexArrIndex;
+
+	int padding, padding2;
+
 }; cMaterialBuffer gMaterialBufferData;
+
+struct materialStruct
+{
+	materialStruct() : Data(cMaterialBuffer()), matName(L"No name") {}
+
+	cMaterialBuffer Data;
+	std::wstring matName;
+};
 
 std::vector<materialStruct> materialVector;
 
@@ -212,8 +227,8 @@ namespace Colors
 
 namespace Materials
 {
-	static const materialStruct Black_plastic	= materialStruct(L"Black plastic",	0.5f, 0.5f, 0.5f, 1.0f, 32.0f);
-	static const materialStruct Black_rubber	= materialStruct(L"Black rubber",	0.4f, 0.4f, 0.4f, 1.0f, 10.0f);
+	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 32.0f);
+	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(/*L"Black rubber",*/	0.4f, 0.4f, 0.4f, 10.0f);
 }
 
 /*--------------------------------------------------------------------------------------
@@ -321,20 +336,20 @@ void CreateLightConstantBuffer()
 
 // might need a rewrite? Not sure if this is the best way to do it
 // storing them in an array could be a good idea
-void SetMaterial(materialStruct matprop)
+void SetMaterial(cMaterialBuffer matprop)
 {
-	gMaterialBufferData.material = matprop;
+	gMaterialBufferData = matprop;
 }
 
 // Currently only creates one static light.
 void setLights()
 {
-	XMFLOAT4 light_position = { 2.0f, 0.0f, 4.0f, 1.0f };
+	XMFLOAT4 light_position = { 0.0f, 1.0f, 2.0f, 1.0f };
 	XMFLOAT4 light_color	= Colors::White;
-	float c_att	= 0.2f;
-	float l_att	= 0.5f;
+	float c_att	= 0.99f;
+	float l_att	= 0.005f;
 	float q_att	= 0.009f;
-	float amb	= 0.01f;
+	float amb	= 0.1f;
 	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
 
 	gLightBufferData.Lights[0] = test_light;
@@ -497,6 +512,7 @@ std::vector<std::wstring> textureNameArray;
 *			Unsuported data:
 * vp - parameter space verticies in (u [,v] [,w]) form; free form geometry statement
 * l  - line
+* s  - smoothing groups
 */
 bool LoadObjectModel(std::wstring filename,
 	ID3D11Buffer** vertBuff,
@@ -540,11 +556,13 @@ bool LoadObjectModel(std::wstring filename,
 	int totalVerts = 0;
 	int meshTriangles = 0;
 
+
 	//TODO: improve with an error message or something
 	if (!fileIn)	//Early exit if the file doesn't open
 		exit(-1);
 
-	
+	bool debugBool = false;
+
 	// .obj file
 	while (fileIn)
 	{
@@ -577,7 +595,7 @@ bool LoadObjectModel(std::wstring filename,
 			{
 				float vnx, vny, vnz;
 				fileIn >> vnx >> vny >> vnz; //store the normal values
-				vertNorm.push_back(XMFLOAT3(vnx, vny, (isRHCoordSys) ? vnz * -1.0f : vnz)); //Invert the z-axiz if the OBJ is RH
+				vertNorm.push_back(XMFLOAT3(vnx, vny, (isRHCoordSys) ? -1.0f * vnz : vnz)); //Invert the z-axiz if the OBJ is RH
 				hasNorm = true;
 			}
 		}
@@ -867,9 +885,7 @@ bool LoadObjectModel(std::wstring filename,
 			meshMaterials.push_back(meshMaterialsTemp); //store it in a vectore of wide strings
 		}
 			break;
-		case 's':
-			// TODO: add side case
-			hasTexCoord = hasTexCoord;
+		case 's': //s - smoothing group [NOT SUPPORTED]
 			break;
 		default:
 			break;
@@ -917,27 +933,27 @@ bool LoadObjectModel(std::wstring filename,
 				checkChar = fileIn.get();
 		}
 			break;
-		case 'K': //Diffuse color
+		case 'K': //Ks - specular color
 		{
 			checkChar = fileIn.get();
 			if (checkChar == 's') // Ks - specular color
 			{
 				checkChar = fileIn.get(); //read over space
 
-				fileIn >> materialVector[matCount - 1].specularColor.x;
-				fileIn >> materialVector[matCount - 1].specularColor.y;
-				fileIn >> materialVector[matCount - 1].specularColor.z;
+				fileIn >> materialVector[matCount - 1].Data.SpecularColor.x;
+				fileIn >> materialVector[matCount - 1].Data.SpecularColor.y;
+				fileIn >> materialVector[matCount - 1].Data.SpecularColor.z;
 			}
 		}
 			break;
-		case 'N':
+		case 'N': //Ns - specular power
 		{
 			checkChar = fileIn.get();
 			if (checkChar == 's')
 			{
 				checkChar = fileIn.get(); //read over space
 
-				fileIn >> materialVector[matCount - 1].specularPower;
+				fileIn >> materialVector[matCount - 1].Data.SpecularPower;
 			}
 		}
 			break;
@@ -982,7 +998,7 @@ bool LoadObjectModel(std::wstring filename,
 				if (fileNamePath == textureNameArray[i])
 				{
 					alreadyLoaded = true;
-					materialVector[matCount - 1].texArrayIndex = i;
+					materialVector[matCount - 1].Data.TexArrIndex = i;
 				}
 			}
 			//load the texture
@@ -1020,8 +1036,8 @@ bool LoadObjectModel(std::wstring filename,
 			{
 				materialStruct tempMat;
 				materialVector.push_back(tempMat);
-				fileIn >> materialVector[matCount].matName;
-				materialVector[matCount].texArrayIndex = 0;
+				//fileIn >> materialVector[matCount].matName;
+				materialVector[matCount].Data.TexArrIndex = 0;
 				matCount++;
 			}
 		}
@@ -1170,7 +1186,7 @@ bool LoadObjectModel(std::wstring filename,
 void CreateTriangleData()
 {
 	
-	if (!LoadObjectModel(L"cube_green_phong_12_tris_TRIANGULATED.obj", &meshVertBuff, &meshIndexBuff, meshSubsetIndexStart, meshSubsetTexture, materialVector, meshSubsets, false, false))
+	if (!LoadObjectModel(L"wt_teapot.obj", &meshVertBuff, &meshIndexBuff, meshSubsetIndexStart, meshSubsetTexture, materialVector, meshSubsets, false, true))
 	{
 		exit(-1);
 	}
@@ -1495,6 +1511,8 @@ void RenderFirstPass()
 
 		static float rotation = 0.0f;
 		rotation += CUBE_ROTATION_SPEED;
+		//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
+
 		XMStoreFloat4x4(&ObjectBufferData.World, XMMatrixTranspose(XMMatrixRotationY(rotation)));
 
 		D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
@@ -1507,15 +1525,15 @@ void RenderFirstPass()
 		gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
 
 		//set material
-		gMaterialBufferData.material.specularColor	= materialVector[meshSubsetTexture[i]].specularColor;
-		gMaterialBufferData.material.specularPower	= materialVector[meshSubsetTexture[i]].specularPower;
-		gMaterialBufferData.material.matName		= materialVector[meshSubsetTexture[i]].matName;			//should probably be removed
+		gMaterialBufferData.SpecularColor	= materialVector[meshSubsetTexture[i]].Data.SpecularColor;
+		gMaterialBufferData.SpecularPower	= materialVector[meshSubsetTexture[i]].Data.SpecularPower;
+//		gMaterialBufferData.material.matName		= materialVector[meshSubsetTexture[i]].matName;			//should probably be removed
 		
 		// REMOVE -------------------------------------------------------------------------
-		materialVector[meshSubsetTexture[i]].hasTexture = false;
+		materialVector[meshSubsetTexture[i]].Data.HasTexture = false;
 		// END REMOVE ---------------------------------------------------------------------
 
-		if (materialVector[meshSubsetTexture[i]].hasTexture)
+		if (materialVector[meshSubsetTexture[i]].Data.HasTexture)
 			gDeviceContext->PSSetShaderResources(0, 1, &gTextureView); // NOT IMPLEMENTED YET!
 
 		// Map material properties buffer

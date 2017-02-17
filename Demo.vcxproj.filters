@@ -56,9 +56,27 @@
     <None Include="cube_green_phong_12_tris_TRIANGULATED.mtl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="dragon.mtl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Object Include="cube_green_phong_12_tris_TRIANGULATED.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="donut_red_lambert_20000_tris_TRIANGLULATED.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="dragon.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="dragon_smooth.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="wt_teapot.obj">
       <Filter>Resource Files</Filter>
     </Object>
   </ItemGroup>

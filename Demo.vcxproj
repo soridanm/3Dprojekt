@@ -208,9 +208,23 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="cube_green_phong_12_tris_TRIANGULATED.mtl" />
+    <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl" />
+    <None Include="dragon.mtl" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="cube_green_phong_12_tris_TRIANGULATED.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
+    <Object Include="donut_red_lambert_20000_tris_TRIANGLULATED.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
+    <Object Include="dragon.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
+    <Object Include="dragon_smooth.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Object>
+    <Object Include="wt_teapot.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
     </Object>
   </ItemGroup>
