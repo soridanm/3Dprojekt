@@ -109,7 +109,9 @@
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Engine.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="GraphicsHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -210,7 +212,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bth_image.h" />
+    <ClInclude Include="Engine.hpp" />
+    <ClInclude Include="Object.hpp" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="GlobalResources.hpp" />
+    <ClInclude Include="GraphicsHandler.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="known_issues.txt" />

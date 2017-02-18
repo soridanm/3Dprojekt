@@ -1,3 +1,10 @@
+TODO:
+	Figure out which pointers NEED to be global pointers and which should be members of various classes.
+	Error messages at gHR checks and whatnot
+	Error blob messages are probably a good idea
+
+
+
 
 
 ------------------------------ Mandatory ---------------------------------------
