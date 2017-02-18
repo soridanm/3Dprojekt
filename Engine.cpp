@@ -3,31 +3,26 @@
 
 // private ------------------------------------------------------------------------------
 
-bool Engine::RenderGeometryPass()
-{
-	mGraphicsHandler.SetGeometryPassRenderTargets();
-	mGraphicsHandler.SetGeometryPassShaders();
-	mGraphicsHandler.SetGeometryPassViewProjectionBuffer();
-
-
-
-	//draw geometry
-	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
-	return true;
-}
-
-
-bool Engine::RenderLightPass()
-{
-
-	return true;
-}
-
 // public ------------------------------------------------------------------------------
+
+//TODO: Create all objects here
+bool Engine::Initialize()
+{
+	mGraphicsHandler.CreateShaders();
+}
+
+bool Engine::Render()
+{
+	mGraphicsHandler.RenderGeometryPass();
+	mGraphicsHandler.RenderLightPass();
+	
+	return true;
+}
 
 Engine::Engine()
 {
-
+	mGraphicsHandler = GraphicsHandler();
+	//TODO: init object vector
 }
 
 Engine::~Engine()
@@ -35,12 +30,3 @@ Engine::~Engine()
 
 }
 
-bool Engine::Initialize()
-{
-
-}
-
-bool Engine::Render()
-{
-
-}

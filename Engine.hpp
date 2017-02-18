@@ -18,8 +18,6 @@ public:
 	bool Render();
 
 private:
-	bool RenderGeometryPass();
-	bool RenderLightPass();
 
 
 	GraphicsHandler mGraphicsHandler;

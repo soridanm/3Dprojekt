@@ -1,6 +1,7 @@
 /*
-* TODO: Write error messages
+* TODO: Write error messages and use if(Function()) instead of just Funtion()
 *		Update code with code from the .obj branch
+*		See if the order of things should be changed
 *
 */
 
@@ -9,7 +10,7 @@
 
 // private ------------------------------------------------------------------------------
 
-//temp done
+//done for now
 bool GraphicsHandler::CompileShader(
 	ID3DBlob* pShader,
 	LPCWSTR shaderFileName,
@@ -141,6 +142,8 @@ bool GraphicsHandler::CreateShaders()
 	return true;
 }
 
+// ------------------------------ Geometry Pass ------------------------------------------------------
+
 //temp done
 bool GraphicsHandler::SetGeometryPassRenderTargets()
 {
@@ -166,22 +169,10 @@ bool GraphicsHandler::SetGeometryPassRenderTargets()
 	return true;
 }
 
-bool GraphicsHandler::SetLightPassRenderTargets()
-{
-
-}
-
-//TODO: update with correct code from both branches
+//TODO: update with correct code from both branches.
 bool GraphicsHandler::SetGeometryPassShaders()
 {
-	UINT32 vertexSize = sizeof(float) * 5;
-	UINT32 offset = 0;
-	UINT32 squareVertexSize = sizeof(float) * 8;
-
 	// Set Vertex Shader input
-	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
-	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
 	gDeviceContext->IASetInputLayout(gVertexLayout);
 	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
@@ -192,6 +183,109 @@ bool GraphicsHandler::SetGeometryPassShaders()
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
 
+	return true;
+}
+
+//TODO: Only do this when the camera updates
+bool GraphicsHandler::SetGeometryPassViewProjectionBuffer()
+{
+	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
+	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
+	gDeviceContext->Map(gPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
+
+	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
+	XMStoreFloat4x4(&VPBufferData.View, view);
+
+	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
+	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
+	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
+
+	return true;
+}
+
+//TODO: Rewrite with oject index as input
+bool GraphicsHandler::SetGeometryPassObjectBuffers()
+{
+	UINT32 vertexSize = sizeof(float) * 5;
+	UINT32 offset = 0;
+	UINT32 squareVertexSize = sizeof(float) * 8;
+
+	// set textures and constant buffers
+	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
+	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+
+	// HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
+
+	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
+
+	// HEIGHT-MAP END ---------------------------------------------------------------------------
+
+	// update per-object buffer to spin cube
+	static float rotation = 0.0f;
+	//rotation += CUBE_ROTATION_SPEED;
+
+	DirectX::XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
+
+	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
+	gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	// copy memory from CPU to GPU of the entire struct
+	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
+	// Unmap constant buffer so that we can use it again in the GPU
+	gDeviceContext->Unmap(gPerObjectBuffer, 0);
+	// set resource to Geometry Shader
+	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+
+	// Map material properties buffer
+
+	//SetMaterial(Materials::Black_plastic);
+	gMaterialBufferData.material = Materials::Black_plastic;
+
+	D3D11_MAPPED_SUBRESOURCE materialPtr;
+	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
+	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
+	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+
+	return true;
+}
+
+bool GraphicsHandler::RenderGeometryPass()
+{
+	SetGeometryPassRenderTargets();
+	SetGeometryPassShaders();
+	SetGeometryPassViewProjectionBuffer();
+
+	//LOOP OVER OBJECTS FROM HERE
+
+	SetGeometryPassObjectBuffers();
+
+	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
+
+	//LOOP OVER OBJECTS TO HERE
+
+	return true;
+}
+
+// ------------------------------ Light Pass ------------------------------------------------------
+
+//TODO: check if pBackBuffer should be declared here or earlier
+bool GraphicsHandler::SetLightPassRenderTargets()
+{
+	// get the address of the back buffer
+	ID3D11Texture2D* pBackBuffer = nullptr;
+	gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+
+	// use the back buffer address to create the render target
+	gDevice->CreateRenderTargetView(pBackBuffer, NULL, &gBackbufferRTV);
+	pBackBuffer->Release();
+
+	// set the render target as the back buffer
+	gDeviceContext->OMSetRenderTargets(1, &gBackbufferRTV, nullptr);
+
+	//Clear screen
+	gDeviceContext->ClearRenderTargetView(gBackbufferRTV, Colors::fWhite);
 
 	return true;
 }
@@ -217,23 +311,23 @@ bool GraphicsHandler::SetLightPassShaders()
 	return true;
 }
 
-bool GraphicsHandler::SetGeometryPassViewProjectionBuffer()
+//TODO: There might be a memory leak here
+bool GraphicsHandler::SetLightPassGBuffers()
 {
-	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
-	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
-	gDeviceContext->Map(gPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
+	ID3D11ShaderResourceView* GBufferTextureViews[] =
+	{
+		gGraphicsBuffer[0].shaderResourceView, // Normal
+		gGraphicsBuffer[1].shaderResourceView, // PositionWS
+		gGraphicsBuffer[2].shaderResourceView, // Diffuse
+		gGraphicsBuffer[3].shaderResourceView  // Specular
+	};
 
-	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
-	XMStoreFloat4x4(&VPBufferData.View, view);
-
-	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
-	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
-	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
+	gDeviceContext->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
 
 	return true;
 }
 
-bool GraphicsHandler::SetLightPassConstantBuffers()
+bool GraphicsHandler::SetLightPassLightBuffer()
 {
 	// Move light up and down
 	static int lightYMovement = 249;
@@ -252,63 +346,19 @@ bool GraphicsHandler::SetLightPassConstantBuffers()
 	memcpy(LightBufferPtr.pData, &gLightBufferData, sizeof(cLightBuffer));
 	gDeviceContext->Unmap(gLightBuffer, 0);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gLightBuffer);
-}
-
-//TODO: Rewrite with oject index as input
-bool GraphicsHandler::SetGeometryPassObjectBuffer()
-{
-	// update per-object buffer to spin cube
-	static float rotation = 0.0f;
-	//rotation += CUBE_ROTATION_SPEED;
-
-	XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
-
-	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
-	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
-	// Unmap constant buffer so that we can use it again in the GPU
-	gDeviceContext->Unmap(gPerObjectBuffer, 0);
-	// set resource to Geometry Shader
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
-
-	// Map material properties buffer
-	//SetMaterial(Materials::Black_plastic);
-	gMaterialBufferData.material = Materials::Black_plastic;
-
-	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	return true;
 }
-
-bool GraphicsHandler::SetLightPassLightBuffer()
-{
-
-	return true;
-}
-
-bool GraphicsHandler::RenderGeometryPass()
-{
-	SetGeometryPassRenderTargets();
-	SetGeometryPassShaders();
-
-	//LOOP OVER OBJECTS FROM HERE
-
-	SetGeometryPassViewProjectionBuffer();
-
-	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
-
-	//LOOP OVER OBJECTS TO HERE
-
-	return true;
-}
-
 
 bool GraphicsHandler::RenderLightPass()
 {
+	SetLightPassRenderTargets();
+	SetLightPassShaders();
+	SetLightPassLightBuffer();
+	SetLightPassLightBuffer();
 
+	// Draw full screen triangle
+	gDeviceContext->Draw(3, 0);
+
+	return true;
 }

@@ -352,6 +352,7 @@ void setLights()
 	gLightBufferData.globalAmbient = { 0.05f, 0.05f, 0.05f, 1.0f };
 }
 
+//FULLY REWRITTEN
 void CreateShaders()
 {
 //---------------------------------- First Pass ----------------------------------------------------
@@ -737,6 +738,7 @@ void initGraphicsBuffer()
 	//Release
 }
 
+//FULLY REWRITTEN
 //TODO: move as much out of render loop as possible. Will need a loop to loop through all ojects in the future
 void RenderFirstPass()
 {
@@ -828,6 +830,7 @@ void RenderFirstPass()
 
 }
 
+//FULLY REWRITTEN
 //TODO: move as much out of render loop as possible
 void RenderLastPass()
 {
@@ -946,6 +949,7 @@ struct Vertex {
 	XMFLOAT2 texCoord;
 	XMFLOAT3 normal;
 };
+
 void CreateWorld() {
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
@@ -1065,6 +1069,7 @@ void CreateWorld() {
 
 }
 
+//FULLY REWRITTEN
 void Render()
 {
 	RenderFirstPass();
@@ -1207,6 +1212,7 @@ void DetectInput(double time, HWND hwnd) {
 	UpdateCamera();
 }
 
+//PARTIALLY REWRITTEN
 void CreateAllConstantBuffers() {
 	CreatePerFrameConstantBuffer();
 	CreatePerObjectConstantBuffer();

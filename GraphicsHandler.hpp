@@ -18,22 +18,8 @@ public:
 	~GraphicsHandler();
 
 	bool CreateShaders();
-
 	bool RenderGeometryPass();
 	bool RenderLightPass();
-
-	bool SetGeometryPassRenderTargets();
-	bool SetLightPassRenderTargets();
-
-	bool SetGeometryPassShaders();
-	bool SetLightPassShaders();
-
-	bool SetGeometryPassViewProjectionBuffer();
-	bool SetLightPassConstantBuffers();
-
-	bool SetGeometryPassObjectBuffer();
-
-	bool SetLightPassLightBuffer();
 
 private:
 	bool CompileShader(
@@ -47,8 +33,20 @@ private:
 		UINT flags2 = 0,
 		ID3DBlob** ppErrorMsgs = nullptr
 	);
-	bool CreateInputLayout(ID3DBlob* pVS); //private?
+	bool CreateInputLayout(ID3DBlob* pVS);
 	
+	// Geometry Pass ----------------------------
+	bool SetGeometryPassRenderTargets();
+	bool SetGeometryPassShaders();
+	bool SetGeometryPassViewProjectionBuffer();
+	bool SetGeometryPassObjectBuffers();
+
+	// Light Pass -------------------------------
+	bool SetLightPassRenderTargets();
+	bool SetLightPassShaders();
+	bool SetLightPassLightBuffer();
+	bool SetLightPassGBuffers();
+
 	ID3D11InputLayout* gVertexLayout;
 	ID3D11InputLayout* gVertexLayout;
 	ID3D11VertexShader* gVertexShader;
