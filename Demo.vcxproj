@@ -109,7 +109,10 @@
     <Link />
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="CameraHandler.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="GlobalResources.cpp" />
+    <ClCompile Include="LightHandler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GraphicsHandler.cpp" />
   </ItemGroup>
@@ -212,7 +215,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bth_image.h" />
+    <ClInclude Include="CameraHandler.hpp" />
     <ClInclude Include="Engine.hpp" />
+    <ClInclude Include="LightHandler.hpp" />
     <ClInclude Include="Object.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="GlobalResources.hpp" />

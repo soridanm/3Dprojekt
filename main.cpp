@@ -19,11 +19,11 @@
 #include <objbase.h>
 
 
-#pragma comment (lib, "d3d11.lib")
-#pragma comment (lib, "d3dcompiler.lib")
-#pragma comment(lib,"dinput8.lib")
-#pragma comment(lib,"dxguid.lib")
-#pragma comment(lib,"Ole32.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "Ole32.lib")
 
 
 using namespace DirectX;
@@ -163,6 +163,7 @@ struct cMaterialBuffer
 //------------------ Lights (LightFragment.hlsl) ---------------------------------------
 ID3D11Buffer* gLightBuffer = nullptr;
 
+//FULLY REWRITTEN IN LightHandler.cpp
 // TODO: one default constructor instead of two
 struct Light
 {
@@ -187,6 +188,7 @@ struct Light
 	float ambientCoefficient;
 };
 
+//FULLY REWRITTEN IN LightHandler.cpp
 struct cLightBuffer 
 {
 	cLightBuffer() 
@@ -231,6 +233,7 @@ namespace Materials
 --------------------------------------------------------------------------------------*/
 
 //--------------------- Create Constant Buffers ----------------------------------------
+//FULLY REWRITTEN IN CameraHandler.cpp
 void CreatePerFrameConstantBuffer()
 {
 	float aspect_ratio			= (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
@@ -265,6 +268,7 @@ void CreatePerFrameConstantBuffer()
 	}
 }
 
+//WILL BE REWRITTEN IN ObjectHandler.cpp
 void CreatePerObjectConstantBuffer()
 {
 	XMMATRIX world = XMMatrixTranspose(XMMatrixRotationY(0.0f));
@@ -285,6 +289,7 @@ void CreatePerObjectConstantBuffer()
 	}
 }
 
+//WILL BE REWRITTEN IN ObjectHandler.cpp
 void CreateMaterialConstantBuffer() 
 {
 	D3D11_BUFFER_DESC materialBufferDesc;
@@ -305,6 +310,7 @@ void CreateMaterialConstantBuffer()
 	}
 }
 
+//FULLY REWRITTEN IN LightHandler.cpp
 // TODO: change MAX_LIGHTS to NR_OF_LIGHTS or add bool Enable to light struct
 void CreateLightConstantBuffer() 
 {
@@ -329,6 +335,7 @@ void CreateLightConstantBuffer()
 
 //---------------------- Set Constant Buffers ------------------------------------------
 
+//WILL BE REWRITTEN IN ObjectHandler.cpp
 // might need a rewrite? Not sure if this is the best way to do it
 // storing them in an array could be a good idea
 void SetMaterial(materialStruct matprop)
@@ -336,6 +343,7 @@ void SetMaterial(materialStruct matprop)
 	gMaterialBufferData.material = matprop;
 }
 
+//FULLY REWRITTEN IN LightHandler.cpp
 // Currently only creates one static light.
 void setLights()
 {
@@ -352,7 +360,7 @@ void setLights()
 	gLightBufferData.globalAmbient = { 0.05f, 0.05f, 0.05f, 1.0f };
 }
 
-//FULLY REWRITTEN
+//FULLY REWRITTEN IN GraphicsHandler.cpp
 void CreateShaders()
 {
 //---------------------------------- First Pass ----------------------------------------------------
@@ -475,6 +483,7 @@ void CreateShaders()
 	pPS2->Release();
 }
 
+//WILL NOT BE REWRITTEN
 void CreateTriangleData()
 {
 	struct TriangleVertex
@@ -661,6 +670,7 @@ void CreateTriangleData()
 	gDevice->CreateBuffer(&bufferDesc, &data, &gVertexBuffer);
 }
 
+//FULLY REWRITTEN IN CameraHandler.cpp
 void SetViewport()
 {
 	D3D11_VIEWPORT vp;
@@ -673,6 +683,7 @@ void SetViewport()
 	gDeviceContext->RSSetViewports(1, &vp);
 }
 
+//FULLY REWRITTEN IN GraphicsHandler.cpp
 // TODO: Should probably add hr checks. also Relese()
 void initGraphicsBuffer()
 {
@@ -738,7 +749,7 @@ void initGraphicsBuffer()
 	//Release
 }
 
-//FULLY REWRITTEN
+//ALMOST FULLY REWRITTEN
 //TODO: move as much out of render loop as possible. Will need a loop to loop through all ojects in the future
 void RenderFirstPass()
 {
@@ -760,7 +771,7 @@ void RenderFirstPass()
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[2].renderTargetView, Colors::fLightSteelBlue);
 	gDeviceContext->ClearRenderTargetView(gGraphicsBuffer[3].renderTargetView, Colors::fBlack);
 	gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	//gDeviceContext->ClearDepthStencilView(gDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	//gDeviceContext->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
@@ -794,7 +805,7 @@ void RenderFirstPass()
 	XMStoreFloat4x4(&VPBufferData.View, view);
 
 	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
-	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
+	//gDeviceContext->Unmap(mPerFrameBuffer, 0);
 	gDeviceContext->GSSetConstantBuffers(0, 1, &gPerFrameBuffer);
 
 // LOOP OVER OBJECTS FROM HERE -----------------------------------------------------------------
@@ -819,7 +830,7 @@ void RenderFirstPass()
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//gDeviceContext->Unmap(gPerFrameBuffer, 0);
+	//gDeviceContext->Unmap(mPerFrameBuffer, 0);
 	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// draw geometry
@@ -830,7 +841,7 @@ void RenderFirstPass()
 
 }
 
-//FULLY REWRITTEN
+//FULLY REWRITTEN IN GraphicsHandler.cpp
 //TODO: move as much out of render loop as possible
 void RenderLastPass()
 {
@@ -896,6 +907,7 @@ void RenderLastPass()
 	gDeviceContext->Draw(3, 0);
 }
 
+//WILL BE REWRITTEN IN ObjectHandler.cpp
 bool LoadHeightMap(char* filename, HeightMapInfo &hminfo) {
 	FILE *fileptr;
 	BITMAPFILEHEADER bitmapFileH;
@@ -950,6 +962,7 @@ struct Vertex {
 	XMFLOAT3 normal;
 };
 
+//WILL BE REWRITTEN IN ObjectHandler.cpp
 void CreateWorld() {
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
@@ -1069,13 +1082,14 @@ void CreateWorld() {
 
 }
 
-//FULLY REWRITTEN
+//REWRITTEN-ish
 void Render()
 {
 	RenderFirstPass();
 	RenderLastPass();
 }
 
+//WILL BE REWRITTEN IN Engine.cpp (probably)
 void StartTimer() {
 	LARGE_INTEGER frequency_count;
 	QueryPerformanceFrequency(&frequency_count);
@@ -1085,12 +1099,14 @@ void StartTimer() {
 	COUNTER_START = frequency_count.QuadPart;
 }
 
+//WILL BE REWRITTEN IN Engine.cpp (probably)
 double GetTime() {//returns time
 	LARGE_INTEGER current_time;
 	QueryPerformanceCounter(&current_time);
 	return double(current_time.QuadPart - COUNTER_START) / COUNTS_PER_SECOND;
 }
 
+//WILL BE REWRITTEN IN Engine.cpp (probably)
 double GetFrameTime() {//returns time per frame, in order to get smooth timebased movements
 	LARGE_INTEGER current_time;
 	_int64 tick_count;
@@ -1104,6 +1120,7 @@ double GetFrameTime() {//returns time per frame, in order to get smooth timebase
 	return float(tick_count) / COUNTS_PER_SECOND;
 }
 
+//FULLY REWRITTEN IN CameraHandler.cpp
 void UpdateCamera() {
 	//limits cam pitch in order to not spin around
 	if (CAM_PITCH < -1.5f) {
@@ -1150,6 +1167,7 @@ void UpdateCamera() {
 
 }
 
+//WILL BE REWRITTEN IN Engine.cpp or some Input class
 void DetectInput(double time, HWND hwnd) {
 	DIMOUSESTATE mouse_current_state;
 	BYTE keyboardState[256];
@@ -1212,7 +1230,7 @@ void DetectInput(double time, HWND hwnd) {
 	UpdateCamera();
 }
 
-//PARTIALLY REWRITTEN
+//PARTIALLY REWRITTEN IN GraphicsHandler.cpp
 void CreateAllConstantBuffers() {
 	CreatePerFrameConstantBuffer();
 	CreatePerObjectConstantBuffer();
@@ -1405,7 +1423,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	//resourceViewDesc.ViewDimension				= D3D11_SRV_DIMENSION_TEXTURE2D;
 	//resourceViewDesc.Texture2D.MipLevels		= bthTexDesc.MipLevels;
 	//resourceViewDesc.Texture2D.MostDetailedMip	= 0;
-	//gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &gTextureView);
+	//gDevice->CreateShaderResourceView(pTexture, &resourceViewDesc, &mTextureView);
 
 	//pTexture->Release();
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -1416,6 +1434,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	return hr;
 }
 
+//WILL BE REWRITTEN IN Engine.cpp or some Input class
 void InitDirectInput(HINSTANCE hInstance, HWND hwnd) {//creates the directx input, sets the data format
 	HRESULT hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
 

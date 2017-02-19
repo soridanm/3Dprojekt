@@ -24,6 +24,15 @@
     <ClCompile Include="GraphicsHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="LightHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CameraHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="GlobalResources.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -59,6 +68,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="GraphicsHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="LightHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CameraHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

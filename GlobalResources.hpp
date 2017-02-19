@@ -15,18 +15,18 @@
 #include <objbase.h>
 
 
-#pragma comment (lib, "d3d11.lib")
-#pragma comment (lib, "d3dcompiler.lib")
-#pragma comment(lib,"dinput8.lib")
-#pragma comment(lib,"dxguid.lib")
-#pragma comment(lib,"Ole32.lib")
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+#pragma comment(lib, "Ole32.lib")
 
 
 const double MATH_PI = 3.14159265358;
-const UINT GBUFFER_COUNT = 4;
+//const UINT GBUFFER_COUNT = 4; //MOVED TO GraphicsHandler.hpp
 const LONG SCREEN_WIDTH = 1920;//2*640;
 const LONG SCREEN_HEIGHT = 1080;//2*480;
-const int MAX_LIGHTS = 8;
+//const int MAX_LIGHTS = 8; //moved to LightHandler.hpp
 const int NR_OF_OBJECTS = 1;
 float CUBE_ROTATION_SPEED = 0.01f;
 float LIGHT_ROTATION_SPEED = 0.001f;
@@ -81,52 +81,64 @@ IDXGISwapChain* gSwapChain = nullptr;
 ID3D11Device* gDevice = nullptr;
 ID3D11DeviceContext* gDeviceContext = nullptr;
 
-// Depth Buffer
-ID3D11DepthStencilView* gDepthStecilView = nullptr;
-ID3D11Texture2D* gDepthStencilTexture = nullptr;
+//MOVED TO GraphicsHandler.hpp
+//// Depth Buffer
+//ID3D11DepthStencilView* mDepthStecilView = nullptr;
+//ID3D11Texture2D* mDepthStencilTexture = nullptr;
 
 // First Pass
 
 ID3D11Buffer* gSquareIndexBuffer = nullptr;
 ID3D11Buffer* gSquareVertBuffer = nullptr;
 
-ID3D11Buffer* gVertexBuffer = nullptr;
-//ID3D11InputLayout* gVertexLayout = nullptr;
-//ID3D11VertexShader* gVertexShader = nullptr;
-//ID3D11GeometryShader* gGeometryShader = nullptr;
-//ID3D11PixelShader* gPixelShader = nullptr;
+//ID3D11Buffer* gVertexBuffer = nullptr;
+//ID3D11InputLayout* mVertexLayout = nullptr;
+//ID3D11VertexShader* mGeometryPassVertexShader = nullptr;
+//ID3D11GeometryShader* mGeometryPassGeometryShader = nullptr;
+//ID3D11PixelShader* mGeometryPassPixelShader = nullptr;
 
-//ID3D11ShaderResourceView* gTextureView = nullptr;
+//ID3D11ShaderResourceView* mTextureView = nullptr;
 
 // Last Pass
-//ID3D11VertexShader* gFullScreenTriangleShader = nullptr;
-//ID3D11PixelShader* gLightPixelShader = nullptr;
-//ID3D11RenderTargetView* gBackbufferRTV = nullptr;
+//ID3D11VertexShader* mLightPassVertexShader = nullptr;
+//ID3D11PixelShader* mLightPassPixelShader = nullptr;
+//ID3D11RenderTargetView* mBackbufferRTV = nullptr;
 
 
-/*--------------------------------------------------------------------------------------
-*			G-Buffer
---------------------------------------------------------------------------------------*/
+struct Vertex {
+	Vertex() {}
+	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
+	DirectX::XMFLOAT3 pos;
+	DirectX::XMFLOAT2 texCoord;
+	DirectX::XMFLOAT3 normal;
+};
 
-struct gGraphicsBufferStruct {
-	ID3D11Texture2D* texture = nullptr;
-	ID3D11RenderTargetView* renderTargetView = nullptr;
-	ID3D11ShaderResourceView* shaderResourceView = nullptr;
-}; gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
+
+//MOVED TO GraphicsHandler.hpp
+///*--------------------------------------------------------------------------------------
+//*			G-Buffer
+//--------------------------------------------------------------------------------------*/
+//
+//struct gGraphicsBufferStruct {
+//	ID3D11Texture2D* texture = nullptr;
+//	ID3D11RenderTargetView* renderTargetView = nullptr;
+//	ID3D11ShaderResourceView* shaderResourceView = nullptr;
+//}; gGraphicsBufferStruct gGraphicsBuffer[GBUFFER_COUNT];
 
 
 /*--------------------------------------------------------------------------------------
 *			Constant Buffers
 --------------------------------------------------------------------------------------*/
-ID3D11Buffer* gPerFrameBuffer = nullptr;
+//ID3D11Buffer* mPerFrameBuffer = nullptr; //MOVED TO CameraHandler.hpp
 ID3D11Buffer* gPerObjectBuffer = nullptr;
 
-struct cPerFrameBuffer
-{
-	//XMFLOAT4X4 ViewProjection;
-	DirectX::XMFLOAT4X4 View;
-	DirectX::XMFLOAT4X4 Projection;
-}; cPerFrameBuffer VPBufferData;
+//MOVED TO CameraHandler.hpp
+//struct cPerFrameBuffer
+//{
+//	//XMFLOAT4X4 ViewProjection;
+//	DirectX::XMFLOAT4X4 View;
+//	DirectX::XMFLOAT4X4 Projection;
+//}; cPerFrameBuffer VPBufferData;
 
 struct cPerObjectBuffer
 {
@@ -153,47 +165,48 @@ struct cMaterialBuffer
 }; cMaterialBuffer gMaterialBufferData;
 
 //------------------ Lights (LightFragment.hlsl) ---------------------------------------
-ID3D11Buffer* gLightBuffer = nullptr;
+//ID3D11Buffer* gLightBuffer = nullptr;
+
 
 // TODO: one default constructor instead of two
-struct Light
-{
-	Light(DirectX::XMFLOAT4 pos = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-		DirectX::XMFLOAT4 col = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
-		float c_att = 1.0f,
-		float l_att = 0.0f,
-		float q_att = 0.0f,
-		float amb = 0.0f)
-		: PositionWS(pos),
-		Color(col),
-		constantAttenuation(c_att),
-		linearAttenuation(l_att),
-		quadraticAttenuation(q_att),
-		ambientCoefficient(amb)
-	{}
-	DirectX::XMFLOAT4 PositionWS;
-	DirectX::XMFLOAT4 Color;
-	float constantAttenuation;
-	float linearAttenuation;
-	float quadraticAttenuation;
-	float ambientCoefficient;
-};
+//struct Light
+//{
+//	Light(DirectX::XMFLOAT4 pos = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
+//		DirectX::XMFLOAT4 col = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+//		float c_att = 1.0f,
+//		float l_att = 0.0f,
+//		float q_att = 0.0f,
+//		float amb = 0.0f)
+//		: PositionWS(pos),
+//		Color(col),
+//		constantAttenuation(c_att),
+//		linearAttenuation(l_att),
+//		quadraticAttenuation(q_att),
+//		ambientCoefficient(amb)
+//	{}
+//	DirectX::XMFLOAT4 PositionWS;
+//	DirectX::XMFLOAT4 Color;
+//	float constantAttenuation;
+//	float linearAttenuation;
+//	float quadraticAttenuation;
+//	float ambientCoefficient;
+//};
+//
+//struct cLightBuffer
+//{
+//	cLightBuffer()
+//		: cameraPositionWS(0.0f, 0.0f, 0.0f, 1.0f),
+//		globalAmbient(0.2f, 0.2f, 0.2f, 1.0f)
+//	{}
+//	DirectX::XMFLOAT4 cameraPositionWS;
+//	DirectX::XMFLOAT4 globalAmbient;
+//	Light Lights[MAX_LIGHTS];
+//}; cLightBuffer gLightBufferData;
 
-struct cLightBuffer
-{
-	cLightBuffer()
-		: cameraPositionWS(0.0f, 0.0f, 0.0f, 1.0f),
-		globalAmbient(0.2f, 0.2f, 0.2f, 1.0f)
-	{}
-	DirectX::XMFLOAT4 cameraPositionWS;
-	DirectX::XMFLOAT4 globalAmbient;
-	Light Lights[MAX_LIGHTS];
-}; cLightBuffer gLightBufferData;
-
-static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+//static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 static_assert((sizeof(cMaterialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+//static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 
 /*--------------------------------------------------------------------------------------
 *				Namespaces

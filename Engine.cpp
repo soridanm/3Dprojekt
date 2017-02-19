@@ -8,7 +8,9 @@
 //TODO: Create all objects here
 bool Engine::Initialize()
 {
+
 	mGraphicsHandler.CreateShaders();
+	return true;
 }
 
 bool Engine::Render()
