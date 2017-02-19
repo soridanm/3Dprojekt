@@ -101,6 +101,7 @@ ID3D11InputLayout* gVertexLayout				= nullptr;
 ID3D11VertexShader* gVertexShader				= nullptr;
 ID3D11GeometryShader* gGeometryShader			= nullptr;
 ID3D11PixelShader* gPixelShader					= nullptr;
+ID3D11SamplerState* gSampleState=nullptr;
 
 ID3D11ShaderResourceView* gTextureView			= nullptr;
 
@@ -426,6 +427,24 @@ void CreateShaders()
 	}
 	// we do not need anymore this COM object, so we release it.
 	pPS->Release();
+
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+	gDevice->CreateSamplerState(&samplerDesc, &gSampleState);
 
 //---------------------------------- Last Pass ----------------------------------------------------
 
@@ -777,7 +796,7 @@ void RenderFirstPass()
 	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
 	gDeviceContext->GSSetShader(gGeometryShader, nullptr, 0);
 	gDeviceContext->PSSetShader(gPixelShader, nullptr, 0);
-
+	gDeviceContext->PSSetSamplers(0, 1, &gSampleState);
 	// set textures and constant buffers
 	gDeviceContext->PSSetShaderResources(0, 1, &gTextureView);
 	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
@@ -972,19 +991,19 @@ void CreateWorld() {
 	for (DWORD j = 0; j < rows - 1; j++) {
 		for (DWORD i = 0; i < columns - 1; i++) {
 			drawOrder[k] = i*columns + j;//bottom left
-			mapVertex[i*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 1.0f) / rows);
+			mapVertex[i*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 1.0f);
 			drawOrder[k + 1] = (1 + i)*columns + j;//top left
-			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 0.0f) / rows);
+			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
 			drawOrder[k + 2] = i*columns + j + 1;//bottom right
-			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 1.0f) / rows);
+			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
 
 
 			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
-			mapVertex[(1 + i)*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 0.0f) / rows);
+			mapVertex[(1 + i)*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 0.0f);
 			drawOrder[k + 4] = i*columns + j + 1;//bottom right
-			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 1.0f) / rows);
+			mapVertex[i*columns + j + 1].texCoord = XMFLOAT2(texUIndex + 1.0f, texVIndex + 1.0f);
 			drawOrder[k + 5] = (1 + i)*columns + j;//top left
-			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 0.0f) / rows);
+			mapVertex[(1 + i)*columns + j].texCoord = XMFLOAT2(texUIndex + 0.0f, texVIndex + 0.0f);
 
 			k += 6;
 			texUIndex++;
@@ -1167,7 +1186,8 @@ void DetectInput(double time, HWND hwnd) {
 		SPEED = 15.0f;
 	}
 	
-	if (keyboardState[DIK_A] & 0x80) {
+	if (keyboardState[DIK_A] & 0x80) {
+
 		MOVE_LR -= SPEED*time;
 	}
 	if (keyboardState[DIK_D] & 0x80) {
