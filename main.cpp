@@ -268,7 +268,7 @@ void CreatePerFrameConstantBuffer()
 	}
 }
 
-//WILL BE REWRITTEN IN ObjectHandler.cpp
+//FULLY REWRITTEN IN ObjectHandler.cpp
 void CreatePerObjectConstantBuffer()
 {
 	XMMATRIX world = XMMatrixTranspose(XMMatrixRotationY(0.0f));
@@ -289,7 +289,7 @@ void CreatePerObjectConstantBuffer()
 	}
 }
 
-//WILL BE REWRITTEN IN ObjectHandler.cpp
+//FULLY REWRITTEN IN ObjectHandler.cpp
 void CreateMaterialConstantBuffer() 
 {
 	D3D11_BUFFER_DESC materialBufferDesc;
@@ -1167,7 +1167,7 @@ void UpdateCamera() {
 
 }
 
-//WILL BE REWRITTEN IN Engine.cpp or some Input class
+//FULLY REWRITTEN IN CameraHandler.cpp
 void DetectInput(double time, HWND hwnd) {
 	DIMOUSESTATE mouse_current_state;
 	BYTE keyboardState[256];
@@ -1434,7 +1434,7 @@ HRESULT CreateDirect3DContext(HWND wndHandle)
 	return hr;
 }
 
-//WILL BE REWRITTEN IN Engine.cpp or some Input class
+//FULLY REWRITTEN IN CameraHandler.cpp
 void InitDirectInput(HINSTANCE hInstance, HWND hwnd) {//creates the directx input, sets the data format
 	HRESULT hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
 

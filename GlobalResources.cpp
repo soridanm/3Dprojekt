@@ -50,7 +50,7 @@
 //
 //// Input devices
 ////HRESULT CreateDirect3DContext(HWND wndHandle);
-////void InitDirectInput(HINSTANCE hInstance, HWND hwnd);
+////void InitializeDirectInput(HINSTANCE hInstance, HWND hwnd);
 //
 ////IDirectInputDevice8* DIKeyboard;
 ////IDirectInputDevice8* DIMouse;

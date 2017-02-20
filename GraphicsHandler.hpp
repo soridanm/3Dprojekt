@@ -13,6 +13,7 @@
 #include "GlobalResources.hpp"
 #include "LightHandler.hpp"
 #include "CameraHandler.hpp"
+#include "ObjectHandler.hpp"
 
 const UINT GBUFFER_COUNT = 4;
 
@@ -46,7 +47,6 @@ private:
 	// Geometry Pass ----------------------------
 	void SetGeometryPassRenderTargets();
 	void SetGeometryPassShaders(); //move to shader class
-	bool SetGeometryPassObjectBuffers(); //move to object class
 
 	// Light Pass -------------------------------
 	bool SetLightPassRenderTargets();
@@ -69,15 +69,15 @@ private:
 	ID3D11VertexShader* mGeometryPassVertexShader;
 	ID3D11GeometryShader* mGeometryPassGeometryShader;
 	ID3D11PixelShader* mGeometryPassPixelShader;
-	ID3D11ShaderResourceView* mTextureView;
+	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
 	ID3D11VertexShader* mLightPassVertexShader;
 	ID3D11PixelShader* mLightPassPixelShader;
 	ID3D11RenderTargetView* mBackbufferRTV;
 
 	LightHandler mLightHandler;
 	//ShaderHandler mShaderHandler;
-	//ObjectHandler mObjectHandler;
-	CameraHandler mCameraHandler;
+	ObjectHandler mObjectHandler;
+	CameraHandler mCameraHandler; //move to engine
 };
 
 

@@ -22,6 +22,10 @@
 #pragma comment(lib, "Ole32.lib")
 
 
+
+
+
+
 const double MATH_PI = 3.14159265358;
 //const UINT GBUFFER_COUNT = 4; //MOVED TO GraphicsHandler.hpp
 const LONG SCREEN_WIDTH = 1920;//2*640;
@@ -31,17 +35,17 @@ const int NR_OF_OBJECTS = 1;
 float CUBE_ROTATION_SPEED = 0.01f;
 float LIGHT_ROTATION_SPEED = 0.001f;
 //---------------Camera default values------------------------------------
-const DirectX::XMVECTOR CAMERA_STARTING_POS = DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f);
-DirectX::XMVECTOR CAM_POS = CAMERA_STARTING_POS;
-DirectX::XMVECTOR CAM_TARGET = DirectX::XMVectorZero();
-DirectX::XMVECTOR CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-DirectX::XMVECTOR CAM_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-DirectX::XMVECTOR CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-DirectX::XMVECTOR DEFAULT_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-DirectX::XMVECTOR DEFAULT_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-DirectX::XMVECTOR DEFAULT_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-float MOVE_LR = 0.0f, MOVE_BF = 0.0f, MOVE_UD = 0.0f, CAM_YAW = 0.0f, CAM_PITCH = 0.0f, SPEED = 15.0f;
+//const DirectX::XMVECTOR CAMERA_STARTING_POS = DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f);
+//DirectX::XMVECTOR CAM_POS = CAMERA_STARTING_POS;
+//DirectX::XMVECTOR CAM_TARGET = DirectX::XMVectorZero();
+//DirectX::XMVECTOR CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+//DirectX::XMVECTOR CAM_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+//DirectX::XMVECTOR CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+//
+//DirectX::XMVECTOR DEFAULT_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+//DirectX::XMVECTOR DEFAULT_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+//DirectX::XMVECTOR DEFAULT_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+//float MOVE_LR = 0.0f, MOVE_BF = 0.0f, MOVE_UD = 0.0f, CAM_YAW = 0.0f, CAM_PITCH = 0.0f, SPEED = 15.0f;
 
 
 //--------------Timer values---------------
@@ -130,7 +134,7 @@ struct Vertex {
 *			Constant Buffers
 --------------------------------------------------------------------------------------*/
 //ID3D11Buffer* mPerFrameBuffer = nullptr; //MOVED TO CameraHandler.hpp
-ID3D11Buffer* gPerObjectBuffer = nullptr;
+//ID3D11Buffer* gPerObjectBuffer = nullptr;
 
 //MOVED TO CameraHandler.hpp
 //struct cPerFrameBuffer
@@ -140,29 +144,29 @@ ID3D11Buffer* gPerObjectBuffer = nullptr;
 //	DirectX::XMFLOAT4X4 Projection;
 //}; cPerFrameBuffer VPBufferData;
 
-struct cPerObjectBuffer
-{
-	DirectX::XMFLOAT4X4 World;
-}; cPerObjectBuffer ObjectBufferData;
+//struct cPerObjectBuffer
+//{
+//	DirectX::XMFLOAT4X4 World;
+//}; cPerObjectBuffer ObjectBufferData;
 
 //------------------ Material (GBufferFragment.hlsl) -----------------------------------
-ID3D11Buffer* gMaterialBuffer = nullptr;
-
-struct materialStruct
-{
-	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f)
-		: specularAlbedo(r, g, b), specularPower(specPow)
-	{}
-	DirectX::XMFLOAT3 specularAlbedo;
-	float specularPower;
-};
-
-struct cMaterialBuffer
-{
-	cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat)
-	{}
-	materialStruct material;
-}; cMaterialBuffer gMaterialBufferData;
+//ID3D11Buffer* gMaterialBuffer = nullptr;
+//
+//struct materialStruct
+//{
+//	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f)
+//		: specularAlbedo(r, g, b), specularPower(specPow)
+//	{}
+//	DirectX::XMFLOAT3 specularAlbedo;
+//	float specularPower;
+//};
+//
+//struct cMaterialBuffer
+//{
+//	cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat)
+//	{}
+//	materialStruct material;
+//}; cMaterialBuffer gMaterialBufferData;
 
 //------------------ Lights (LightFragment.hlsl) ---------------------------------------
 //ID3D11Buffer* gLightBuffer = nullptr;
@@ -204,8 +208,8 @@ struct cMaterialBuffer
 //}; cLightBuffer gLightBufferData;
 
 //static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
-static_assert((sizeof(cMaterialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+//static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
+//static_assert((sizeof(cMaterialBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 //static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Buffer size must be 16-byte aligned");
 
 /*--------------------------------------------------------------------------------------
@@ -225,11 +229,11 @@ namespace Colors
 	static const float fLightSteelBlue[4] = { 0.69f, 0.77f, 0.87f, 1.0f };
 }
 
-namespace Materials
+/*namespace Materials
 {
 	static const materialStruct Black_plastic = materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
 	static const materialStruct Black_rubber = materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
-}
+}*/
 
 
 #endif // !GLOBALRESOURCES_HPP

@@ -11,7 +11,7 @@
 
 // public ------------------------------------------------------------------------------
 
-LightHandler::LightHandler()
+LightHandler::LightHandler(DirectX::XMVECTOR CAM_POS)
 {
 	DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
 	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 0.05f);
@@ -51,7 +51,7 @@ bool LightHandler::CreateLightBuffer()
 
 
 //Currently only sets one light
-bool LightHandler::InitializeLights()
+bool LightHandler::InitializeLights(DirectX::XMVECTOR CAM_POS)
 {
 	CreateLightBuffer();
 
@@ -73,7 +73,7 @@ bool LightHandler::InitializeLights()
 
 //TODO: Make the movement time dependant and not frame dependant
 // The light currently follows the camera's position
-bool LightHandler::BindLightBuffer()
+bool LightHandler::BindLightBuffer(DirectX::XMVECTOR CAM_POS)
 {
 	// Move light up and down
 	/*static int lightYMovement = 249;

@@ -148,7 +148,7 @@ bool GraphicsHandler::Initialize()
 
 	CreateShaders(); //TODO: rewrite with shader class
 
-	mLightHandler.InitializeLights();
+	mLightHandler.InitializeLights(mCameraHandler.GetCameraPosition());
 
 	//create world/models
 
@@ -160,7 +160,9 @@ bool GraphicsHandler::Initialize()
 	return true;
 }
 
-GraphicsHandler::GraphicsHandler()
+//TODO: initialization list probably doesn't work!
+GraphicsHandler::GraphicsHandler() 
+	: mCameraHandler(), mLightHandler(mCameraHandler.GetCameraPosition())
 {
 	for (int i = 0; i < GBUFFER_COUNT; i++)
 	{
@@ -172,12 +174,13 @@ GraphicsHandler::GraphicsHandler()
 	mGeometryPassVertexShader = nullptr;
 	mGeometryPassGeometryShader = nullptr;
 	mGeometryPassPixelShader = nullptr;
-	mTextureView = nullptr;
+	//mTextureView = nullptr;
 	mLightPassVertexShader = nullptr;
 	mLightPassPixelShader = nullptr;
 	mBackbufferRTV = nullptr;
 
-	mLightHandler = LightHandler();
+	//mCameraHandler = CameraHandler();
+	//mLightHandler = LightHandler(mCameraHandler.GetCameraPosition());
 }
 
 GraphicsHandler::~GraphicsHandler()
@@ -290,55 +293,6 @@ void GraphicsHandler::SetGeometryPassShaders()
 	gDeviceContext->PSSetShader(mGeometryPassPixelShader, nullptr, 0);
 }
 
-
-//TODO: Rewrite with Objects
-bool GraphicsHandler::SetGeometryPassObjectBuffers()
-{
-	UINT32 vertexSize = sizeof(float) * 5;
-	UINT32 offset = 0;
-	UINT32 squareVertexSize = sizeof(float) * 8;
-
-	// set textures and constant buffers
-	gDeviceContext->PSSetShaderResources(0, 1, &mTextureView);
-	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
-
-	// HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
-
-	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
-	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
-
-	// HEIGHT-MAP END ---------------------------------------------------------------------------
-
-	// update per-object buffer to spin cube
-	static float rotation = 0.0f;
-	//rotation += CUBE_ROTATION_SPEED;
-
-	DirectX::XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
-
-	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
-	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
-	// Unmap constant buffer so that we can use it again in the GPU
-	gDeviceContext->Unmap(gPerObjectBuffer, 0);
-	// set resource to Geometry Shader
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
-
-	// Map material properties buffer
-
-	//SetMaterial(Materials::Black_plastic);
-	gMaterialBufferData.material = Materials::Black_plastic;
-
-	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//gDeviceContext->Unmap(mPerFrameBuffer, 0);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
-
-	return true;
-}
-
 void GraphicsHandler::RenderGeometryPass()
 {
 	SetGeometryPassRenderTargets();
@@ -346,7 +300,7 @@ void GraphicsHandler::RenderGeometryPass()
 	mCameraHandler.BindPerFrameConstantBuffer();
 	//LOOP OVER OBJECTS FROM HERE
 
-	SetGeometryPassObjectBuffers();
+	mObjectHandler.SetGeometryPassObjectBuffers();
 
 	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
 
@@ -419,7 +373,7 @@ void GraphicsHandler::RenderLightPass()
 	SetLightPassRenderTargets();
 	SetLightPassShaders();
 	SetLightPassGBuffers();
-	mLightHandler.BindLightBuffer();
+	mLightHandler.BindLightBuffer(mCameraHandler.GetCameraPosition());
 
 	// Draw full screen triangle
 	gDeviceContext->Draw(3, 0);

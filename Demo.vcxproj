@@ -115,6 +115,7 @@
     <ClCompile Include="LightHandler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GraphicsHandler.cpp" />
+    <ClCompile Include="ObjectHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -218,7 +219,7 @@
     <ClInclude Include="CameraHandler.hpp" />
     <ClInclude Include="Engine.hpp" />
     <ClInclude Include="LightHandler.hpp" />
-    <ClInclude Include="Object.hpp" />
+    <ClInclude Include="ObjectHandler.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="GraphicsHandler.hpp" />

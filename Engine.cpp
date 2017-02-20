@@ -23,7 +23,7 @@ bool Engine::Render()
 
 Engine::Engine()
 {
-	mGraphicsHandler = GraphicsHandler();
+	//mGraphicsHandler = GraphicsHandler();
 	//TODO: init object vector
 }
 

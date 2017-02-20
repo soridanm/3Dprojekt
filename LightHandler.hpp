@@ -14,11 +14,11 @@ const int NR_OF_LIGHTS = 1;
 class LightHandler
 {
 public:
-	LightHandler();
+	LightHandler(DirectX::XMVECTOR CAM_POS);
 	~LightHandler();
 
-	bool InitializeLights();
-	bool BindLightBuffer();
+	bool InitializeLights(DirectX::XMVECTOR CAM_POS);
+	bool BindLightBuffer(DirectX::XMVECTOR CAM_POS);
 	bool CreateLightBuffer();
 private:
 	struct Light
@@ -49,7 +49,7 @@ private:
 	{
 		cLightBuffer() 
 		{
-			DirectX::XMStoreFloat4(&cameraPositionWS, CAM_POS);
+			//DirectX::XMStoreFloat4(&cameraPositionWS, CAM_POS);
 			globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 0.05f);
 
 			for (int i = 0; i < NR_OF_LIGHTS; i++)

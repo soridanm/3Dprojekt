@@ -3,7 +3,6 @@
 
 #include <vector>
 
-#include "Object.hpp"
 #include "GraphicsHandler.hpp"
 
 
@@ -21,7 +20,7 @@ private:
 
 
 	GraphicsHandler mGraphicsHandler;
-	std::vector<Object> mObjects;
+	//std::vector<Object> mObjects;
 
 };
 
