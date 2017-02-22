@@ -24,9 +24,13 @@ public:
 	ObjectHandler();
 	~ObjectHandler();
 
+	void CreateGeometry();
 	bool SetGeometryPassObjectBuffers();
 	
 private:
+	bool LoadHeightMap(char* filename, HeightMapInfo &hminfo);
+	void CreateWorld();
+
 	void CreatePerObjectConstantBuffer();
 	void CreateMaterialConstantBuffer();
 
@@ -53,6 +57,8 @@ private:
 	cMaterialBuffer gMaterialBufferData;
 	ID3D11ShaderResourceView* mTextureView;
 
+	ID3D11Buffer* gSquareIndexBuffer = nullptr;
+	ID3D11Buffer* gSquareVertBuffer = nullptr;
 
 };
 

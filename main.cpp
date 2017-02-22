@@ -907,7 +907,7 @@ void RenderLastPass()
 	gDeviceContext->Draw(3, 0);
 }
 
-//WILL BE REWRITTEN IN ObjectHandler.cpp
+//FULLY REWRITTEN IN ObjectHandler.cpp
 bool LoadHeightMap(char* filename, HeightMapInfo &hminfo) {
 	FILE *fileptr;
 	BITMAPFILEHEADER bitmapFileH;
@@ -962,7 +962,7 @@ struct Vertex {
 	XMFLOAT3 normal;
 };
 
-//WILL BE REWRITTEN IN ObjectHandler.cpp
+//FULLY REWRITTEN IN ObjectHandler.cpp
 void CreateWorld() {
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
@@ -1079,7 +1079,6 @@ void CreateWorld() {
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 	vertexBufferData.pSysMem = &mapVertex[0];
 	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
-
 }
 
 //REWRITTEN-ish
@@ -1089,7 +1088,7 @@ void Render()
 	RenderLastPass();
 }
 
-//WILL BE REWRITTEN IN Engine.cpp (probably)
+//FULLY REWRITTEN IN TimeHandler.cpp
 void StartTimer() {
 	LARGE_INTEGER frequency_count;
 	QueryPerformanceFrequency(&frequency_count);
@@ -1099,14 +1098,14 @@ void StartTimer() {
 	COUNTER_START = frequency_count.QuadPart;
 }
 
-//WILL BE REWRITTEN IN Engine.cpp (probably)
+//FULLY REWRITTEN IN TimeHandler.cpp
 double GetTime() {//returns time
 	LARGE_INTEGER current_time;
 	QueryPerformanceCounter(&current_time);
 	return double(current_time.QuadPart - COUNTER_START) / COUNTS_PER_SECOND;
 }
 
-//WILL BE REWRITTEN IN Engine.cpp (probably)
+//FULLY REWRITTEN IN TimeHandler.cpp
 double GetFrameTime() {//returns time per frame, in order to get smooth timebased movements
 	LARGE_INTEGER current_time;
 	_int64 tick_count;

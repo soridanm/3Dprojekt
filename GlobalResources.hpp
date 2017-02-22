@@ -49,11 +49,11 @@ float LIGHT_ROTATION_SPEED = 0.001f;
 
 
 //--------------Timer values---------------
-double COUNTS_PER_SECOND = 0.0;
-_int64 COUNTER_START = 0;
-int FRAME_COUNT = 0, FPS = 0;
-_int64 FRAME_TIME_OLD = 0;
-double FRAME_TIME;
+//double COUNTS_PER_SECOND = 0.0;
+//__int64 COUNTER_START = 0;
+//int FRAME_COUNT = 0, FPS = 0;
+//__int64 FRAME_TIME_OLD = 0;
+//double FRAME_TIME;
 
 //---------------------Heightmap values-----------------------------
 int NUMBER_OF_FACES = 0;
@@ -81,9 +81,9 @@ IDirectInputDevice8* DIMouse;
 DIMOUSESTATE MOUSE_LAST_STATE;
 LPDIRECTINPUT8 DirectInput;
 
-IDXGISwapChain* gSwapChain = nullptr;
-ID3D11Device* gDevice = nullptr;
-ID3D11DeviceContext* gDeviceContext = nullptr;
+//IDXGISwapChain* gSwapChain = nullptr;
+//ID3D11Device* gDevice = nullptr;
+//ID3D11DeviceContext* gDeviceContext = nullptr;
 
 //MOVED TO GraphicsHandler.hpp
 //// Depth Buffer
@@ -92,8 +92,8 @@ ID3D11DeviceContext* gDeviceContext = nullptr;
 
 // First Pass
 
-ID3D11Buffer* gSquareIndexBuffer = nullptr;
-ID3D11Buffer* gSquareVertBuffer = nullptr;
+//ID3D11Buffer* gSquareIndexBuffer = nullptr;
+//ID3D11Buffer* gSquareVertBuffer = nullptr;
 
 //ID3D11Buffer* gVertexBuffer = nullptr;
 //ID3D11InputLayout* mVertexLayout = nullptr;

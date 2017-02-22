@@ -32,3 +32,19 @@ Engine::~Engine()
 
 }
 
+IDXGISwapChain* Engine::GetSwapChain()
+{
+	return gSwapChain;
+}
+
+ID3D11Device* Engine::GetDevice()
+{
+	return gDevice;
+}
+
+ID3D11DeviceContext* Engine::GetDeviceContext()
+{
+	return gDeviceContext;
+}
+
+

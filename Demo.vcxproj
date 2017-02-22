@@ -116,6 +116,7 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GraphicsHandler.cpp" />
     <ClCompile Include="ObjectHandler.cpp" />
+    <ClCompile Include="TimeHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -223,6 +224,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="GraphicsHandler.hpp" />
+    <ClInclude Include="TimeHandler.hpp" />
   </ItemGroup>
   <ItemGroup>
     <Text Include="known_issues.txt" />

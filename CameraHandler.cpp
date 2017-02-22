@@ -109,7 +109,7 @@ void CameraHandler::InitializeCamera()
 	CreatePerFrameConstantBuffer();
 }
 
-//move to input class
+//move to input class?
 //used in wWinMain()
 void CameraHandler::DetectInput(double time, HWND hwnd)
 {
