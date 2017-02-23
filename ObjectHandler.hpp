@@ -24,17 +24,18 @@ public:
 	ObjectHandler();
 	~ObjectHandler();
 
-	void CreateGeometry();
-	bool SetGeometryPassObjectBuffers(ID3D11DeviceContext* DeviceContext);
+	void InitializeObjects(ID3D11Device* Dev);
+	bool SetGeometryPassObjectBuffers(ID3D11DeviceContext* DevCon);
 	
 	int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();
+
+	void CreateWorld(ID3D11Device* Dev);
 private:
 	bool LoadHeightMap(char* filename, HeightMapInfo &hminfo);
-	void CreateWorld(ID3D11Device* Device);
 
-	void CreatePerObjectConstantBuffer(ID3D11Device* Device);
-	void CreateMaterialConstantBuffer(ID3D11Device* Device);
+	void CreatePerObjectConstantBuffer(ID3D11Device* Dev);
+	void CreateMaterialConstantBuffer(ID3D11Device* Dev);
 
 	struct cPerObjectBuffer
 	{

@@ -7,7 +7,7 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
-#include "bth_image.h"
+//#include "bth_image.h"
 #include <Windows.h>
 #include <vector>
 #include <dinput.h>
@@ -66,15 +66,15 @@ struct HeightMapInfo {
 	DirectX::XMFLOAT3 *heightMap;
 };
 
-HWND InitWindow(HINSTANCE hInstance);
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+//HWND InitWindow(HINSTANCE hInstance);
+//LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-HRESULT CreateDirect3DContext(HWND wndHandle);
-HRESULT gHR = 0;
+//HRESULT CreateDirect3DContext(HWND wndHandle);
+//HRESULT gHR = 0;
 
 // Input devices
-HRESULT CreateDirect3DContext(HWND wndHandle);
-void InitDirectInput(HINSTANCE hInstance, HWND hwnd);
+//HRESULT CreateDirect3DContext(HWND wndHandle);
+//void InitDirectInput(HINSTANCE hInstance, HWND hwnd);
 
 //IDirectInputDevice8* DIKeyboard;
 //IDirectInputDevice8* DIMouse;

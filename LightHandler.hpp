@@ -17,9 +17,9 @@ public:
 	LightHandler(DirectX::XMVECTOR CAM_POS);
 	~LightHandler();
 
-	bool InitializeLights(DirectX::XMVECTOR CAM_POS);
-	bool BindLightBuffer(DirectX::XMVECTOR CAM_POS);
-	bool CreateLightBuffer();
+	bool InitializeLights(ID3D11Device* Dev, DirectX::XMVECTOR CAM_POS);
+	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMVECTOR CAM_POS);
+	bool CreateLightBuffer(ID3D11Device* Dev);
 private:
 	struct Light
 	{

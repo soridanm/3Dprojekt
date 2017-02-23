@@ -16,26 +16,30 @@ ObjectHandler::~ObjectHandler()
 }
 
 
-void ObjectHandler::CreateGeometry()
+//used in Graphics
+void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 {
-
+	
+	CreatePerObjectConstantBuffer(Dev);
+	CreateMaterialConstantBuffer(Dev);
+	CreateWorld(Dev);
 }
 
-bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DeviceContext)
+bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DevCon)
 {
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
 	UINT32 squareVertexSize = sizeof(float) * 8;
 
 	// set textures and constant buffers
-	DeviceContext->PSSetShaderResources(0, 1, &mTextureView);
-	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	DevCon->PSSetShaderResources(0, 1, &mTextureView);
+	//DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
 
-	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
-	DeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	DeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
+	//gDevCon->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
+	DevCon->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	DevCon->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
 
 	// HEIGHT-MAP END ---------------------------------------------------------------------------
 
@@ -46,13 +50,13 @@ bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DeviceCont
 	DirectX::XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	DeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	DevCon->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
 	// copy memory from CPU to GPU of the entire struct
 	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
 	// Unmap constant buffer so that we can use it again in the GPU
-	DeviceContext->Unmap(gPerObjectBuffer, 0);
+	DevCon->Unmap(gPerObjectBuffer, 0);
 	// set resource to Geometry Shader
-	DeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
 
 	// Map material properties buffer
 
@@ -60,10 +64,10 @@ bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DeviceCont
 	gMaterialBufferData.material = Materials::Black_plastic;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	DeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//gDeviceContext->Unmap(mPerFrameBuffer, 0);
-	DeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	//DevCon->Unmap(mPerFrameBuffer, 0);
+	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	return true;
 }
@@ -126,7 +130,8 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	return true;
 }
 
-void ObjectHandler::CreateWorld(ID3D11Device* Device)
+//used in
+void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 {
 	using DirectX::operator/;
 
@@ -197,6 +202,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Device)
 		tempNormal.push_back(nonNormalized);
 	}
 
+	//this part is still really slow
 	//calculates the average normal in order to make the world smooth
 	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	int facesUsing = 0;
@@ -231,7 +237,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Device)
 
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &drawOrder[0];
-	Device->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
+	Dev->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
 
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
@@ -244,11 +250,11 @@ void ObjectHandler::CreateWorld(ID3D11Device* Device)
 	D3D11_SUBRESOURCE_DATA vertexBufferData;
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 	vertexBufferData.pSysMem = &mapVertex[0];
-	Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
+	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
 }
 
 
-void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Device)
+void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Dev)
 {
 	DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(0.0f));
 
@@ -262,13 +268,13 @@ void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Device)
 	WBufferDesc.MiscFlags = 0;
 	WBufferDesc.StructureByteStride = 0;
 
-	gHR = Device->CreateBuffer(&WBufferDesc, nullptr, &gPerObjectBuffer);
+	HRESULT gHR = Dev->CreateBuffer(&WBufferDesc, nullptr, &gPerObjectBuffer);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
 }
 
-void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Device)
+void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Dev)
 {
 	D3D11_BUFFER_DESC materialBufferDesc;
 	materialBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -280,7 +286,7 @@ void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Device)
 
 	// check if the creation failed for any reason
 	HRESULT hr = 0;
-	hr = Device->CreateBuffer(&materialBufferDesc, nullptr, &gMaterialBuffer);
+	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &gMaterialBuffer);
 	if (FAILED(hr))
 	{
 		// handle the error, could be fatal or a warning...

@@ -11,7 +11,7 @@
 
 //done for now, will add comments to this function later
 bool GraphicsHandler::CompileShader(
-	ID3DBlob* pShader,
+	ID3DBlob** pShader,
 	LPCWSTR shaderFileName,
 	LPCSTR entryPoint,
 	LPCSTR shaderModel,
@@ -21,7 +21,7 @@ bool GraphicsHandler::CompileShader(
 	UINT flags2,
 	ID3DBlob** ppErrorMsgs)
 {
-	gHR = D3DCompileFromFile(
+	HRESULT gHR = D3DCompileFromFile(
 		shaderFileName,
 		pDefines,
 		pInclude,
@@ -29,7 +29,7 @@ bool GraphicsHandler::CompileShader(
 		shaderModel,
 		Flags1,
 		flags2,
-		&pShader,
+		pShader,
 		ppErrorMsgs
 	);
 	
@@ -41,7 +41,7 @@ bool GraphicsHandler::CompileShader(
 }
 
 //temp done
-bool GraphicsHandler::CreateInputLayout(ID3DBlob* pVS)
+bool GraphicsHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS)
 {
 	//create input layout (verified using vertex shader)
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = 
@@ -51,18 +51,18 @@ bool GraphicsHandler::CreateInputLayout(ID3DBlob* pVS)
 		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0,	20,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	gDevice->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &mVertexLayout);
+	Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &mVertexLayout);
 
 	return true;
 }
 
 // TODO: Should probably add hr checks. also Relese()
-bool GraphicsHandler::InitializeGraphicsBuffer()
+bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 {
 	// Create render target textures
 	D3D11_TEXTURE2D_DESC textureDesc{};
-	textureDesc.Width = SCREEN_WIDTH;
-	textureDesc.Height = SCREEN_HEIGHT;
+	textureDesc.Width = mCameraHandler.GetScreenWidth();
+	textureDesc.Height = mCameraHandler.GetScreenHeight();
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -74,7 +74,7 @@ bool GraphicsHandler::InitializeGraphicsBuffer()
 	//textureDesc.MiscFlags = 0;
 
 	for (UINT i = 0; i < GBUFFER_COUNT; i++) {
-		gDevice->CreateTexture2D(&textureDesc, NULL, &mGraphicsBuffer[i].texture);
+		Dev->CreateTexture2D(&textureDesc, NULL, &mGraphicsBuffer[i].texture);
 	}
 
 	// Create render target views.
@@ -83,7 +83,7 @@ bool GraphicsHandler::InitializeGraphicsBuffer()
 	renderTargetViewDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
 
 	for (UINT i = 0; i < GBUFFER_COUNT; i++) {
-		gDevice->CreateRenderTargetView(mGraphicsBuffer[i].texture, &renderTargetViewDesc, &mGraphicsBuffer[i].renderTargetView);
+		Dev->CreateRenderTargetView(mGraphicsBuffer[i].texture, &renderTargetViewDesc, &mGraphicsBuffer[i].renderTargetView);
 	}
 
 	// Create the shader resource views
@@ -93,13 +93,13 @@ bool GraphicsHandler::InitializeGraphicsBuffer()
 	shaderResourceViewDesc.Texture2D.MipLevels = 1;
 
 	for (UINT i = 0; i < GBUFFER_COUNT; i++) {
-		gDevice->CreateShaderResourceView(mGraphicsBuffer[i].texture, &shaderResourceViewDesc, &mGraphicsBuffer[i].shaderResourceView);
+		Dev->CreateShaderResourceView(mGraphicsBuffer[i].texture, &shaderResourceViewDesc, &mGraphicsBuffer[i].shaderResourceView);
 	}
 
 	//Create the depth stencil buffer texture
 	D3D11_TEXTURE2D_DESC depthDesc{};
-	depthDesc.Width = SCREEN_WIDTH;
-	depthDesc.Height = SCREEN_HEIGHT;
+	depthDesc.Width = mCameraHandler.GetScreenWidth();
+	depthDesc.Height = mCameraHandler.GetScreenHeight();
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
@@ -107,14 +107,14 @@ bool GraphicsHandler::InitializeGraphicsBuffer()
 	depthDesc.Usage = D3D11_USAGE_DEFAULT;
 	depthDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
 
-	gDevice->CreateTexture2D(&depthDesc, NULL, &mDepthStencilTexture);
+	Dev->CreateTexture2D(&depthDesc, NULL, &mDepthStencilTexture);
 
 	// Create the depth stencil view
 	D3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc{};
 	depthStencilViewDesc.Format = depthDesc.Format;
 	depthStencilViewDesc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 
-	gDevice->CreateDepthStencilView(
+	Dev->CreateDepthStencilView(
 		mDepthStencilTexture,	// Depth stencil texture
 		&depthStencilViewDesc,	// Depth stencil desc
 		&mDepthStecilView);		// [out] Depth stencil view
@@ -142,20 +142,24 @@ void GraphicsHandler::CreateAllConstantBuffers()
 
 // public ------------------------------------------------------------------------------
 
-bool GraphicsHandler::Initialize()
+bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	mCameraHandler.InitializeCamera();
+	mCameraHandler.InitializeCamera(Dev, DevCon);
 
-	CreateShaders(); //TODO: rewrite with shader class
+	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
-	mLightHandler.InitializeLights(mCameraHandler.GetCameraPosition());
+	mObjectHandler.InitializeObjects(Dev);
+
+	CreateShaders(Dev); //TODO: rewrite with shader class
 
 	//create world/models
 
 	//create constant buffers
 
-	InitializeGraphicsBuffer();
+	InitializeGraphicsBuffer(Dev);
 
+
+	
 
 	return true;
 }
@@ -189,38 +193,38 @@ GraphicsHandler::~GraphicsHandler()
 }
 
 //TODO: clean up and write better error messages
-bool GraphicsHandler::CreateShaders()
+bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 {
 	//---------------------------------- Geometry Pass ----------------------------------------------------
 
 	//compile and create vertex shader
 	ID3DBlob* pVS = nullptr;
-	CompileShader(pVS, L"GBufferVertex.hlsl", "VS_main", "vs_5_0");
+	CompileShader(&pVS, L"GBufferVertex.hlsl", "VS_main", "vs_5_0");
 
-	gHR = gDevice->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &mGeometryPassVertexShader);
+	HRESULT gHR = Dev->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &mGeometryPassVertexShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
 
 	//Create an input layout for the vertex shader
-	if (!CreateInputLayout(pVS)) {
+	if (!CreateInputLayout(Dev, pVS)) {
 		exit(-1);
 	}
 
 	//compile and create geometry shader
 	ID3DBlob* pGS = nullptr;
-	CompileShader(pGS, L"GBufferGeometry.hlsl", "GS_main", "gs_5_0");
+	CompileShader(&pGS, L"GBufferGeometry.hlsl", "GS_main", "gs_5_0");
 
-	gHR = gDevice->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &mGeometryPassGeometryShader);
+	gHR = Dev->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &mGeometryPassGeometryShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
 
 	//compile and create pixel shader
 	ID3DBlob* pPS = nullptr;
-	CompileShader(pPS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0");
+	CompileShader(&pPS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0");
 
-	gHR = gDevice->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &mGeometryPassPixelShader);
+	gHR = Dev->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &mGeometryPassPixelShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
@@ -229,16 +233,16 @@ bool GraphicsHandler::CreateShaders()
 
 		//compile and create vertex shader
 	ID3DBlob* pVS2 = nullptr;
-	CompileShader(pVS2, L"LightVertex.hlsl", "VS_main", "vs_5_0");
-	gHR = gDevice->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mLightPassVertexShader);
+	CompileShader(&pVS2, L"LightVertex.hlsl", "VS_main", "vs_5_0");
+	gHR = Dev->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mLightPassVertexShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
 
 	//compile and create pixel shader
 	ID3DBlob* pPS2 = nullptr;
-	CompileShader(pPS2, L"LightFragment.hlsl", "PS_main", "ps_5_0");
-	gHR = gDevice->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mLightPassPixelShader);
+	CompileShader(&pPS2, L"LightFragment.hlsl", "PS_main", "ps_5_0");
+	gHR = Dev->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mLightPassPixelShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
@@ -256,15 +260,15 @@ bool GraphicsHandler::CreateShaders()
 // ------------------------------ Geometry Pass ------------------------------------------------------
 
 //temp done
-void GraphicsHandler::SetGeometryPassRenderTargets()
+void GraphicsHandler::SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon)
 {
 	//Clear the render targets
-	gDeviceContext->ClearRenderTargetView(mGraphicsBuffer[0].renderTargetView, Colors::fBlack);
-	gDeviceContext->ClearRenderTargetView(mGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(mGraphicsBuffer[2].renderTargetView, Colors::fLightSteelBlue);
-	gDeviceContext->ClearRenderTargetView(mGraphicsBuffer[3].renderTargetView, Colors::fBlack);
-	gDeviceContext->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-	//gDeviceContext->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[0].renderTargetView, Colors::fBlack);
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[2].renderTargetView, Colors::fLightSteelBlue);
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[3].renderTargetView, Colors::fBlack);
+	DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+	//DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	ID3D11RenderTargetView* renderTargets[] =
 	{
@@ -275,34 +279,40 @@ void GraphicsHandler::SetGeometryPassRenderTargets()
 	};
 
 	//set render targets
-	gDeviceContext->OMSetRenderTargets(GBUFFER_COUNT, renderTargets, mDepthStecilView);
+	DevCon->OMSetRenderTargets(GBUFFER_COUNT, renderTargets, mDepthStecilView);
 }
 
 //TODO: update with correct code from both branches.
-void GraphicsHandler::SetGeometryPassShaders()
+void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon)
 {
 	// Set Vertex Shader input
-	gDeviceContext->IASetInputLayout(mVertexLayout);
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	DevCon->IASetInputLayout(mVertexLayout);
+	DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
 	// Set shaders
-	gDeviceContext->VSSetShader(mGeometryPassVertexShader, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(mGeometryPassGeometryShader, nullptr, 0);
-	gDeviceContext->PSSetShader(mGeometryPassPixelShader, nullptr, 0);
+	DevCon->VSSetShader(mGeometryPassVertexShader, nullptr, 0);
+	DevCon->HSSetShader(nullptr, nullptr, 0);
+	DevCon->DSSetShader(nullptr, nullptr, 0);
+	DevCon->GSSetShader(mGeometryPassGeometryShader, nullptr, 0);
+	DevCon->PSSetShader(mGeometryPassPixelShader, nullptr, 0);
 }
 
-void GraphicsHandler::RenderGeometryPass()
+void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon)
 {
-	SetGeometryPassRenderTargets();
-	SetGeometryPassShaders();
-	mCameraHandler.BindPerFrameConstantBuffer();
+	DevCon->PSSetShaderResources(0, 1, &gTextureView);
+}
+
+void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
+{
+	SetGeometryPassRenderTargets(DevCon);
+	SetGeometryPassShaders(DevCon);
+	SetGeometryPassShaderResources(DevCon);
+	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 	//LOOP OVER OBJECTS FROM HERE
 
-	mObjectHandler.SetGeometryPassObjectBuffers();
+	mObjectHandler.SetGeometryPassObjectBuffers(DevCon);
 
-	gDeviceContext->DrawIndexed(NUMBER_OF_FACES * 3, 0, 0);
+	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	//LOOP OVER OBJECTS TO HERE
 }
@@ -310,49 +320,49 @@ void GraphicsHandler::RenderGeometryPass()
 // ------------------------------ Light Pass ------------------------------------------------------
 
 //TODO: check if pBackBuffer should be declared here or earlier
-bool GraphicsHandler::SetLightPassRenderTargets()
+bool GraphicsHandler::SetLightPassRenderTargets(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
 	// get the address of the back buffer
 	ID3D11Texture2D* pBackBuffer = nullptr;
-	gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+	SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 
 	// use the back buffer address to create the render target
-	gDevice->CreateRenderTargetView(pBackBuffer, NULL, &mBackbufferRTV);
+	Dev->CreateRenderTargetView(pBackBuffer, NULL, &mBackbufferRTV);
 	pBackBuffer->Release();
 
 	// set the render target as the back buffer
-	gDeviceContext->OMSetRenderTargets(1, &mBackbufferRTV, nullptr);
+	DevCon->OMSetRenderTargets(1, &mBackbufferRTV, nullptr);
 
 	//Clear screen
-	gDeviceContext->ClearRenderTargetView(mBackbufferRTV, Colors::fWhite);
+	DevCon->ClearRenderTargetView(mBackbufferRTV, Colors::fWhite);
 
 	return true;
 }
 
 //DONE!
-bool GraphicsHandler::SetLightPassShaders()
+bool GraphicsHandler::SetLightPassShaders(ID3D11DeviceContext* DevCon)
 {
 	/* Full screen triangle is created in Vertex shader using vertexID so no input layout needed */
 	const uintptr_t n0 = 0;
-	gDeviceContext->IASetInputLayout(nullptr);
-	gDeviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	gDeviceContext->IASetVertexBuffers(0, 0,
+	DevCon->IASetInputLayout(nullptr);
+	DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	DevCon->IASetVertexBuffers(0, 0,
 		reinterpret_cast<ID3D11Buffer *const *>(&n0),
 		reinterpret_cast<const UINT *>(n0),
 		reinterpret_cast<const UINT *>(&n0)
 	);
 
-	gDeviceContext->VSSetShader(mLightPassVertexShader, nullptr, 0);
-	gDeviceContext->HSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->DSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->GSSetShader(nullptr, nullptr, 0);
-	gDeviceContext->PSSetShader(mLightPassPixelShader, nullptr, 0);
+	DevCon->VSSetShader(mLightPassVertexShader, nullptr, 0);
+	DevCon->HSSetShader(nullptr, nullptr, 0);
+	DevCon->DSSetShader(nullptr, nullptr, 0);
+	DevCon->GSSetShader(nullptr, nullptr, 0);
+	DevCon->PSSetShader(mLightPassPixelShader, nullptr, 0);
 
 	return true;
 }
 
 //TODO: There might be a memory leak here
-bool GraphicsHandler::SetLightPassGBuffers()
+bool GraphicsHandler::SetLightPassGBuffers(ID3D11DeviceContext* DevCon)
 {
 	ID3D11ShaderResourceView* GBufferTextureViews[] =
 	{
@@ -362,19 +372,19 @@ bool GraphicsHandler::SetLightPassGBuffers()
 		mGraphicsBuffer[3].shaderResourceView  // Specular
 	};
 
-	gDeviceContext->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
+	DevCon->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
 
 	return true;
 }
 
 //DONE
-void GraphicsHandler::RenderLightPass()
+void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
-	SetLightPassRenderTargets();
-	SetLightPassShaders();
-	SetLightPassGBuffers();
-	mLightHandler.BindLightBuffer(mCameraHandler.GetCameraPosition());
+	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
+	SetLightPassShaders(DevCon);
+	SetLightPassGBuffers(DevCon);
+	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
 
 	// Draw full screen triangle
-	gDeviceContext->Draw(3, 0);
+	DevCon->Draw(3, 0);
 }

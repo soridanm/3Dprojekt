@@ -28,7 +28,7 @@ LightHandler::~LightHandler()
 
 }
 
-bool LightHandler::CreateLightBuffer()
+bool LightHandler::CreateLightBuffer(ID3D11Device* Dev)
 {
 	// initialize the description of the buffer.
 	D3D11_BUFFER_DESC lightBufferDesc;
@@ -40,7 +40,7 @@ bool LightHandler::CreateLightBuffer()
 	lightBufferDesc.StructureByteStride = 0;
 
 	// check if the creation failed for any reason
-	gHR = gDevice->CreateBuffer(&lightBufferDesc, nullptr, &mLightBuffer);
+	HRESULT gHR = Dev->CreateBuffer(&lightBufferDesc, nullptr, &mLightBuffer);
 	if (FAILED(gHR))
 	{
 		// handle the error, could be fatal or a warning...
@@ -49,11 +49,11 @@ bool LightHandler::CreateLightBuffer()
 	return true;
 }
 
-
+//used in 
 //Currently only sets one light
-bool LightHandler::InitializeLights(DirectX::XMVECTOR CAM_POS)
+bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMVECTOR CAM_POS)
 {
-	CreateLightBuffer();
+	CreateLightBuffer(Dev);
 
 	DirectX::XMFLOAT4 light_position = { 10.0f, 10.0f, 100.0f, 1.0f };
 	DirectX::XMFLOAT4 light_color = Colors::White;
@@ -73,7 +73,7 @@ bool LightHandler::InitializeLights(DirectX::XMVECTOR CAM_POS)
 
 //TODO: Make the movement time dependant and not frame dependant
 // The light currently follows the camera's position
-bool LightHandler::BindLightBuffer(DirectX::XMVECTOR CAM_POS)
+bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMVECTOR CAM_POS)
 {
 	// Move light up and down
 	/*static int lightYMovement = 249;
@@ -91,11 +91,11 @@ bool LightHandler::BindLightBuffer(DirectX::XMVECTOR CAM_POS)
 
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
-	gDeviceContext->Map(mLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightBufferPtr);
+	DevCon->Map(mLightBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &LightBufferPtr);
 	memcpy(LightBufferPtr.pData, &mLightBufferData, sizeof(cLightBuffer));
-	gDeviceContext->Unmap(mLightBuffer, 0);
+	DevCon->Unmap(mLightBuffer, 0);
 
-	gDeviceContext->PSSetConstantBuffers(0, 1, &mLightBuffer);
+	DevCon->PSSetConstantBuffers(0, 1, &mLightBuffer);
 
 	return true;
 }

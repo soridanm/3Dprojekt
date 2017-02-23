@@ -16,6 +16,17 @@ TimeHandler::~TimeHandler()
 
 }
 
+void TimeHandler::TimeHandlerTimeFunction()
+{
+	FRAME_COUNT++;
+	if (GetTime() > 1.0)
+	{
+		FPS = FRAME_COUNT;
+		FRAME_COUNT = 0;
+		StartTimer();
+	}
+}
+
 //used in wWinMain
 void TimeHandler::StartTimer()
 {
@@ -52,3 +63,7 @@ double TimeHandler::GetFrameTime()
 	return static_cast<double>(tickCount) / COUNTS_PER_SECOND;
 }
 
+void TimeHandler::SetFrameCount(int newCount)
+{
+	FRAME_COUNT = newCount;
+}

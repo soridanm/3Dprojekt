@@ -16,21 +16,28 @@ public:
 	bool Initialize();
 	bool Render();
 
+	HRESULT eCreateDirect3DContext(HWND &wndHandle);
 
+	void TimeFunction(HWND &wndHandle);
 
-	ID3D11Device*	GetDevice();
-	IDXGISwapChain*	GetSwapChain();
-	ID3D11DeviceContext* GetDeviceContext();
-private:
-
-
-	GraphicsHandler mGraphicsHandler;
-	TimeHandler		mTimeHandler;
-	//std::vector<Object> mObjects;
+	ID3D11Device**	GetDevice();
+	IDXGISwapChain**	GetSwapChain();
+	ID3D11DeviceContext** GetDeviceContext();
+	ID3D11RenderTargetView** GetBackBufferRTV();
+	ID3D11ShaderResourceView** Engine::GetTextureView();
 
 	ID3D11Device*	gDevice		= nullptr;
 	IDXGISwapChain* gSwapChain	= nullptr;
 	ID3D11DeviceContext* gDeviceContext = nullptr;
+
+
+	GraphicsHandler mGraphicsHandler;
+	TimeHandler		mTimeHandler;
+private:
+
+
+	//std::vector<Object> mObjects;
+
 
 
 };

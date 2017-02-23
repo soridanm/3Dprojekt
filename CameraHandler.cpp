@@ -103,6 +103,7 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 	return true;
 }
 
+//used in 
 void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
 	SetViewPort(DevCon);
@@ -111,7 +112,7 @@ void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* Dev
 
 //move to input class?
 //used in wWinMain()
-void CameraHandler::DetectInput(double time, HWND hwnd)
+void CameraHandler::DetectInput(double time, HWND &hwnd)
 {
 	DIMOUSESTATE mouse_current_state;
 	BYTE keyboardState[256];
@@ -176,7 +177,7 @@ void CameraHandler::DetectInput(double time, HWND hwnd)
 }
 
 //used in wWinMain()
-void CameraHandler::InitializeDirectInput(HINSTANCE hInstance, HWND hwnd) //creates the directx input, sets the data format
+void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //creates the directx input, sets the data format
 {
 	HRESULT hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
 
@@ -242,7 +243,7 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	VPBufferDesc.MiscFlags				= 0;
 	VPBufferDesc.StructureByteStride	= 0;
 
-	gHR = Dev->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
+	HRESULT gHR = Dev->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}

@@ -20,10 +20,15 @@ public:
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
 	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
-	void DetectInput(double time, HWND hwnd);
-	void InitializeDirectInput(HINSTANCE hInstance, HWND hwnd);
+	void DetectInput(double time, HWND &hwnd);
+	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 	const LONG GetScreenWidth();
 	const LONG GetScreenHeight();
+
+	//input ------------------------------------------------------
+	IDirectInputDevice8* DIKeyboard = nullptr;
+	IDirectInputDevice8* DIMouse = nullptr;
+	LPDIRECTINPUT8 DirectInput;
 private:
 	void SetViewPort(ID3D11DeviceContext* DevCon);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
@@ -57,15 +62,12 @@ private:
 	float CAM_PITCH;
 	float SPEED;
 
-	//input ------------------------------------------------------
-	IDirectInputDevice8* DIKeyboard;
-	IDirectInputDevice8* DIMouse;
 
 	DIMOUSESTATE MOUSE_LAST_STATE;
-	LPDIRECTINPUT8 DirectInput;
 
-	const LONG SCREEN_WIDTH = 1920;
-	const LONG SCREEN_HEIGHT = 1080;
+	//TODO: Move these two somewhere else. They're way too deep
+	const LONG SCREEN_WIDTH = 1280;
+	const LONG SCREEN_HEIGHT = 720;
 };
 
 

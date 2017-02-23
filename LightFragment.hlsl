@@ -72,15 +72,16 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 	// In case you want to set it to one of the G-Buffers
 
-	//float3 finalColor = normal;
+	float3 finalColor = normal;
 	//float3 finalColor = positionWS;
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
 
 	//float3 finalColor = diffuse_component;
 	//float3 finalColor = float3(specular_coefficient, specular_coefficient, specular_coefficient);
+	//float3 finalColor = float3(1.0, 0.0, 0.0);
 
-	float3 finalColor = final_color;
+	//float3 finalColor = final_color;
 
 	return float4(finalColor, 1.0);
 }
