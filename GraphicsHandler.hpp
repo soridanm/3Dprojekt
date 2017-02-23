@@ -77,7 +77,7 @@ private:
 	LightHandler mLightHandler;
 	//ShaderHandler mShaderHandler;
 	ObjectHandler mObjectHandler;
-	CameraHandler mCameraHandler; //move to engine
+	CameraHandler mCameraHandler; //move to engine //dev/devcon set
 };
 
 

@@ -18,8 +18,8 @@ public:
 
 
 
-	IDXGISwapChain* GetSwapChain();
-	ID3D11Device* GetDevice();
+	ID3D11Device*	GetDevice();
+	IDXGISwapChain*	GetSwapChain();
 	ID3D11DeviceContext* GetDeviceContext();
 private:
 
@@ -28,9 +28,9 @@ private:
 	TimeHandler		mTimeHandler;
 	//std::vector<Object> mObjects;
 
-	IDXGISwapChain* gSwapChain;// = nullptr;
-	ID3D11Device* gDevice;// = nullptr;
-	ID3D11DeviceContext* gDeviceContext;// = nullptr;
+	ID3D11Device*	gDevice		= nullptr;
+	IDXGISwapChain* gSwapChain	= nullptr;
+	ID3D11DeviceContext* gDeviceContext = nullptr;
 
 
 };

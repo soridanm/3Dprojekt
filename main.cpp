@@ -39,7 +39,7 @@ float LIGHT_ROTATION_SPEED		= 0.001f;
 //---------------Camera default values------------------------------------
 const XMVECTOR CAMERA_STARTING_POS = XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f);
 XMVECTOR CAM_POS = CAMERA_STARTING_POS;
-XMVECTOR CAM_TARGET =XMVectorZero();
+XMVECTOR CAM_TARGET = XMVectorZero();
 XMVECTOR CAM_FORWARD = XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 XMVECTOR CAM_RIGHT = XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 XMVECTOR CAM_UP = XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -1189,7 +1189,8 @@ void DetectInput(double time, HWND hwnd) {
 		SPEED = 15.0f;
 	}
 	
-	if (keyboardState[DIK_A] & 0x80) {
+	if (keyboardState[DIK_A] & 0x80) {
+
 		MOVE_LR -= SPEED*time;
 	}
 	if (keyboardState[DIK_D] & 0x80) {

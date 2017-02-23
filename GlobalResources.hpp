@@ -26,14 +26,14 @@
 
 
 
-const double MATH_PI = 3.14159265358;
+//const double MATH_PI = 3.14159265358;
 //const UINT GBUFFER_COUNT = 4; //MOVED TO GraphicsHandler.hpp
-const LONG SCREEN_WIDTH = 1920;//2*640;
-const LONG SCREEN_HEIGHT = 1080;//2*480;
+//const LONG SCREEN_WIDTH = 1920;//2*640;  CameraHandler.hpp
+//const LONG SCREEN_HEIGHT = 1080;//2*480; //moved to CameraHandler.hpp
 //const int MAX_LIGHTS = 8; //moved to LightHandler.hpp
-const int NR_OF_OBJECTS = 1;
-float CUBE_ROTATION_SPEED = 0.01f;
-float LIGHT_ROTATION_SPEED = 0.001f;
+//const int NR_OF_OBJECTS = 1; //not used
+//float CUBE_ROTATION_SPEED = 0.01f;  //not used
+//float LIGHT_ROTATION_SPEED = 0.001f; //not used
 //---------------Camera default values------------------------------------
 //const DirectX::XMVECTOR CAMERA_STARTING_POS = DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f);
 //DirectX::XMVECTOR CAM_POS = CAMERA_STARTING_POS;
@@ -55,10 +55,11 @@ float LIGHT_ROTATION_SPEED = 0.001f;
 //__int64 FRAME_TIME_OLD = 0;
 //double FRAME_TIME;
 
+//moved to ObjectHandler.hpp
 //---------------------Heightmap values-----------------------------
-int NUMBER_OF_FACES = 0;
-int NUMBER_OF_VERTICES = 0;
-float WORLD_HEIGHT[200][200];
+//int NUMBER_OF_FACES = 0;
+//int NUMBER_OF_VERTICES = 0;
+//float WORLD_HEIGHT[200][200];
 struct HeightMapInfo {
 	int worldWidth;
 	int worldHeight;
@@ -75,11 +76,11 @@ HRESULT gHR = 0;
 HRESULT CreateDirect3DContext(HWND wndHandle);
 void InitDirectInput(HINSTANCE hInstance, HWND hwnd);
 
-IDirectInputDevice8* DIKeyboard;
-IDirectInputDevice8* DIMouse;
+//IDirectInputDevice8* DIKeyboard;
+//IDirectInputDevice8* DIMouse;
 
-DIMOUSESTATE MOUSE_LAST_STATE;
-LPDIRECTINPUT8 DirectInput;
+//DIMOUSESTATE MOUSE_LAST_STATE;
+//LPDIRECTINPUT8 DirectInput;
 
 //IDXGISwapChain* gSwapChain = nullptr;
 //ID3D11Device* gDevice = nullptr;

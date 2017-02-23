@@ -25,14 +25,16 @@ public:
 	~ObjectHandler();
 
 	void CreateGeometry();
-	bool SetGeometryPassObjectBuffers();
+	bool SetGeometryPassObjectBuffers(ID3D11DeviceContext* DeviceContext);
 	
+	int GetHeightMapNrOfFaces();
+	int GetHeightMapNrOfVerticies();
 private:
 	bool LoadHeightMap(char* filename, HeightMapInfo &hminfo);
-	void CreateWorld();
+	void CreateWorld(ID3D11Device* Device);
 
-	void CreatePerObjectConstantBuffer();
-	void CreateMaterialConstantBuffer();
+	void CreatePerObjectConstantBuffer(ID3D11Device* Device);
+	void CreateMaterialConstantBuffer(ID3D11Device* Device);
 
 	struct cPerObjectBuffer
 	{
@@ -57,8 +59,12 @@ private:
 	cMaterialBuffer gMaterialBufferData;
 	ID3D11ShaderResourceView* mTextureView;
 
+	//Height map
 	ID3D11Buffer* gSquareIndexBuffer = nullptr;
 	ID3D11Buffer* gSquareVertBuffer = nullptr;
+	int NUMBER_OF_FACES = 0;
+	int NUMBER_OF_VERTICES = 0;
+	float WORLD_HEIGHT[200][200];
 
 };
 

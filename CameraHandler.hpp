@@ -11,7 +11,6 @@
 
 class CameraHandler
 {
-
 public:
 	CameraHandler();
 	~CameraHandler();
@@ -19,20 +18,22 @@ public:
 	DirectX::XMVECTOR GetCameraPosition();
 
 	void UpdateCamera();
-	bool BindPerFrameConstantBuffer();
-	void InitializeCamera();
+	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	void DetectInput(double time, HWND hwnd);
 	void InitializeDirectInput(HINSTANCE hInstance, HWND hwnd);
+	const LONG GetScreenWidth();
+	const LONG GetScreenHeight();
 private:
-	void SetViewPort();
-	bool CreatePerFrameConstantBuffer();
+	void SetViewPort(ID3D11DeviceContext* DevCon);
+	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 
 	struct cPerFrameBuffer
 	{
 		//XMFLOAT4X4 ViewProjection;
 		DirectX::XMFLOAT4X4 View;
 		DirectX::XMFLOAT4X4 Projection;
-	}; 
+	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
 
 
@@ -55,6 +56,16 @@ private:
 	float CAM_YAW;
 	float CAM_PITCH;
 	float SPEED;
+
+	//input ------------------------------------------------------
+	IDirectInputDevice8* DIKeyboard;
+	IDirectInputDevice8* DIMouse;
+
+	DIMOUSESTATE MOUSE_LAST_STATE;
+	LPDIRECTINPUT8 DirectInput;
+
+	const LONG SCREEN_WIDTH = 1920;
+	const LONG SCREEN_HEIGHT = 1080;
 };
 
 

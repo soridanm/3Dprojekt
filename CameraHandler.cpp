@@ -87,26 +87,26 @@ void CameraHandler::UpdateCamera()
 	CAM_TARGET = CAM_POS + CAM_TARGET;
 }
 
-bool CameraHandler::BindPerFrameConstantBuffer()
+bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 {
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
-	gDeviceContext->Map(mPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
+	DevCon->Map(mPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
 
 	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
 	XMStoreFloat4x4(&VPBufferData.View, view);
 
 	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
-	//gDeviceContext->Unmap(mPerFrameBuffer, 0);
-	gDeviceContext->GSSetConstantBuffers(0, 1, &mPerFrameBuffer);
+	//DevCon->Unmap(mPerFrameBuffer, 0);
+	DevCon->GSSetConstantBuffers(0, 1, &mPerFrameBuffer);
 
 	return true;
 }
 
-void CameraHandler::InitializeCamera()
+void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	SetViewPort();
-	CreatePerFrameConstantBuffer();
+	SetViewPort(DevCon);
+	CreatePerFrameConstantBuffer(Dev);
 }
 
 //move to input class?
@@ -134,7 +134,8 @@ void CameraHandler::DetectInput(double time, HWND hwnd)
 		SPEED = 15.0f;
 	}
 
-	if (keyboardState[DIK_A] & 0x80) {
+	if (keyboardState[DIK_A] & 0x80) {
+
 		MOVE_LR -= SPEED*time;
 	}
 	if (keyboardState[DIK_D] & 0x80) {
@@ -189,9 +190,18 @@ void CameraHandler::InitializeDirectInput(HINSTANCE hInstance, HWND hwnd) //crea
 	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 }
 
+const LONG CameraHandler::GetScreenWidth() 
+{
+	return SCREEN_WIDTH;
+}
+const LONG CameraHandler::GetScreenHeight()
+{
+	return SCREEN_HEIGHT;
+}
+
 // private ------------------------------------------------------------------------------
 
-void CameraHandler::SetViewPort()
+void CameraHandler::SetViewPort(ID3D11DeviceContext* DevCon)
 {
 	D3D11_VIEWPORT vp;
 	vp.Width	= (FLOAT)SCREEN_WIDTH;
@@ -201,10 +211,10 @@ void CameraHandler::SetViewPort()
 	vp.TopLeftX = 0.f;
 	vp.TopLeftY = 0.f;
 
-	gDeviceContext->RSSetViewports(1, &vp);
+	DevCon->RSSetViewports(1, &vp);
 }
 
-bool CameraHandler::CreatePerFrameConstantBuffer()
+bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 {
 	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 	float degrees_field_of_view = 90.0f;
@@ -232,7 +242,7 @@ bool CameraHandler::CreatePerFrameConstantBuffer()
 	VPBufferDesc.MiscFlags				= 0;
 	VPBufferDesc.StructureByteStride	= 0;
 
-	gHR = gDevice->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
+	gHR = Dev->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}

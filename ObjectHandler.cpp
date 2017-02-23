@@ -15,21 +15,27 @@ ObjectHandler::~ObjectHandler()
 
 }
 
-bool ObjectHandler::SetGeometryPassObjectBuffers()
+
+void ObjectHandler::CreateGeometry()
+{
+
+}
+
+bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DeviceContext)
 {
 	UINT32 vertexSize = sizeof(float) * 5;
 	UINT32 offset = 0;
 	UINT32 squareVertexSize = sizeof(float) * 8;
 
 	// set textures and constant buffers
-	gDeviceContext->PSSetShaderResources(0, 1, &mTextureView);
+	DeviceContext->PSSetShaderResources(0, 1, &mTextureView);
 	//gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	// HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
 
 	//gDeviceContext->IASetVertexBuffers(0, 1, &gVertexBuffer, &vertexSize, &offset);
-	gDeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	gDeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
+	DeviceContext->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	DeviceContext->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
 
 	// HEIGHT-MAP END ---------------------------------------------------------------------------
 
@@ -40,13 +46,13 @@ bool ObjectHandler::SetGeometryPassObjectBuffers()
 	DirectX::XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	gDeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	DeviceContext->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
 	// copy memory from CPU to GPU of the entire struct
 	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
 	// Unmap constant buffer so that we can use it again in the GPU
-	gDeviceContext->Unmap(gPerObjectBuffer, 0);
+	DeviceContext->Unmap(gPerObjectBuffer, 0);
 	// set resource to Geometry Shader
-	gDeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	DeviceContext->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
 
 	// Map material properties buffer
 
@@ -54,14 +60,23 @@ bool ObjectHandler::SetGeometryPassObjectBuffers()
 	gMaterialBufferData.material = Materials::Black_plastic;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	gDeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	DeviceContext->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
 	//gDeviceContext->Unmap(mPerFrameBuffer, 0);
-	gDeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	DeviceContext->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	return true;
 }
 
+int ObjectHandler::GetHeightMapNrOfFaces()
+{
+	return NUMBER_OF_FACES;
+}
+
+int ObjectHandler::GetHeightMapNrOfVerticies()
+{
+	return NUMBER_OF_VERTICES;
+}
 // private ---------------------------------------------------------------------------------------
 
 bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
@@ -111,7 +126,7 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	return true;
 }
 
-void ObjectHandler::CreateWorld()
+void ObjectHandler::CreateWorld(ID3D11Device* Device)
 {
 	using DirectX::operator/;
 
@@ -216,7 +231,7 @@ void ObjectHandler::CreateWorld()
 
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &drawOrder[0];
-	gDevice->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
+	Device->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
 
 	D3D11_BUFFER_DESC vertexBufferDesc;
 	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
@@ -229,11 +244,11 @@ void ObjectHandler::CreateWorld()
 	D3D11_SUBRESOURCE_DATA vertexBufferData;
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 	vertexBufferData.pSysMem = &mapVertex[0];
-	gDevice->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
+	Device->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
 }
 
 
-void ObjectHandler::CreatePerObjectConstantBuffer()
+void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Device)
 {
 	DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(0.0f));
 
@@ -247,13 +262,13 @@ void ObjectHandler::CreatePerObjectConstantBuffer()
 	WBufferDesc.MiscFlags = 0;
 	WBufferDesc.StructureByteStride = 0;
 
-	gHR = gDevice->CreateBuffer(&WBufferDesc, nullptr, &gPerObjectBuffer);
+	gHR = Device->CreateBuffer(&WBufferDesc, nullptr, &gPerObjectBuffer);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
 }
 
-void ObjectHandler::CreateMaterialConstantBuffer()
+void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Device)
 {
 	D3D11_BUFFER_DESC materialBufferDesc;
 	materialBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -265,7 +280,7 @@ void ObjectHandler::CreateMaterialConstantBuffer()
 
 	// check if the creation failed for any reason
 	HRESULT hr = 0;
-	hr = gDevice->CreateBuffer(&materialBufferDesc, nullptr, &gMaterialBuffer);
+	hr = Device->CreateBuffer(&materialBufferDesc, nullptr, &gMaterialBuffer);
 	if (FAILED(hr))
 	{
 		// handle the error, could be fatal or a warning...
