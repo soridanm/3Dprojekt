@@ -15,8 +15,7 @@ ObjectHandler::~ObjectHandler()
 
 }
 
-
-//used in Graphics
+//used in GraphicsHandler.InitializeGraphics
 void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 {
 	
@@ -25,6 +24,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	CreateWorld(Dev);
 }
 
+//used in GraphicsHandler.RenderGeometryPass
 bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DevCon)
 {
 	UINT32 vertexSize = sizeof(float) * 5;
@@ -72,17 +72,20 @@ bool ObjectHandler::SetGeometryPassObjectBuffers(ID3D11DeviceContext* DevCon)
 	return true;
 }
 
+//used in GraphicsHandler.RenderGeometryPass
 int ObjectHandler::GetHeightMapNrOfFaces()
 {
 	return NUMBER_OF_FACES;
 }
 
+//used in ????
 int ObjectHandler::GetHeightMapNrOfVerticies()
 {
 	return NUMBER_OF_VERTICES;
 }
 // private ---------------------------------------------------------------------------------------
 
+//used in CreateWorld
 bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 {
 	FILE *fileptr;
@@ -130,7 +133,7 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	return true;
 }
 
-//used in
+//used in InitializeObjects
 void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 {
 	using DirectX::operator/;
@@ -253,7 +256,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
 }
 
-
+//used in InitializeObjects
 void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Dev)
 {
 	DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(0.0f));
@@ -274,6 +277,7 @@ void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Dev)
 	}
 }
 
+//used in InitializeObjects
 void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Dev)
 {
 	D3D11_BUFFER_DESC materialBufferDesc;

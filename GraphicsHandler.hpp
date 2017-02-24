@@ -51,7 +51,6 @@ private:
 	);
 	bool CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS);
 	bool InitializeGraphicsBuffer(ID3D11Device* Dev);
-	void CreateAllConstantBuffers();
 	
 	// Geometry Pass ----------------------------
 	void SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon);

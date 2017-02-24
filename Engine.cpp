@@ -65,13 +65,11 @@ HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
 		gDeviceContext->OMSetRenderTargets(1, GetBackBufferRTV(), NULL);
 	}
 
-
 	//pTexture->Release();
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	//CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	ID3D11Resource* texture;
-	DirectX::CreateWICTextureFromFile(gDevice, gDeviceContext, L"grass-free-texture.jpg", &texture, GetTextureView());
-
+	//ID3D11Resource* texture;
+	//hr = DirectX::CreateWICTextureFromFile(gDevice, gDeviceContext, L"grass-free-texture.jpg", &texture, &mGraphicsHandler.gTextureView);
 	return hr;
 }
 

@@ -1,6 +1,6 @@
 // G-Buffer fragment shader
 
-Texture2D DiffuseMap		: register(t0);
+Texture2D DiffuseMap		: register(t1);
 SamplerState AnisoSampler	: register(s0);
 
 struct materialStruct

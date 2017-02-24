@@ -124,21 +124,6 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 	return true;
 }
 
-//will probably be removed
-void GraphicsHandler::CreateAllConstantBuffers()
-{
-	//CreatePerFrameConstantBuffer();
-
-
-	//CreatePerObjectConstantBuffer();
-
-
-	//CreateMaterialConstantBuffer();
-
-
-	//CreateLightConstantBuffer();
-	//mLightHandler.CreateLightBuffer();
-}
 
 // public ------------------------------------------------------------------------------
 
@@ -152,14 +137,16 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	CreateShaders(Dev); //TODO: rewrite with shader class
 
-	//create world/models
-
-	//create constant buffers
-
 	InitializeGraphicsBuffer(Dev);
 
 
-	
+	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+
+	ID3D11Resource* texture;
+	HRESULT hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"grass-free-texture.jpg", &texture, &gTextureView);
+	if (FAILED(hr)) {
+		return false;
+	}
 
 	return true;
 }
@@ -299,18 +286,18 @@ void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon)
 
 void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon)
 {
-	DevCon->PSSetShaderResources(0, 1, &gTextureView);
+	DevCon->PSSetShaderResources(1, 1, &gTextureView);
 }
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 {
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
-	SetGeometryPassShaderResources(DevCon);
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 	//LOOP OVER OBJECTS FROM HERE
 
 	mObjectHandler.SetGeometryPassObjectBuffers(DevCon);
+	SetGeometryPassShaderResources(DevCon);
 
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
