@@ -15,7 +15,7 @@ public:
 	CameraHandler();
 	~CameraHandler();
 
-	DirectX::XMVECTOR GetCameraPosition();
+	DirectX::XMFLOAT4 GetCameraPosition();
 
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);

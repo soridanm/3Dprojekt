@@ -29,9 +29,11 @@ CameraHandler::~CameraHandler()
 
 }
 
-DirectX::XMVECTOR CameraHandler::GetCameraPosition()
+DirectX::XMFLOAT4 CameraHandler::GetCameraPosition()
 {
-	return this->CAM_POS;
+	DirectX::XMFLOAT4 pos; 
+	DirectX::XMStoreFloat4(&pos, CAM_POS);
+	return pos;
 }
 
 //temp done

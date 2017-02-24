@@ -14,11 +14,11 @@ const int NR_OF_LIGHTS = 1;
 class LightHandler
 {
 public:
-	LightHandler(DirectX::XMVECTOR CAM_POS);
+	LightHandler(DirectX::XMFLOAT4 CAM_POS);
 	~LightHandler();
 
-	bool InitializeLights(ID3D11Device* Dev, DirectX::XMVECTOR CAM_POS);
-	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMVECTOR &CAM_POS);
+	bool InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS);
+	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 CAM_POS);
 	bool CreateLightBuffer(ID3D11Device* Dev);
 private:
 	struct Light
@@ -58,9 +58,9 @@ private:
 			}
 		}
 
-		Light LightArray[NR_OF_LIGHTS];
 		DirectX::XMFLOAT4 cameraPositionWS;
 		DirectX::XMFLOAT4 globalAmbient;
+		Light LightArray[NR_OF_LIGHTS];
 	};
 	static_assert((sizeof(cLightBuffer) % 16) == 0, "Constant Light Buffer size must be 16-byte aligned");
 
