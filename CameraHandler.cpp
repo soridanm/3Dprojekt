@@ -31,7 +31,7 @@ CameraHandler::~CameraHandler()
 
 DirectX::XMVECTOR CameraHandler::GetCameraPosition()
 {
-	return CAM_POS;
+	return this->CAM_POS;
 }
 
 //temp done

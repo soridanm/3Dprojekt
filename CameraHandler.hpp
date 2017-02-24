@@ -29,6 +29,9 @@ public:
 	IDirectInputDevice8* DIKeyboard = nullptr;
 	IDirectInputDevice8* DIMouse = nullptr;
 	LPDIRECTINPUT8 DirectInput;
+
+
+	DirectX::XMVECTOR CAM_POS;
 private:
 	void SetViewPort(ID3D11DeviceContext* DevCon);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
@@ -46,7 +49,6 @@ private:
 	ID3D11Buffer* mPerFrameBuffer;
 
 	const DirectX::XMVECTOR CAMERA_STARTING_POS;
-	DirectX::XMVECTOR CAM_POS;
 	DirectX::XMVECTOR CAM_TARGET;
 	DirectX::XMVECTOR CAM_FORWARD;
 	DirectX::XMVECTOR CAM_RIGHT;

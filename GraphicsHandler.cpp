@@ -370,7 +370,7 @@ void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* De
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
-	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
+	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.CAM_POS);
 
 	// Draw full screen triangle
 	DevCon->Draw(3, 0);

@@ -73,21 +73,24 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMVECTOR CAM_POS
 
 //TODO: Make the movement time dependant and not frame dependant
 // The light currently follows the camera's position
-bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMVECTOR CAM_POS)
+bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMVECTOR &CAM_POS)
 {
 	// Move light up and down
-	/*static int lightYMovement = 249;
+	static int lightYMovement = 249;
 	lightYMovement = (lightYMovement + 1) % 1000;
-	float yMovement = (lightYMovement < 500) ? -0.01f : 0.01f;
-	DirectX::XMMATRIX yMove = DirectX::XMMatrixTranslation(0.0f, yMovement, 0.0f);
-*/
-	/*DirectX::XMVECTOR lightPos = DirectX::XMLoadFloat4(&mLightBufferData.LightArray[0].PositionWS);
-	lightPos = DirectX::XMVector4Transform(lightPos, yMove);*/
+	float yMovement = (lightYMovement < 500) ? -100.1f : -100.1f;
+	DirectX::XMMATRIX yMove = DirectX::XMMatrixTranslation(yMovement, 0.0f, 0.0f);
 
+	DirectX::XMVECTOR lightPos = DirectX::XMLoadFloat4(&mLightBufferData.LightArray[0].PositionWS);
+	lightPos = DirectX::XMVector4Transform(lightPos, yMove);
+
+	//static double lightMovement = 0.01;
+	//DirectX::XMVECTOR testMove = DirectX::XMVECTOR()
+
+	//set the light position to the camera position
+	DirectX::XMStoreFloat4(&mLightBufferData.LightArray[0].PositionWS, lightPos);
 	//update the camera position in the Light buffer
 	DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
-	//set the light position to the camera position
-	DirectX::XMStoreFloat4(&mLightBufferData.LightArray[0].PositionWS, CAM_POS);
 
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;
