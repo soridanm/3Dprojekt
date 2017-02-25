@@ -23,7 +23,7 @@ struct Light
 	float ambient_coefficient;
 };
 
-cbuffer pointLightProperties	: register (b0)
+cbuffer pointLightProperties	: register (b1)
 {
 	float4 camera_positionWS;
 	float4 global_ambient;
@@ -77,8 +77,10 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
 
+	//float3 finalColor = float3(diffuse_coefficient, diffuse_coefficient, diffuse_coefficient);
 	//float3 finalColor = diffuse_component;
 	//float3 finalColor = float3(specular_coefficient, specular_coefficient, specular_coefficient);
+	//float3 finalColor = float3(1.0, 0.0, 0.0);
 
 	float3 finalColor = final_color;
 
