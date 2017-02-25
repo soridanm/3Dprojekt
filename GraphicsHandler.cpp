@@ -296,11 +296,20 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 	//LOOP OVER OBJECTS FROM HERE
 
-	mObjectHandler.SetGeometryPassObjectBuffers(DevCon);
 	SetGeometryPassShaderResources(DevCon);
 
+	mObjectHandler.SetGeometryPassHeightMapBuffer(DevCon);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
+	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+	{
+		mObjectHandler.SetGeometryPassObjectBufferWithIndex(DevCon, i);
+
+		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+
+		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	}
 	//LOOP OVER OBJECTS TO HERE
 }
 

@@ -242,3 +242,4 @@ ModelManifest.xml
 .fake/
 /dragon.mtl
 /donut_red_lambert_20000_tris_TRIANGLULATED.mtl
+/old_obj_main.cpp

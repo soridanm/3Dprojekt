@@ -14,6 +14,12 @@
 #include <WICTextureLoader.h>
 #include <objbase.h>
 
+// for reading obj
+#include <string> //might not be necessary
+#include <vector>
+#include <fstream>
+#include <istream>
+#include <sstream>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -22,8 +28,32 @@
 #pragma comment(lib, "Ole32.lib")
 
 
+struct HeightMapInfo {
+	int worldWidth;
+	int worldHeight;
+	DirectX::XMFLOAT3 *heightMap;
+};
 
+struct Vertex {
+	Vertex() {}
+	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
+	DirectX::XMFLOAT3 pos;
+	DirectX::XMFLOAT2 texCoord;
+	DirectX::XMFLOAT3 normal;
+};
 
+namespace Colors
+{
+	static const DirectX::XMFLOAT4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const DirectX::XMFLOAT4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
+	static const DirectX::XMFLOAT4 LightSteelBlue = { 0.69f, 0.77f, 0.87f, 1.0f };
+	static const DirectX::XMFLOAT4 Red = { 1.0f, 0.0f, 0.0f, 1.0f };
+	static const DirectX::XMFLOAT4 Green = { 0.0f, 1.0f, 0.0f, 1.0f };
+	static const DirectX::XMFLOAT4 Blue = { 0.0f, 0.0f, 1.0f, 1.0f };
+	static const float fWhite[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
+	static const float fBlack[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	static const float fLightSteelBlue[4] = { 0.69f, 0.77f, 0.87f, 1.0f };
+}
 
 
 //const double MATH_PI = 3.14159265358;
@@ -60,11 +90,6 @@
 //int NUMBER_OF_FACES = 0;
 //int NUMBER_OF_VERTICES = 0;
 //float WORLD_HEIGHT[200][200];
-struct HeightMapInfo {
-	int worldWidth;
-	int worldHeight;
-	DirectX::XMFLOAT3 *heightMap;
-};
 
 //HWND InitWindow(HINSTANCE hInstance);
 //LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
@@ -110,13 +135,6 @@ struct HeightMapInfo {
 //ID3D11RenderTargetView* mBackbufferRTV = nullptr;
 
 
-struct Vertex {
-	Vertex() {}
-	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) :pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) {}
-	DirectX::XMFLOAT3 pos;
-	DirectX::XMFLOAT2 texCoord;
-	DirectX::XMFLOAT3 normal;
-};
 
 
 //MOVED TO GraphicsHandler.hpp
@@ -217,18 +235,6 @@ struct Vertex {
 *				Namespaces
 --------------------------------------------------------------------------------------*/
 
-namespace Colors
-{
-	static const DirectX::XMFLOAT4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
-	static const DirectX::XMFLOAT4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
-	static const DirectX::XMFLOAT4 LightSteelBlue = { 0.69f, 0.77f, 0.87f, 1.0f };
-	static const DirectX::XMFLOAT4 Red = { 1.0f, 0.0f, 0.0f, 1.0f };
-	static const DirectX::XMFLOAT4 Green = { 0.0f, 1.0f, 0.0f, 1.0f };
-	static const DirectX::XMFLOAT4 Blue = { 0.0f, 0.0f, 1.0f, 1.0f };
-	static const float fWhite[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
-	static const float fBlack[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
-	static const float fLightSteelBlue[4] = { 0.69f, 0.77f, 0.87f, 1.0f };
-}
 
 /*namespace Materials
 {

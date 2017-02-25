@@ -1,21 +1,54 @@
+/* TODO: Might merge the perObject- and materialBuffers
+*
+*
+*/
+
+
 #ifndef OBJECTHANDLER_HPP
 #define OBJECTHANDLER_HPP
 
 #include "GlobalResources.hpp"
 	
+//struct materialStruct
+//{
+//	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f)
+//		: specularAlbedo(r, g, b), specularPower(specPow)
+//	{}
+//	DirectX::XMFLOAT3 specularAlbedo;
+//	float specularPower;
+//};
+
+//Might be moved into the class
+struct cMaterialBuffer
+{
+	cMaterialBuffer(float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, bool hasTex = false, int texInd = 0)
+		: SpecularColor(r, g, b), SpecularPower(specPow), HasTexture(hasTex), TexArrIndex(texInd), padding(0), padding2(0)
+	{}
+	DirectX::XMFLOAT3 SpecularColor;
+	float SpecularPower;
+	bool HasTexture;
+	int TexArrIndex;
+
+	int padding, padding2;
+
+	//cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat)
+	//{}
+	//materialStruct material;
+}; 
+static_assert((sizeof(cMaterialBuffer) % 16) == 0, "cMaterialBuffer size must be 16-byte aligned");
+
 struct materialStruct
 {
-	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f)
-		: specularAlbedo(r, g, b), specularPower(specPow)
-	{}
-	DirectX::XMFLOAT3 specularAlbedo;
-	float specularPower;
+	materialStruct() : Data(cMaterialBuffer()), matName(L"No name") {}
+
+	cMaterialBuffer Data;
+	std::wstring matName;
 };
 
 namespace Materials
 {
-	static const materialStruct Black_plastic	= materialStruct(0.5f, 0.5f, 0.5f, 32.0f);
-	static const materialStruct Black_rubber	= materialStruct(0.4f, 0.4f, 0.4f, 10.0f);
+	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 32.0f);
+	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(/*L"Black rubber",*/	0.4f, 0.4f, 0.4f, 10.0f);
 }
 
 class ObjectHandler
@@ -25,13 +58,27 @@ public:
 	~ObjectHandler();
 
 	void InitializeObjects(ID3D11Device* Dev);
-	bool SetGeometryPassObjectBuffers(ID3D11DeviceContext* DevCon);
+	bool SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon);
+	bool SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i);
 	
 	int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();
 
 	void CreateWorld(ID3D11Device* Dev);
+
+	void MapObjectByIndex(int i);
+
+	int GetNrOfMeshSubsets();
+
+	std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
 private:
+	//TODO: Turn some of these into member variables
+	bool LoadObjectModel(
+		ID3D11Device* Dev, 
+		std::wstring filename,
+		bool isRHCoordSys,
+		bool computeNormals);
+
 	bool LoadHeightMap(char* filename, HeightMapInfo &hminfo);
 
 	void CreatePerObjectConstantBuffer(ID3D11Device* Dev);
@@ -45,14 +92,13 @@ private:
 
 	//struct material WILL BE REWRITTEN WHIT CODE FROM OTHER BRANCH
 
-	struct cMaterialBuffer
-	{
-		cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat)
-		{}
-		materialStruct material;
-	}; 
-	static_assert((sizeof(cMaterialBuffer) % 16) == 0, "cMaterialBuffer size must be 16-byte aligned");
+	//Constant Buffer used in GBufferFragment.hlsl
 
+	//Used to store all materials in an arary
+	//Might be renamed
+	
+
+	std::vector<materialStruct> materialVector;
 
 	ID3D11Buffer* gPerObjectBuffer;
 	cPerObjectBuffer ObjectBufferData;
@@ -66,6 +112,16 @@ private:
 	int NUMBER_OF_FACES = 0;
 	int NUMBER_OF_VERTICES = 0;
 	float WORLD_HEIGHT[200][200];
+
+	//Loading .obj files
+	ID3D11BlendState* Transparency;
+	ID3D11Buffer* meshVertBuff;
+	ID3D11Buffer* meshIndexBuff;
+	DirectX::XMMATRIX meshWorld;			//not used????
+	int meshSubsets = 0;					//number of objects
+	std::vector<int> meshSubsetTexture;
+	std::vector<ID3D11ShaderResourceView*> meshSRV;
+	std::vector<std::wstring> textureNameArray;
 
 };
 
