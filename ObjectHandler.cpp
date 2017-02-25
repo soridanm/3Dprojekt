@@ -64,6 +64,7 @@ bool ObjectHandler::SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon)
 
 	//SetMaterial(Materials::Black_plastic);
 	gMaterialBufferData = Materials::Black_plastic;
+	gMaterialBufferData.HasTexture = true;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
@@ -89,9 +90,18 @@ bool ObjectHandler::SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* De
 
 	static float rotation = 0.0f;
 	rotation += 0.01f;
+	int scale = 10.0f;
 	//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
 
-	XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
+	DirectX::XMMATRIX scaleMatrix	= DirectX::XMMatrixScaling(scale, scale, scale);
+	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationY(rotation);
+	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(20.0f, 20.0f, 20.0f);
+
+	using DirectX::operator*;
+
+	DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+
+	XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
 	DevCon->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
@@ -105,11 +115,11 @@ bool ObjectHandler::SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* De
 	//set material
 	gMaterialBufferData.SpecularColor = materialVector[meshSubsetTexture[i]].Data.SpecularColor;
 	gMaterialBufferData.SpecularPower = materialVector[meshSubsetTexture[i]].Data.SpecularPower;
-	//		gMaterialBufferData.material.matName		= materialVector[meshSubsetTexture[i]].matName;			//should probably be removed
-
+	gMaterialBufferData.DiffuseColor  = materialVector[meshSubsetTexture[i]].Data.DiffuseColor;
 	// REMOVE -------------------------------------------------------------------------
 	materialVector[meshSubsetTexture[i]].Data.HasTexture = false;
 	// END REMOVE ---------------------------------------------------------------------
+	gMaterialBufferData.HasTexture = materialVector[meshSubsetTexture[i]].Data.HasTexture;
 
 	if (materialVector[meshSubsetTexture[i]].Data.HasTexture)
 		DevCon->PSSetShaderResources(0, 1, &mTextureView); // NOT IMPLEMENTED YET!
@@ -573,6 +583,14 @@ bool ObjectHandler::LoadObjectModel(
 				fileIn >> materialVector[matCount - 1].Data.SpecularColor.x;
 				fileIn >> materialVector[matCount - 1].Data.SpecularColor.y;
 				fileIn >> materialVector[matCount - 1].Data.SpecularColor.z;
+			}
+			else if (checkChar == 'd')
+			{
+				checkChar = fileIn.get(); //read over space
+
+				fileIn >> materialVector[matCount - 1].Data.DiffuseColor.x;
+				fileIn >> materialVector[matCount - 1].Data.DiffuseColor.y;
+				fileIn >> materialVector[matCount - 1].Data.DiffuseColor.z;
 			}
 		}
 		break;

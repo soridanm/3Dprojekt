@@ -9,31 +9,20 @@
 
 #include "GlobalResources.hpp"
 	
-//struct materialStruct
-//{
-//	materialStruct(float r = 0.0f, float b = 0.0f, float g = 0.0f, float specPow = 128.0f)
-//		: specularAlbedo(r, g, b), specularPower(specPow)
-//	{}
-//	DirectX::XMFLOAT3 specularAlbedo;
-//	float specularPower;
-//};
 
 //Might be moved into the class
 struct cMaterialBuffer
 {
 	cMaterialBuffer(float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, bool hasTex = false, int texInd = 0)
-		: SpecularColor(r, g, b), SpecularPower(specPow), HasTexture(hasTex), TexArrIndex(texInd), padding(0), padding2(0)
+		: SpecularColor(r, g, b), SpecularPower(specPow), DiffuseColor(r, g, b), HasTexture(hasTex), TexArrIndex(texInd), padding(0.0f, 0.0f, 0.0f)
 	{}
 	DirectX::XMFLOAT3 SpecularColor;
 	float SpecularPower;
+	DirectX::XMFLOAT3 DiffuseColor;
 	bool HasTexture;
 	int TexArrIndex;
 
-	int padding, padding2;
-
-	//cMaterialBuffer(materialStruct mat = materialStruct()) : material(mat)
-	//{}
-	//materialStruct material;
+	DirectX::XMFLOAT3 padding;
 }; 
 static_assert((sizeof(cMaterialBuffer) % 16) == 0, "cMaterialBuffer size must be 16-byte aligned");
 
@@ -66,8 +55,6 @@ public:
 
 	void CreateWorld(ID3D11Device* Dev);
 
-	void MapObjectByIndex(int i);
-
 	int GetNrOfMeshSubsets();
 
 	std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
@@ -89,14 +76,6 @@ private:
 		DirectX::XMFLOAT4X4 World;
 	};
 	static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "cPerObjectBuffer size must be 16-byte aligned");
-
-	//struct material WILL BE REWRITTEN WHIT CODE FROM OTHER BRANCH
-
-	//Constant Buffer used in GBufferFragment.hlsl
-
-	//Used to store all materials in an arary
-	//Might be renamed
-	
 
 	std::vector<materialStruct> materialVector;
 
