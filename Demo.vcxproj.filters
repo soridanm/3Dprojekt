@@ -115,9 +115,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
-    <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl">
-      <Filter>Resource Files</Filter>
-    </None>
   </ItemGroup>
   <ItemGroup>
     <Object Include="wt_teapot.obj">

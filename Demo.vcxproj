@@ -241,9 +241,6 @@
     <ResourceCompile Include="Demo.rc" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
-    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
