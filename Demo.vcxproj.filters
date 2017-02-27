@@ -42,9 +42,6 @@
     <ClCompile Include="old_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="old_obj_main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">

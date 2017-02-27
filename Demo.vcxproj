@@ -118,7 +118,6 @@
     <ClCompile Include="GraphicsHandler.cpp" />
     <ClCompile Include="ObjectHandler.cpp" />
     <ClCompile Include="old_main.cpp" />
-    <ClCompile Include="old_obj_main.cpp" />
     <ClCompile Include="TimeHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
