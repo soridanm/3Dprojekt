@@ -1,6 +1,5 @@
 /*
 * TODO: See what functions should be made private
-*		Loop over objects in render function
 *		Rename member pointers to mPointerName
 *		Make a seperate shader class
 *

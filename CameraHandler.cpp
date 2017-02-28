@@ -2,13 +2,13 @@
 
 // public ------------------------------------------------------------------------------
 
-CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f))
+CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f, 40.0f, 10.0f, 1.0f))
 {
 	VPBufferData	= cPerFrameBuffer();
 	mPerFrameBuffer = nullptr;
 
 	CAM_POS		= CAMERA_STARTING_POS;
-	CAM_TARGET	= DirectX::XMVectorZero();
+	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
 	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	CAM_RIGHT	= DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	CAM_UP		= DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -167,7 +167,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	//reset camera directions and position
 	if (keyboardState[DIK_Q] & 0x80) {
 		CAM_POS = CAMERA_STARTING_POS;
-		CAM_TARGET = DirectX::XMVectorZero();
+		CAM_TARGET = DirectX::XMVectorSet(0.0f, 20.0f, 20.0f, 0.0f);
 		CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 		CAM_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 		CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -175,7 +175,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 		CAM_YAW = 0.0f;
 	}
 	MOUSE_LAST_STATE = mouse_current_state;
-	UpdateCamera();
+	//UpdateCamera();
 }
 
 //used in wWinMain()
@@ -222,7 +222,7 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 	float degrees_field_of_view = 90.0f;
 	float near_plane			= 0.1f;
-	float far_plane				= 1000.f;
+	float far_plane				= 500.f;
 
 	//camera, look at, up
 	DirectX::XMVECTOR camera	= CAMERA_STARTING_POS;

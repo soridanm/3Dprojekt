@@ -20,6 +20,7 @@ public:
 	bool InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS);
 	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 CAM_POS);
 	bool CreateLightBuffer(ID3D11Device* Dev);
+	bool CreateShadowMap(ID3D11Device* Dev);
 private:
 	struct Light
 	{
@@ -66,6 +67,12 @@ private:
 
 	cLightBuffer mLightBufferData;
 	ID3D11Buffer* mLightBuffer;
+
+
+	//shadow mapping
+	ID3D11Texture2D* mShadowMap;
+	ID3D11DepthStencilView* mShadowMapDepthView;
+	ID3D11ShaderResourceView* mShadowMapSRView;
 };
 
 

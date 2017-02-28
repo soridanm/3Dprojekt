@@ -37,7 +37,7 @@ HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
 	scd.SampleDesc.Count = 1;                               // how many multisamples
 	scd.Windowed = TRUE;                            // windowed/full-screen mode
 
-													// create a device, device context and swap chain using the information in the scd struct
+	// create a device, device context and swap chain using the information in the scd struct
 	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,

@@ -133,6 +133,8 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
+	mLightHandler.CreateShadowMap(Dev);
+
 	mObjectHandler.InitializeObjects(Dev);
 
 	CreateShaders(Dev); //TODO: rewrite with shader class

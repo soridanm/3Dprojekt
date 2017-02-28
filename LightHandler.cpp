@@ -107,4 +107,48 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 	return true;
 }
 
+//TODO: look up what format is best to use. Do this for the GBuffer as well
+bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
+{
+	//Shadow map height and width
+	UINT smHeight = 1000;
+	UINT smWidth = 1000;
+
+	//Shadow map texture desc
+	D3D11_TEXTURE2D_DESC smTexDesc;
+	smTexDesc.Width = smWidth;
+	smTexDesc.Height = smHeight;
+	smTexDesc.MipLevels = 1;
+	smTexDesc.ArraySize = 1;
+	smTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	smTexDesc.SampleDesc.Count = 1;
+	smTexDesc.SampleDesc.Quality = 0;
+	smTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	smTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; //
+	smTexDesc.CPUAccessFlags = 0;
+	smTexDesc.MiscFlags = 0;
+
+	//Shadow map depth stencil view desc
+	D3D11_DEPTH_STENCIL_VIEW_DESC smDescDSV{}; //{} might be unnecessary
+	smDescDSV.Format = smTexDesc.Format;
+	smDescDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	smDescDSV.Texture2D.MipSlice = 0;
+
+	//Shadow map shader resource view desc
+	D3D11_SHADER_RESOURCE_VIEW_DESC smSrvDesc;
+	smSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	smSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	smSrvDesc.Texture2D.MipLevels = smTexDesc.MipLevels;
+	smSrvDesc.Texture2D.MostDetailedMip = 0;
+
+	HRESULT hr;
+	hr = Dev->CreateTexture2D(&smTexDesc, nullptr, &mShadowMap);
+	if (FAILED(hr)) { return false; }
+	hr = Dev->CreateDepthStencilView(mShadowMap, &smDescDSV, &mShadowMapDepthView);
+	if (FAILED(hr)) { return false; }
+	hr = Dev->CreateShaderResourceView(mShadowMap, &smSrvDesc, &mShadowMapSRView);
+	if (FAILED(hr)) { return false; }
+
+	return true;
+}
 
