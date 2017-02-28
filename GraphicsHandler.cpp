@@ -315,6 +315,36 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	//LOOP OVER OBJECTS TO HERE
 }
 
+// ------------------------------ Shadow Map Pass ------------------------------------------------------
+
+
+//TODO: move to LightHandler.cpp
+void GraphicsHandler::SetShadowMapPassRenderTargets(ID3D11DeviceContext* DevCon)
+{
+	DevCon->OMSetRenderTargets(0, 0, mLightHandler.mShadowMapDepthView);
+	DevCon->ClearDepthStencilView(mLightHandler.mShadowMapDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+}
+
+//TODO: make a seperate input layout for the shadow pass since it only needs the position
+void GraphicsHandler::SetShadowMapPassShaders(ID3D11DeviceContext* DevCon)
+{
+	// Set Vertex Shader input
+	DevCon->IASetInputLayout(mVertexLayout);
+	DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set shaders
+	DevCon->VSSetShader(mShadowPassVertexShader, nullptr, 0);
+	DevCon->HSSetShader(nullptr, nullptr, 0);
+	DevCon->DSSetShader(nullptr, nullptr, 0);
+	DevCon->GSSetShader(nullptr, nullptr, 0);
+	DevCon->PSSetShader(mShadowPassPixelShader, nullptr, 0);
+}
+
+void GraphicsHandler::SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCon)
+{
+
+}
+
 // ------------------------------ Light Pass ------------------------------------------------------
 
 //TODO: check if pBackBuffer should be declared here or earlier

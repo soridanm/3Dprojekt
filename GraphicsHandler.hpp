@@ -56,6 +56,11 @@ private:
 	void SetGeometryPassShaders(ID3D11DeviceContext* DevCon); //move to shader class
 	void SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon);
 
+	// Shadow mapping Pass ----------------------
+	void SetShadowMapPassRenderTargets(ID3D11DeviceContext* DevCon);
+	void SetShadowMapPassShaders(ID3D11DeviceContext* DevCon);
+	void SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCon);
+
 	// Light Pass -------------------------------
 	bool SetLightPassRenderTargets(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
 	bool SetLightPassShaders(ID3D11DeviceContext* DevCon);
@@ -74,9 +79,14 @@ private:
 	ID3D11DepthStencilView* mDepthStecilView;
 	ID3D11Texture2D* mDepthStencilTexture;
 	ID3D11InputLayout* mVertexLayout;
+	//Geometry Pass
 	ID3D11VertexShader* mGeometryPassVertexShader;
 	ID3D11GeometryShader* mGeometryPassGeometryShader;
 	ID3D11PixelShader* mGeometryPassPixelShader;
+	//Shadow Pass
+	ID3D11VertexShader* mShadowPassVertexShader;
+	ID3D11PixelShader* mShadowPassPixelShader;
+	//Light Pass
 	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
 	ID3D11VertexShader* mLightPassVertexShader;
 	ID3D11PixelShader* mLightPassPixelShader;
