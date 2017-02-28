@@ -216,6 +216,25 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 		exit(-1);
 	}
 
+	//describe and create sampler state
+	D3D11_SAMPLER_DESC samplerDesc;
+	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias = 0.0f;
+	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
+	samplerDesc.BorderColor[0] = 0;
+	samplerDesc.BorderColor[1] = 0;
+	samplerDesc.BorderColor[2] = 0;
+	samplerDesc.BorderColor[3] = 0;
+	samplerDesc.MinLOD = 0;
+	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	// Create the texture sampler state.
+	gHR=Dev->CreateSamplerState(&samplerDesc, &mSampleState);
+	
 	//---------------------------------- Light Pass ----------------------------------------------------
 
 		//compile and create vertex shader
@@ -282,6 +301,7 @@ void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon)
 	DevCon->DSSetShader(nullptr, nullptr, 0);
 	DevCon->GSSetShader(mGeometryPassGeometryShader, nullptr, 0);
 	DevCon->PSSetShader(mGeometryPassPixelShader, nullptr, 0);
+	DevCon->PSSetSamplers(0, 1, &mSampleState);
 }
 
 void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon)

@@ -910,19 +910,19 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	for (DWORD j = 0; j < rows - 1; j++) {
 		for (DWORD i = 0; i < columns - 1; i++) {
 			drawOrder[k] = i*columns + j;//bottom left
-			mapVertex[i*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 1.0f) / rows);
+			mapVertex[i*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 1.0f));
 			drawOrder[k + 1] = (1 + i)*columns + j;//top left
-			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 0.0f) / rows);
+			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
 			drawOrder[k + 2] = i*columns + j + 1;//bottom right
-			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 1.0f) / rows);
+			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
 
 
 			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
-			mapVertex[(1 + i)*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 0.0f) / rows);
+			mapVertex[(1 + i)*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 0.0f));
 			drawOrder[k + 4] = i*columns + j + 1;//bottom right
-			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f) / rows, (texVIndex + 1.0f) / rows);
+			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
 			drawOrder[k + 5] = (1 + i)*columns + j;//top left
-			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f) / rows, (texVIndex + 0.0f) / rows);
+			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
 
 			k += 6;
 			texUIndex++;

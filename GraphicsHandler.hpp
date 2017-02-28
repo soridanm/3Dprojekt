@@ -78,6 +78,7 @@ private:
 	ID3D11VertexShader* mGeometryPassVertexShader;
 	ID3D11GeometryShader* mGeometryPassGeometryShader;
 	ID3D11PixelShader* mGeometryPassPixelShader;
+	ID3D11SamplerState* mSampleState;
 	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
 	ID3D11VertexShader* mLightPassVertexShader;
 	ID3D11PixelShader* mLightPassPixelShader;
