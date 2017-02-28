@@ -120,5 +120,8 @@
     <Object Include="wt_teapot.obj">
       <Filter>Resource Files</Filter>
     </Object>
+    <Object Include="donut_red_lambert_20000_tris_TRIANGLULATED.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
   </ItemGroup>
 </Project>
