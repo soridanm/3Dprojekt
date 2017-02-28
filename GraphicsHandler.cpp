@@ -2,7 +2,7 @@
 * TODO: Write error messages and use if(Function()) instead of just Funtion()
 *		Update code with code from the .obj branch
 *		See if the order of things should be changed
-*
+*		viewport and whatnot
 */
 
 #include "GraphicsHandler.hpp"
@@ -153,7 +153,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 	return true;
 }
 
-//TODO: initialization list probably doesn't work!
+//TODO: Should probably be rewritten
 GraphicsHandler::GraphicsHandler() 
 	: mCameraHandler(), mLightHandler(mCameraHandler.GetCameraPosition())
 {
@@ -168,6 +168,9 @@ GraphicsHandler::GraphicsHandler()
 	mGeometryPassGeometryShader = nullptr;
 	mGeometryPassPixelShader = nullptr;
 	//mTextureView = nullptr;
+	mShadowPassVertexShader = nullptr;
+	mShadowPassPixelShader = nullptr;
+
 	mLightPassVertexShader = nullptr;
 	mLightPassPixelShader = nullptr;
 	mBackbufferRTV = nullptr;
@@ -182,6 +185,7 @@ GraphicsHandler::~GraphicsHandler()
 }
 
 //TODO: clean up and write better error messages
+//		Create a seperate input layout for the shadow pass
 bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 {
 	//---------------------------------- Geometry Pass ----------------------------------------------------
@@ -218,20 +222,43 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 		exit(-1);
 	}
 
-	//---------------------------------- Light Pass ----------------------------------------------------
+	//---------------------------------- Shadow Pass ----------------------------------------------------
 
-		//compile and create vertex shader
+	//compile and create vertex shader
 	ID3DBlob* pVS2 = nullptr;
-	CompileShader(&pVS2, L"LightVertex.hlsl", "VS_main", "vs_5_0");
-	gHR = Dev->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mLightPassVertexShader);
+	CompileShader(&pVS2, L"ShadowVertex.hlsl", "VS_main", "vs_5_0");
+	gHR = Dev->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mShadowPassVertexShader);
 	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	//Create an input layout for the shadow vertex shader
+	if (!CreateInputLayout(Dev, pVS2)) {
 		exit(-1);
 	}
 
 	//compile and create pixel shader
 	ID3DBlob* pPS2 = nullptr;
-	CompileShader(&pPS2, L"LightFragment.hlsl", "PS_main", "ps_5_0");
-	gHR = Dev->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mLightPassPixelShader);
+	CompileShader(&pPS2, L"ShadowFragment.hlsl", "PS_main", "ps_5_0");
+	gHR = Dev->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mShadowPassPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	//---------------------------------- Light Pass ----------------------------------------------------
+
+		//compile and create vertex shader
+	ID3DBlob* pVS3 = nullptr;
+	CompileShader(&pVS3, L"LightVertex.hlsl", "VS_main", "vs_5_0");
+	gHR = Dev->CreateVertexShader(pVS3->GetBufferPointer(), pVS3->GetBufferSize(), nullptr, &mLightPassVertexShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	//compile and create pixel shader
+	ID3DBlob* pPS3 = nullptr;
+	CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0");
+	gHR = Dev->CreatePixelShader(pPS3->GetBufferPointer(), pPS3->GetBufferSize(), nullptr, &mLightPassPixelShader);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
@@ -343,6 +370,28 @@ void GraphicsHandler::SetShadowMapPassShaders(ID3D11DeviceContext* DevCon)
 void GraphicsHandler::SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCon)
 {
 
+}
+
+void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
+{
+	SetShadowMapPassRenderTargets(DevCon);
+	SetShadowMapPassShaders(DevCon);
+	mCameraHandler.BindPerFrameConstantBuffer(DevCon); //REWRITE THIS FUNCTION FOR SHADOWPASS
+
+	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
+
+	//TODO: Set heightmap buffer for shadow pass
+	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
+
+	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+	{
+		//TODO: Set objectbuffer for shadow pass
+
+		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+
+		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	}
 }
 
 // ------------------------------ Light Pass ------------------------------------------------------

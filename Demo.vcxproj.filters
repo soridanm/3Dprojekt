@@ -59,10 +59,10 @@
     <FxCompile Include="LightVertex.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
-    <FxCompile Include="ShadowPassVertex.hlsl">
+    <FxCompile Include="ShadowVertex.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
-    <FxCompile Include="ShadowPassFragment.hlsl">
+    <FxCompile Include="ShadowFragment.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>

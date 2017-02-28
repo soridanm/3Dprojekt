@@ -25,12 +25,13 @@ public:
 	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	bool CreateShaders(ID3D11Device* Dev);
 	void RenderGeometryPass(ID3D11DeviceContext* DevCon);
+	void RenderShadowPass(ID3D11DeviceContext* DevCon);
 	void RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
+
+
 
 	ID3D11ShaderResourceView* gTextureView = nullptr; //SHOULD BE MOVED TO MODEL
 	ID3D11RenderTargetView* mBackbufferRTV; //might be moved to Engine
-
-
 	//Really not sure if it's best to have these public or not
 	LightHandler mLightHandler;
 	//ShaderHandler mShaderHandler;
@@ -75,10 +76,10 @@ private:
 	
 	GraphicsBuffer mGraphicsBuffer[GBUFFER_COUNT];
 
-
 	ID3D11DepthStencilView* mDepthStecilView;
 	ID3D11Texture2D* mDepthStencilTexture;
 	ID3D11InputLayout* mVertexLayout;
+
 	//Geometry Pass
 	ID3D11VertexShader* mGeometryPassVertexShader;
 	ID3D11GeometryShader* mGeometryPassGeometryShader;
