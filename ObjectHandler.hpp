@@ -47,8 +47,8 @@ public:
 	~ObjectHandler();
 
 	void InitializeObjects(ID3D11Device* Dev);
-	bool SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon);
-	bool SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i);
+	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon);
+	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i);
 	
 	int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();

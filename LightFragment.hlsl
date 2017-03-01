@@ -10,6 +10,7 @@ Texture2D NormalTexture			: register(t0); // x-y-z-unused
 Texture2D PositionTexture		: register(t1); // x-y-z-unused
 Texture2D DiffuseAlbedoTexture	: register(t2); // r-g-b-unused
 Texture2D SpecularAlbedoTexture	: register(t3); // r-g-b-specularPower
+Texture2D ShadowMap				: register(t4); // r
 
 SamplerState textureSampler; // TODO: look up sampler settings
 

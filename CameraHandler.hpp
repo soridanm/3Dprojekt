@@ -30,10 +30,12 @@ public:
 	IDirectInputDevice8* DIMouse = nullptr;
 	LPDIRECTINPUT8 DirectInput;
 
+	D3D11_VIEWPORT playerVP;
+	D3D11_VIEWPORT lightVP;
 
 	DirectX::XMVECTOR CAM_POS;
 private:
-	void SetViewPort(ID3D11DeviceContext* DevCon);
+	void CreateViewPorts();
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 
 	struct cPerFrameBuffer
@@ -66,6 +68,7 @@ private:
 
 
 	DIMOUSESTATE MOUSE_LAST_STATE;
+
 
 	//TODO: Move these two somewhere else. They're way too deep
 	const LONG SCREEN_WIDTH = 1280;

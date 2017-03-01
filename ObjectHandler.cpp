@@ -29,7 +29,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 }
 
 //used in GraphicsHandler.RenderGeometryPass
-bool ObjectHandler::SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon)
+bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon)
 {
 	UINT32 squareVertexSize = sizeof(float) * 8;
 	UINT32 offset = 0;
@@ -77,7 +77,7 @@ bool ObjectHandler::SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon)
 	return true;
 }
 
-bool ObjectHandler::SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i)
+bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i)
 {
 	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;

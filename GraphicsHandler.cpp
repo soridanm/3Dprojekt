@@ -320,6 +320,8 @@ void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 {
+	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
+
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
@@ -327,12 +329,12 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	SetGeometryPassShaderResources(DevCon);
 
-	mObjectHandler.SetGeometryPassHeightMapBuffer(DevCon);
+	mObjectHandler.SetHeightMapBuffer(DevCon);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
 	{
-		mObjectHandler.SetGeometryPassObjectBufferWithIndex(DevCon, i);
+		mObjectHandler.SetObjectBufferWithIndex(DevCon, i);
 
 		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
 		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
@@ -369,23 +371,25 @@ void GraphicsHandler::SetShadowMapPassShaders(ID3D11DeviceContext* DevCon)
 
 void GraphicsHandler::SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCon)
 {
-
+	//doesn't need any resources since it only cares about depth.
+	//remove this function later
 }
 
 void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 {
+	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
 	SetShadowMapPassRenderTargets(DevCon);
 	SetShadowMapPassShaders(DevCon);
-	mCameraHandler.BindPerFrameConstantBuffer(DevCon); //REWRITE THIS FUNCTION FOR SHADOWPASS
+	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 
 	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
 
-	//TODO: Set heightmap buffer for shadow pass
+	mObjectHandler.SetHeightMapBuffer(DevCon);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
 	{
-		//TODO: Set objectbuffer for shadow pass
+		mObjectHandler.SetObjectBufferWithIndex(DevCon, i);
 
 		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
 		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
@@ -457,9 +461,13 @@ bool GraphicsHandler::SetLightPassGBuffers(ID3D11DeviceContext* DevCon)
 //DONE
 void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
+	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
+	
+	DevCon->PSSetShaderResources(4, 1, &mLightHandler.mShadowMapSRView);
+
 	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
 
 	// Draw full screen triangle

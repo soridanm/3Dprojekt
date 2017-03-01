@@ -108,7 +108,7 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 //used in 
 void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	SetViewPort(DevCon);
+	CreateViewPorts();
 	CreatePerFrameConstantBuffer(Dev);
 }
 
@@ -204,17 +204,21 @@ const LONG CameraHandler::GetScreenHeight()
 
 // private ------------------------------------------------------------------------------
 
-void CameraHandler::SetViewPort(ID3D11DeviceContext* DevCon)
+void CameraHandler::CreateViewPorts()
 {
-	D3D11_VIEWPORT vp;
-	vp.Width	= (FLOAT)SCREEN_WIDTH;
-	vp.Height	= (FLOAT)SCREEN_HEIGHT;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 0.f;
-	vp.TopLeftY = 0.f;
+	playerVP.Width	= (FLOAT)SCREEN_WIDTH;
+	playerVP.Height	= (FLOAT)SCREEN_HEIGHT;
+	playerVP.MinDepth = 0.0f;
+	playerVP.MaxDepth = 1.0f;
+	playerVP.TopLeftX = 0.f;
+	playerVP.TopLeftY = 0.f;
 
-	DevCon->RSSetViewports(1, &vp);
+	lightVP.Width    = 1000.0f;
+	lightVP.Height	 = 1000.0f;
+	lightVP.MinDepth = 0.0f;
+	lightVP.MaxDepth = 1.0f;
+	lightVP.TopLeftX = 0.f;
+	lightVP.TopLeftY = 0.f;
 }
 
 bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)

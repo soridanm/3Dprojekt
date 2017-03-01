@@ -4,7 +4,7 @@
 // needed to fill in the depth buffer
 //-----------------------------------------------------------------------------------------
 
-cbuffer PER_FRAME	:register(bo);
+cbuffer PER_FRAME	:register(b0)
 {
 	float4x4 view;
 	float4x4 projection;

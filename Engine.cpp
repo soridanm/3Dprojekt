@@ -15,6 +15,7 @@ bool Engine::Initialize()
 bool Engine::Render()
 {
 	mGraphicsHandler.RenderGeometryPass(gDeviceContext);
+	mGraphicsHandler.RenderShadowPass(gDeviceContext);
 	mGraphicsHandler.RenderLightPass(gDevice, gDeviceContext, gSwapChain);
 	
 	return true;

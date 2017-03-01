@@ -111,8 +111,8 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
 {
 	//Shadow map height and width
-	UINT smHeight = 1000;
-	UINT smWidth = 1000;
+	UINT smHeight = 512;
+	UINT smWidth = 512;
 
 	//Shadow map texture desc
 	D3D11_TEXTURE2D_DESC smTexDesc;
@@ -133,9 +133,10 @@ bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
 	smDescDSV.Format = smTexDesc.Format;
 	smDescDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	smDescDSV.Texture2D.MipSlice = 0;
+	smDescDSV.Flags = 0;
 
 	//Shadow map shader resource view desc
-	D3D11_SHADER_RESOURCE_VIEW_DESC smSrvDesc;
+	D3D11_SHADER_RESOURCE_VIEW_DESC smSrvDesc {};
 	smSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
 	smSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
 	smSrvDesc.Texture2D.MipLevels = smTexDesc.MipLevels;
