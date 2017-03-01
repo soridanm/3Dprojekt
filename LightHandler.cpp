@@ -130,7 +130,7 @@ bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
 
 	//Shadow map depth stencil view desc
 	D3D11_DEPTH_STENCIL_VIEW_DESC smDescDSV{}; //{} might be unnecessary
-	smDescDSV.Format = smTexDesc.Format;
+	smDescDSV.Format = DXGI_FORMAT_D32_FLOAT;
 	smDescDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	smDescDSV.Texture2D.MipSlice = 0;
 	smDescDSV.Flags = 0;
