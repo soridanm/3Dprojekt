@@ -175,7 +175,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 		CAM_YAW = 0.0f;
 	}
 	MOUSE_LAST_STATE = mouse_current_state;
-	//UpdateCamera();
+	UpdateCamera();
 }
 
 //used in wWinMain()
