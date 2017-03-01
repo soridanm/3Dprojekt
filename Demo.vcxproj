@@ -236,6 +236,8 @@
   <ItemGroup>
     <Image Include="grass-free-texture.jpg" />
     <Image Include="heightmap.bmp" />
+    <Image Include="peninsula.bmp" />
+    <Image Include="world.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Demo.rc" />

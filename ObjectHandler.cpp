@@ -12,7 +12,10 @@ ObjectHandler::ObjectHandler()
 
 ObjectHandler::~ObjectHandler()
 {
-
+	//for (int i = 0; i < WORLD_WITDH; i++) {
+	//	delete[]WORLD_HEIGHT[i];
+	//}
+	//delete[]WORLD_HEIGHT;
 }
 
 //used in GraphicsHandler.InitializeGraphics
@@ -153,6 +156,16 @@ int ObjectHandler::GetHeightMapNrOfVerticies()
 int ObjectHandler::GetNrOfMeshSubsets()
 {
 	return meshSubsets;
+}
+
+float** ObjectHandler::getWorldHeight() {
+	return WORLD_HEIGHT;
+}
+int ObjectHandler::getWorldDepth() {
+	return WORLD_DEPTH;
+}
+int ObjectHandler::getWorldWidth() {
+	return WORLD_WITDH;
 }
 
 // private ---------------------------------------------------------------------------------------
@@ -887,16 +900,22 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
-	LoadHeightMap("heightmap.bmp", hminfo);
+	LoadHeightMap("world.bmp", hminfo);
 	int columns = hminfo.worldWidth;
 	int rows = hminfo.worldHeight;
 
 	NUMBER_OF_VERTICES = rows*columns;
 	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
 
+
+	WORLD_WITDH = columns;
+	WORLD_DEPTH = rows;
+	WORLD_HEIGHT = new float*[WORLD_WITDH];
+
 	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
 
 	for (DWORD i = 0; i < rows; i++) {
+		WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
 		for (DWORD j = 0; j < columns; j++) {
 			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
 			mapVertex[i*columns + j].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal

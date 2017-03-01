@@ -6,6 +6,7 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(2.0f, 
 {
 	VPBufferData	= cPerFrameBuffer();
 	mPerFrameBuffer = nullptr;
+	freemoovingCamera = true;
 
 	CAM_POS		= CAMERA_STARTING_POS;
 	CAM_TARGET	= DirectX::XMVectorZero();
@@ -77,10 +78,10 @@ void CameraHandler::UpdateCamera()
 	CAM_POS += MOVE_UD * CAM_UP;
 
 	//following terrain
-	//int a= XMVectorGetX(CAM_POS), b = XMVectorGetZ(CAM_POS);
-	//if (a > 0 && b > 0 && a < 200 && b < 200) {
-	//	CAM_POS = XMVectorSet(XMVectorGetX(CAM_POS), WORLD_HEIGHT[b][a] + 3, XMVectorGetZ(CAM_POS), 1.0f);
-	//}
+	int a= DirectX::XMVectorGetX(CAM_POS), b = DirectX::XMVectorGetZ(CAM_POS);
+	if (a > 0 && b > 0 && a < terrain.worldDepth && b < terrain.worldWidth && !freemoovingCamera) {
+		CAM_POS = DirectX::XMVectorSet(DirectX::XMVectorGetX(CAM_POS), terrain.worldHeight[b][a] + 3, DirectX::XMVectorGetZ(CAM_POS), 1.0f);
+	}
 
 	MOVE_LR = 0.0f;
 	MOVE_BF = 0.0f;
@@ -106,10 +107,14 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 }
 
 //used in 
-void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
+void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight)
 {
+	terrain.worldDepth = worldDepth;
+	terrain.worldWidth = worldWidth;
+	terrain.worldHeight = worldHeight;
 	SetViewPort(DevCon);
 	CreatePerFrameConstantBuffer(Dev);
+
 }
 
 //move to input class?
@@ -155,6 +160,12 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	}
 	if (keyboardState[DIK_C] & 0x80) {
 		MOVE_UD -= SPEED*time;
+	}
+	if (keyboardState[DIK_1] & 0x80) {
+		freemoovingCamera = true;
+	}
+	if (keyboardState[DIK_2] & 0x80) {
+		freemoovingCamera = false;
 	}
 
 	//mouse movement do change camera directions

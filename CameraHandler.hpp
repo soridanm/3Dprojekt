@@ -19,7 +19,7 @@ public:
 
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
-	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 	const LONG GetScreenWidth();
@@ -35,7 +35,7 @@ public:
 private:
 	void SetViewPort(ID3D11DeviceContext* DevCon);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
-
+	bool freemoovingCamera;
 	struct cPerFrameBuffer
 	{
 		//XMFLOAT4X4 ViewProjection;
@@ -43,7 +43,12 @@ private:
 		DirectX::XMFLOAT4X4 Projection;
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
-
+	
+	struct terrainValues {
+		int worldWidth;
+		int worldDepth;
+		float** worldHeight;
+	};
 
 	cPerFrameBuffer VPBufferData;
 	ID3D11Buffer* mPerFrameBuffer;
@@ -70,6 +75,8 @@ private:
 	//TODO: Move these two somewhere else. They're way too deep
 	const LONG SCREEN_WIDTH = 1280;
 	const LONG SCREEN_HEIGHT = 720;
+
+	terrainValues terrain;
 };
 
 

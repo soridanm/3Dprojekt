@@ -129,11 +129,12 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 
 bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	mCameraHandler.InitializeCamera(Dev, DevCon);
+	mObjectHandler.InitializeObjects(Dev);
+
+	mCameraHandler.InitializeCamera(Dev, DevCon, mObjectHandler.getWorldDepth(),mObjectHandler.getWorldWidth(),mObjectHandler.getWorldHeight());
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
-	mObjectHandler.InitializeObjects(Dev);
 
 	CreateShaders(Dev); //TODO: rewrite with shader class
 
