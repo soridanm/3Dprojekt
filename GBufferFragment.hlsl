@@ -8,8 +8,8 @@ cbuffer MaterialBuffer		: register(b0)
 	float3 SpecularAlbedo;
 	float SpecularPower;
 	float3 DiffuseAlbedo;
-	bool hasTexture;
 	int TexArrayIndex;
+	bool hasTexture;
 
 	float3 padding;
 };

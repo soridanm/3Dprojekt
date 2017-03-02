@@ -19,8 +19,8 @@ struct cMaterialBuffer
 	DirectX::XMFLOAT3 SpecularColor;
 	float SpecularPower;
 	DirectX::XMFLOAT3 DiffuseColor;
-	bool HasTexture;
 	int TexArrIndex;
+	bool HasTexture;
 
 	DirectX::XMFLOAT3 padding;
 }; 
@@ -36,7 +36,7 @@ struct materialStruct
 
 namespace Materials
 {
-	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 32.0f);
+	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 33.0f);
 	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(/*L"Black rubber",*/	0.4f, 0.4f, 0.4f, 10.0f);
 }
 

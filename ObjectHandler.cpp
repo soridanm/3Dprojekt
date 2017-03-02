@@ -72,11 +72,9 @@ bool ObjectHandler::SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon)
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//DevCon->Unmap(mPerFrameBuffer, 0);
+	DevCon->Unmap(gMaterialBuffer, 0);
 	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
-	//new code ----------------------------------------------------------------------------------------------
-	
 	return true;
 }
 
@@ -131,12 +129,10 @@ bool ObjectHandler::SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* De
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(gMaterialBufferData));
-	//DevCon->Unmap(gPerFrameBuffer, 0);
+	DevCon->Unmap(gMaterialBuffer, 0);
 	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
-	int indexStart = meshSubsetIndexStart[i];
-	int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
-	DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+
 
 	return true;
 }
