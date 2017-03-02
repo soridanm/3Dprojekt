@@ -104,13 +104,13 @@
     <Image Include="heightmap.bmp">
       <Filter>Resource Files</Filter>
     </Image>
-    <Image Include="grass-free-texture.jpg">
-      <Filter>Source Files</Filter>
-    </Image>
     <Image Include="world.bmp">
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="peninsula.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="grass-free-texture.jpg">
       <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>

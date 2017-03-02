@@ -900,10 +900,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
-	LoadHeightMap("peninsula.bmp", hminfo);
-	//LoadHeightMap("world.bmp", hminfo);
-
-	//LoadHeightMap("heightmap.bmp", hminfo);
+	LoadHeightMap("world.bmp", hminfo);
 
 	int columns = hminfo.worldWidth;
 	int rows = hminfo.worldHeight;
