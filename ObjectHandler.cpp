@@ -67,7 +67,7 @@ bool ObjectHandler::SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon)
 
 	//SetMaterial(Materials::Black_plastic);
 	gMaterialBufferData = Materials::Black_plastic;
-	gMaterialBufferData.HasTexture = true;
+	gMaterialBufferData.HasTexture = 1;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
@@ -75,6 +75,8 @@ bool ObjectHandler::SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon)
 	DevCon->Unmap(gMaterialBuffer, 0);
 	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
+	//new code ----------------------------------------------------------------------------------------------
+	
 	return true;
 }
 
@@ -118,11 +120,11 @@ bool ObjectHandler::SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* De
 	gMaterialBufferData.SpecularPower = materialVector[meshSubsetTexture[i]].Data.SpecularPower;
 	gMaterialBufferData.DiffuseColor  = materialVector[meshSubsetTexture[i]].Data.DiffuseColor;
 	// REMOVE -------------------------------------------------------------------------
-	materialVector[meshSubsetTexture[i]].Data.HasTexture = false;
+	materialVector[meshSubsetTexture[i]].Data.HasTexture = 0;
 	// END REMOVE ---------------------------------------------------------------------
 	gMaterialBufferData.HasTexture = materialVector[meshSubsetTexture[i]].Data.HasTexture;
 
-	if (materialVector[meshSubsetTexture[i]].Data.HasTexture)
+	if (materialVector[meshSubsetTexture[i]].Data.HasTexture == 1)
 		DevCon->PSSetShaderResources(0, 1, &mTextureView); // NOT IMPLEMENTED YET!
 
 														   // Map material properties buffer
