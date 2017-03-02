@@ -9,7 +9,7 @@
 
 #include "GlobalResources.hpp"
 
-const int NR_OF_LIGHTS = 1;
+const int NR_OF_LIGHTS = 2;
 
 class LightHandler
 {
