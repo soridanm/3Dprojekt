@@ -58,26 +58,28 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 	CreateLightBuffer(Dev);
 
 	DirectX::XMFLOAT4 light_position = { 10.0f, 10.0f, 100.0f, 1.0f };
-	DirectX::XMFLOAT4 light_color = Colors::Red;
+	DirectX::XMFLOAT3 light_color = Colors::Red;
+	int has_s = 0;
 	float c_att = 1.0f;
 	float l_att = 0.0001f;
 	float q_att = 0.001f;
 	float amb   = 0.0001f;
 
-	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
+	Light test_light(light_position, light_color, has_s, c_att, l_att, q_att, amb);
 	mLightBufferData.LightArray[0] = test_light;
 
 	DirectX::XMFLOAT4 shadowlight_position = { 100.0f, 100.0f, 100.0f, 0.0f };
-	DirectX::XMFLOAT4 shadowlight_color = Colors::White;
+	DirectX::XMFLOAT3 shadowlight_color = Colors::White;
+	int sm_has_s = 1;
 	float sm_c_att = 1.0f;
 	float sm_l_att = 0.00001f;
 	float sm_q_att = 0.0002f;
 	float sm_amb   = 0.00001f;
 
-	Light shadow_light(shadowlight_position, shadowlight_color, sm_c_att, sm_l_att, sm_q_att, sm_amb);
+	Light shadow_light(shadowlight_position, shadowlight_color, sm_has_s, sm_c_att, sm_l_att, sm_q_att, sm_amb);
 	mLightBufferData.LightArray[1] = shadow_light;
 
-	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 1.0f);
+	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
 	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
 	mLightBufferData.cameraPositionWS = CAM_POS;
 

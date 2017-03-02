@@ -44,12 +44,12 @@ struct Vertex {
 
 namespace Colors
 {
-	static const DirectX::XMFLOAT4 White = { 1.0f, 1.0f, 1.0f, 1.0f };
-	static const DirectX::XMFLOAT4 Black = { 0.0f, 0.0f, 0.0f, 1.0f };
-	static const DirectX::XMFLOAT4 LightSteelBlue = { 0.69f, 0.77f, 0.87f, 1.0f };
-	static const DirectX::XMFLOAT4 Red = { 1.0f, 0.0f, 0.0f, 1.0f };
-	static const DirectX::XMFLOAT4 Green = { 0.0f, 1.0f, 0.0f, 1.0f };
-	static const DirectX::XMFLOAT4 Blue = { 0.0f, 0.0f, 1.0f, 1.0f };
+	static const DirectX::XMFLOAT3 White = { 1.0f, 1.0f, 1.0f };
+	static const DirectX::XMFLOAT3 Black = { 0.0f, 0.0f, 0.0f };
+	static const DirectX::XMFLOAT3 LightSteelBlue = { 0.69f, 0.77f, 0.87f };
+	static const DirectX::XMFLOAT3 Red = { 1.0f, 0.0f, 0.0f };
+	static const DirectX::XMFLOAT3 Green = { 0.0f, 1.0f, 0.0f };
+	static const DirectX::XMFLOAT3 Blue = { 0.0f, 0.0f, 1.0f };
 	static const float fWhite[4] = { 1.0f, 1.0f, 1.0f, 1.0f };
 	static const float fBlack[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	static const float fLightSteelBlue[4] = { 0.69f, 0.77f, 0.87f, 1.0f };

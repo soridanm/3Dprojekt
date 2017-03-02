@@ -17,7 +17,8 @@ SamplerState textureSampler; // TODO: look up sampler settings
 struct Light
 {
 	float4 light_positionWS;
-	float4 color;
+	float3 color;
+	int hasShadow;
 	float constant_attenuation;
 	float linear_attenuation;
 	float quadratic_attenuation;
@@ -34,7 +35,8 @@ cbuffer pointLightProperties	: register (b1)
 struct PS_IN
 {
 	float4 PositionCS	: SV_Position; //pixel location
-	float2 TexCoord		: TEXCOORD;
+	float4 ShadowLightCS: TEXCOORD0;
+	float2 TexCoord		: TEXCOORD1;
 };
 
 
@@ -48,10 +50,21 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float3 to_camera	= normalize(camera_positionWS.xyz - positionWS); // vectore from surface to camera
 // LOOP OVER LIGHTS FROM HERE ---------------------------------------------------------------------------
 
-	float3 final_color = float3(0.0, 0.0, 0.0);
+	float3 final_color = global_ambient * diffuseColor;
+
+	float bias = 0.001f;
 
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
+		if (Lights[i].hasShadow == 1)
+		{
+			float2 shadowTexCoord;
+			//shadowTexCoord.x = 
+
+
+		}
+
+
 		//float3 normal = normalTex.xyz; // normal vector from surface
 		float3 to_light = normalize(Lights[i].light_positionWS.xyz - positionWS); // vector from light source to surface
 		float3 reflection = reflect(-to_light, normal); // vector of reflected light after light hits surface
@@ -77,7 +90,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 // LOOP OVER LIGHTS TO HERE ---------------------------------------------------------------------------
 
-	final_color = saturate(final_color + global_ambient);
+	//final_color = saturate(final_color + global_ambient * diffuseColor );
 	// In case you want to set it to one of the G-Buffers
 
 	//float3 finalColor = normal;

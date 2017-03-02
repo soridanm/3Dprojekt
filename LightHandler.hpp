@@ -30,13 +30,15 @@ private:
 	struct Light
 	{
 		Light(DirectX::XMFLOAT4 pos = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f),
-			DirectX::XMFLOAT4 col = DirectX::XMFLOAT4(1.0f, 1.0f, 1.0f, 1.0f),
+			DirectX::XMFLOAT3 col = DirectX::XMFLOAT3(1.0f, 1.0f, 1.0f),
+			int hasS = 0,
 			float c_att = 1.0f,
 			float l_att = 0.0f,
 			float q_att = 0.0f,
 			float amb = 0.0f)
 			: PositionWS(pos),
 			Color(col),
+			hasShadow(hasS),
 			constantAttenuation(c_att),
 			linearAttenuation(l_att),
 			quadraticAttenuation(q_att),
@@ -44,7 +46,8 @@ private:
 		{}
 
 		DirectX::XMFLOAT4 PositionWS;
-		DirectX::XMFLOAT4 Color;
+		DirectX::XMFLOAT3 Color;
+		int hasShadow;
 		float constantAttenuation;
 		float linearAttenuation;
 		float quadraticAttenuation;

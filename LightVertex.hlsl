@@ -1,8 +1,9 @@
 
 struct VS_OUT
 {
-	float4 Position	: SV_Position;
-	float2 TexCoord	: TEXCOORD;
+	float4 Position		: SV_Position;
+	float4 ShadowLightCS: TEXCOORD0;
+	float2 TexCoord		: TEXCOORD1;
 };
 
 // Generates a full screen triangle using vertexID which goes from 0 to 2
