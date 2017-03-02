@@ -324,7 +324,7 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
-	mCameraHandler.BindPerFrameConstantBuffer(DevCon, 1);
+	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 	//LOOP OVER OBJECTS FROM HERE
 
 	SetGeometryPassShaderResources(DevCon);
@@ -381,7 +381,7 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
 	SetShadowMapPassRenderTargets(DevCon);
 	SetShadowMapPassShaders(DevCon);
-	mCameraHandler.BindPerFrameConstantBuffer(DevCon, 2);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon);
 
 	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
 

@@ -18,7 +18,8 @@ public:
 	DirectX::XMFLOAT4 GetCameraPosition();
 
 	void UpdateCamera();
-	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID);
+	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
+	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
 	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
@@ -37,6 +38,7 @@ public:
 private:
 	void CreateViewPorts();
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
+	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
 
 	struct cPerFrameBuffer
 	{
@@ -48,7 +50,11 @@ private:
 
 
 	cPerFrameBuffer VPBufferData;
+	cPerFrameBuffer SMBufferData; //TODO: Move this to somewhere else
+
 	ID3D11Buffer* mPerFrameBuffer;
+	ID3D11Buffer* mShadowMapBuffer;
+
 
 	const DirectX::XMVECTOR CAMERA_STARTING_POS;
 	DirectX::XMVECTOR CAM_TARGET;

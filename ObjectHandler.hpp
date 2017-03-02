@@ -19,8 +19,8 @@ struct cMaterialBuffer
 	DirectX::XMFLOAT3 SpecularColor;
 	float SpecularPower;
 	DirectX::XMFLOAT3 DiffuseColor;
-	bool HasTexture;
 	int TexArrIndex;
+	int HasTexture;
 
 	DirectX::XMFLOAT3 padding;
 }; 

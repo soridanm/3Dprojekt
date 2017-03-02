@@ -75,12 +75,12 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID)
 
 	//SetMaterial(Materials::Black_plastic);
 	gMaterialBufferData = Materials::Black_plastic;
-	gMaterialBufferData.HasTexture = true;
+	gMaterialBufferData.HasTexture = 1;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	//DevCon->Unmap(mPerFrameBuffer, 0);
+	DevCon->Unmap(gMaterialBuffer, 0);
 	if (passID == 1)
 	{
 		DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
@@ -109,7 +109,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i,
 
 	DirectX::XMMATRIX scaleMatrix	= DirectX::XMMatrixScaling(scale, scale, scale);
 	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationY(rotation);
-	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(20.0f, 20.0f, 20.0f);
+	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f, 20.0f, 100.0f);
 
 	using DirectX::operator*;
 
@@ -139,18 +139,18 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i,
 	gMaterialBufferData.SpecularPower = materialVector[meshSubsetTexture[i]].Data.SpecularPower;
 	gMaterialBufferData.DiffuseColor  = materialVector[meshSubsetTexture[i]].Data.DiffuseColor;
 	// REMOVE -------------------------------------------------------------------------
-	materialVector[meshSubsetTexture[i]].Data.HasTexture = false;
+	materialVector[meshSubsetTexture[i]].Data.HasTexture = 0;
 	// END REMOVE ---------------------------------------------------------------------
 	gMaterialBufferData.HasTexture = materialVector[meshSubsetTexture[i]].Data.HasTexture;
 
-	if (materialVector[meshSubsetTexture[i]].Data.HasTexture)
+	if (materialVector[meshSubsetTexture[i]].Data.HasTexture == 1)
 		DevCon->PSSetShaderResources(0, 1, &mTextureView); // NOT IMPLEMENTED YET!
 
 														   // Map material properties buffer
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(gMaterialBufferData));
-	//DevCon->Unmap(gPerFrameBuffer, 0);
+	DevCon->Unmap(gMaterialBuffer, 0);
 	if (passID == 1) 
 	{
 		DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
