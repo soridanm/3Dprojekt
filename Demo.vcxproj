@@ -237,7 +237,16 @@
     <Image Include="grass-free-texture.jpg" />
     <Image Include="heightmap.bmp" />
     <Image Include="peninsula.bmp" />
-    <Image Include="world.bmp" />
+    <Image Include="world.bmp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </ExcludedFromBuild>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Demo.rc" />

@@ -165,7 +165,7 @@ int ObjectHandler::getWorldDepth() {
 	return WORLD_DEPTH;
 }
 int ObjectHandler::getWorldWidth() {
-	return WORLD_WITDH;
+	return WORLD_WIDTH;
 }
 
 // private ---------------------------------------------------------------------------------------
@@ -900,17 +900,25 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
-	LoadHeightMap("world.bmp", hminfo);
+	LoadHeightMap("peninsula.bmp", hminfo);
+	//LoadHeightMap("world.bmp", hminfo);
+
+	//LoadHeightMap("heightmap.bmp", hminfo);
+
 	int columns = hminfo.worldWidth;
 	int rows = hminfo.worldHeight;
+
+	//int columns = hminfo.worldHeight;
+	//int rows = hminfo.worldWidth;
+
 
 	NUMBER_OF_VERTICES = rows*columns;
 	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
 
 
-	WORLD_WITDH = columns;
-	WORLD_DEPTH = rows;
-	WORLD_HEIGHT = new float*[WORLD_WITDH];
+	WORLD_WIDTH = rows;
+	WORLD_DEPTH = columns;
+	WORLD_HEIGHT = new float*[WORLD_WIDTH];
 
 	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
 

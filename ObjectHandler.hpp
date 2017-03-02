@@ -95,7 +95,7 @@ private:
 	int NUMBER_OF_FACES = 0;
 	int NUMBER_OF_VERTICES = 0;
 	float** WORLD_HEIGHT;
-	int WORLD_WITDH = 0, WORLD_DEPTH = 0;
+	int WORLD_WIDTH = 0, WORLD_DEPTH = 0;
 
 	//Loading .obj files
 	ID3D11BlendState* Transparency;
