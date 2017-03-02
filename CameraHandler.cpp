@@ -89,7 +89,7 @@ void CameraHandler::UpdateCamera()
 	CAM_TARGET = CAM_POS + CAM_TARGET;
 }
 
-bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
+bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID)
 {
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
@@ -100,8 +100,14 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 
 	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
 	//DevCon->Unmap(mPerFrameBuffer, 0);
-	DevCon->GSSetConstantBuffers(0, 1, &mPerFrameBuffer);
-
+	if (passID == 1)
+	{
+		DevCon->GSSetConstantBuffers(0, 1, &mPerFrameBuffer);
+	}
+	else
+	{
+		DevCon->VSSetConstantBuffers(0, 1, &mPerFrameBuffer);
+	}
 	return true;
 }
 

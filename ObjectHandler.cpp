@@ -28,15 +28,19 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	}
 }
 
+//TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
 //used in GraphicsHandler.RenderGeometryPass
-bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon)
+bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID)
 {
 	UINT32 squareVertexSize = sizeof(float) * 8;
 	UINT32 offset = 0;
 
 	//set textures and constant buffers
-	DevCon->PSSetShaderResources(0, 1, &mTextureView);
-	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	if (passID == 1)
+	{
+		DevCon->PSSetShaderResources(0, 1, &mTextureView);
+	}
+	//DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	 //HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
 
@@ -58,7 +62,14 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon)
 	// Unmap constant buffer so that we can use it again in the GPU
 	DevCon->Unmap(gPerObjectBuffer, 0);
 	// set resource to Geometry Shader
-	DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	if (passID == 1)
+	{
+		DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	}
+	else 
+	{
+		DevCon->VSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	}
 
 	// Map material properties buffer
 
@@ -70,14 +81,17 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon)
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
 	//DevCon->Unmap(mPerFrameBuffer, 0);
-	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
-
+	if (passID == 1)
+	{
+		DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	}
 	//new code ----------------------------------------------------------------------------------------------
 	
 	return true;
 }
 
-bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i)
+//TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
+bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i, int passID)
 {
 	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;
@@ -110,7 +124,15 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i)
 	// Unmap constant buffer so that we can use it again in the GPU
 	DevCon->Unmap(gPerObjectBuffer, 0);
 	// set resource to Geometry Shader
-	DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	if (passID == 1)
+	{
+		DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	}
+	else
+	{
+		DevCon->VSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+	}
+
 
 	//set material
 	gMaterialBufferData.SpecularColor = materialVector[meshSubsetTexture[i]].Data.SpecularColor;
@@ -129,11 +151,14 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i)
 	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(gMaterialBufferData));
 	//DevCon->Unmap(gPerFrameBuffer, 0);
-	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	if (passID == 1) 
+	{
+		DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	}
 
-	int indexStart = meshSubsetIndexStart[i];
+	/*int indexStart = meshSubsetIndexStart[i];
 	int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
-	DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);*/
 
 	return true;
 }

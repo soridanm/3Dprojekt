@@ -324,17 +324,17 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
-	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
+	mCameraHandler.BindPerFrameConstantBuffer(DevCon, 1);
 	//LOOP OVER OBJECTS FROM HERE
 
 	SetGeometryPassShaderResources(DevCon);
 
-	mObjectHandler.SetHeightMapBuffer(DevCon);
+	mObjectHandler.SetHeightMapBuffer(DevCon, 1);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
 	{
-		mObjectHandler.SetObjectBufferWithIndex(DevCon, i);
+		mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 1);
 
 		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
 		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
@@ -375,21 +375,23 @@ void GraphicsHandler::SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCo
 	//remove this function later
 }
 
+//TODO: set the position and whatnot for the light
 void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 {
 	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
 	SetShadowMapPassRenderTargets(DevCon);
 	SetShadowMapPassShaders(DevCon);
-	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
+	mCameraHandler.BindPerFrameConstantBuffer(DevCon, 2);
 
 	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
 
-	mObjectHandler.SetHeightMapBuffer(DevCon);
+	mObjectHandler.SetHeightMapBuffer(DevCon, 2);
+
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
 	{
-		mObjectHandler.SetObjectBufferWithIndex(DevCon, i);
+		mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 2);
 
 		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
 		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;

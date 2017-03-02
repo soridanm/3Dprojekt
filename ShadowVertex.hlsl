@@ -25,7 +25,7 @@ struct VS_IN
 
 struct VS_OUT
 {
-	float4 PositionCS : SV_POSITION;
+	float4 PositionCS : SV_Position;
 };
 
 VS_OUT VS_main(in VS_IN input)
@@ -33,9 +33,11 @@ VS_OUT VS_main(in VS_IN input)
 	VS_OUT output = (VS_OUT)0;
 
 	float4x4 viewProjection = mul(view, projection);
-	float4x4 worldViewProjection = mul(worldMatrix, viewProjection);
+	//float4x4 worldViewProjection = mul(worldMatrix, viewProjection);
 
-	output.PositionCS = mul(float4(input.Position, 1.0), worldViewProjection);
+	float4 temp = mul(float4(input.Position, 1.0), worldMatrix);
+
+	output.PositionCS = mul(temp, viewProjection);
 
 	return output;
 }
