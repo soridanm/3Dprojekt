@@ -1,8 +1,7 @@
 
 struct VS_OUT
 {
-	float4 Position		: SV_Position;
-	float4 ShadowLightCS: TEXCOORD0;
+	float4 PositionCS	: SV_Position;
 	float2 TexCoord		: TEXCOORD1;
 };
 
@@ -15,7 +14,7 @@ VS_OUT VS_main( in uint vertexID : SV_VertexID )
 	float x = (float)(vertexID / 2) * 4.0 - 1.0;
 	float y = (float)(vertexID % 2) * 4.0 - 1.0;
 
-	output.Position = float4(x, y, 0.0, 1.0);
+	output.PositionCS = float4(x, y, 0.0, 1.0);
 
 	// texture coordinates: (0,0), (0,2), (2,0)
 	output.TexCoord.x = (float)(vertexID / 2) * 2.0;

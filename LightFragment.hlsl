@@ -1,9 +1,11 @@
 /* Base code from the book "Practical Rendering and Computation with Direct3D 11", page 504 */
 
-// TODO: loop over multiple lights
+// TODO: Rename buffers and variables
 // TODO? Gamma correction
 
 #define NR_OF_LIGHTS 2
+
+//TODO? Texture2D<float4>
 
 // Textures from G-Buffers
 Texture2D NormalTexture			: register(t0); // x-y-z-unused
@@ -13,6 +15,12 @@ Texture2D SpecularAlbedoTexture	: register(t3); // r-g-b-specularPower
 Texture2D ShadowMap				: register(t4); // r
 
 SamplerState textureSampler; // TODO: look up sampler settings
+
+cbuffer shadowMapMatrix			: register(b0)
+{
+	float4x4 lightView;
+	float4x4 lightProjection;
+}
 
 struct Light
 {
@@ -32,10 +40,11 @@ cbuffer pointLightProperties	: register (b1)
 	Light Lights[NR_OF_LIGHTS];
 };
 
+
+
 struct PS_IN
 {
 	float4 PositionCS	: SV_Position; //pixel location
-	float4 ShadowLightCS: TEXCOORD0;
 	float2 TexCoord		: TEXCOORD1;
 };
 
@@ -50,21 +59,27 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float3 to_camera	= normalize(camera_positionWS.xyz - positionWS); // vectore from surface to camera
 // LOOP OVER LIGHTS FROM HERE ---------------------------------------------------------------------------
 
-	float3 final_color = global_ambient * diffuseColor;
+
+	//shadow map
+	float4x4 lightViewProjection = mul(lightView, lightProjection);
+
+
+	float4 test = mul(float4(positionWS, 1.0), lightViewProjection);
 
 	float bias = 0.001f;
+	float2 shadowTexCoord;
+	shadowTexCoord.x = test.x / test.w / 2.0 + 0.5;
+	shadowTexCoord.y = test.y / test.w / 2.0 + 0.5;
+	//Dividing by w gives positions in clip-space [-1, 1]
+	//Dividing by 2.0 and adding 0.5 gives uv coordinates [0, 1]
+
+
+
+	float3 final_color = global_ambient * diffuseColor;
 
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
-		if (Lights[i].hasShadow == 1)
-		{
-			float2 shadowTexCoord;
-			//shadowTexCoord.x = 
-
-
-		}
-
-
+		
 		//float3 normal = normalTex.xyz; // normal vector from surface
 		float3 to_light = normalize(Lights[i].light_positionWS.xyz - positionWS); // vector from light source to surface
 		float3 reflection = reflect(-to_light, normal); // vector of reflected light after light hits surface
@@ -103,7 +118,9 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = float3(specular_coefficient, specular_coefficient, specular_coefficient);
 	//float3 finalColor = float3(1.0, 0.0, 0.0);
 
-	float3 finalColor = final_color;
+	//float3 finalColor = final_color;
+
+	float3 finalColor = float3(shadowTexCoord, 0.0);
 
 	return float4(finalColor, 1.0);
 }

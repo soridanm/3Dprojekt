@@ -91,13 +91,13 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 CAM_POS)
 {
 	// Move light up and down
-	static int lightYMovement = 249;
-	lightYMovement = (lightYMovement + 1) % 1000;
-	float yMovement = (lightYMovement < 500) ? -100.1f : -100.1f;
-	DirectX::XMMATRIX yMove = DirectX::XMMatrixTranslation(yMovement, 0.0f, 0.0f);
+	//static int lightYMovement = 249;
+	//lightYMovement = (lightYMovement + 1) % 1000;
+	//float yMovement = (lightYMovement < 500) ? -100.1f : -100.1f;
+	//DirectX::XMMATRIX yMove = DirectX::XMMatrixTranslation(yMovement, 0.0f, 0.0f);
 
-	DirectX::XMVECTOR lightPos = DirectX::XMLoadFloat4(&mLightBufferData.LightArray[0].PositionWS);
-	lightPos = DirectX::XMVector4Transform(lightPos, yMove);
+	//DirectX::XMVECTOR lightPos = DirectX::XMLoadFloat4(&mLightBufferData.LightArray[0].PositionWS);
+	//lightPos = DirectX::XMVector4Transform(lightPos, yMove);
 
 	//static double lightMovement = 0.01;
 	//DirectX::XMVECTOR testMove = DirectX::XMVECTOR()

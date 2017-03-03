@@ -108,7 +108,7 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 	return true;
 }
 
-bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
+bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID)
 {
 	//TODO: this code block might not be needed
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
@@ -116,8 +116,16 @@ bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* Dev
 	DevCon->Map(mShadowMapBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
 	memcpy(viewProjectionMatrixPtr.pData, &SMBufferData, sizeof(cPerFrameBuffer));
 	DevCon->Unmap(mShadowMapBuffer, 0);
-
-	DevCon->VSSetConstantBuffers(0, 1, &mShadowMapBuffer);
+	
+	if (passID == 1) //ShadowVertex.hlsl
+	{
+		DevCon->VSSetConstantBuffers(0, 1, &mShadowMapBuffer);
+	}
+	
+	if (passID == 2) //LightFragment.hlsl
+	{
+		DevCon->PSSetConstantBuffers(0, 1, &mShadowMapBuffer);
+	}
 
 	return true;
 }
@@ -283,7 +291,7 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	float far_plane = 150.f;
 
 	DirectX::XMVECTOR LIGHT_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
-	DirectX::XMVECTOR LIGHT_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 90.0f, 0.0f);
+	DirectX::XMVECTOR LIGHT_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 99.0f, 0.0f);
 	DirectX::XMVECTOR LIGHT_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
 	DirectX::XMMATRIX projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(
@@ -309,3 +317,4 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 
 	return true;
 }
+

@@ -19,7 +19,7 @@ public:
 
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
-	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
+	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID);
 	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);

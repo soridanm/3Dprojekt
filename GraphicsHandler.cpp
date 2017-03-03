@@ -381,7 +381,7 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
 	SetShadowMapPassRenderTargets(DevCon);
 	SetShadowMapPassShaders(DevCon);
-	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 1);
 
 	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
 
@@ -467,10 +467,12 @@ void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* De
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 2);
 	
 	DevCon->PSSetShaderResources(4, 1, &mLightHandler.mShadowMapSRView);
 
 	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
+
 
 	// Draw full screen triangle
 	DevCon->Draw(3, 0);
