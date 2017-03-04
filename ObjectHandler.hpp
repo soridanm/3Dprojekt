@@ -19,8 +19,8 @@ struct cMaterialBuffer
 	DirectX::XMFLOAT3 SpecularColor;
 	float SpecularPower;
 	DirectX::XMFLOAT3 DiffuseColor;
-	bool HasTexture;
 	int TexArrIndex;
+	int HasTexture;
 
 	DirectX::XMFLOAT3 padding;
 }; 
@@ -47,8 +47,8 @@ public:
 	~ObjectHandler();
 
 	void InitializeObjects(ID3D11Device* Dev);
-	bool SetGeometryPassHeightMapBuffer(ID3D11DeviceContext* DevCon);
-	bool SetGeometryPassObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i);
+	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID);
+	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i, int passID);
 	
 	int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();

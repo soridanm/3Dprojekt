@@ -2,7 +2,7 @@
 * TODO: Write error messages and use if(Function()) instead of just Funtion()
 *		Update code with code from the .obj branch
 *		See if the order of things should be changed
-*
+*		viewport and whatnot
 */
 
 #include "GraphicsHandler.hpp"
@@ -127,11 +127,13 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 
 // public ------------------------------------------------------------------------------
 
-bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
+bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
 {
-	mCameraHandler.InitializeCamera(Dev, DevCon);
+	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality);
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
+
+	mLightHandler.CreateShadowMap(Dev, shadowQuality);
 
 	mObjectHandler.InitializeObjects(Dev);
 
@@ -151,7 +153,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 	return true;
 }
 
-//TODO: initialization list probably doesn't work!
+//TODO: Should probably be rewritten
 GraphicsHandler::GraphicsHandler() 
 	: mCameraHandler(), mLightHandler(mCameraHandler.GetCameraPosition())
 {
@@ -166,6 +168,9 @@ GraphicsHandler::GraphicsHandler()
 	mGeometryPassGeometryShader = nullptr;
 	mGeometryPassPixelShader = nullptr;
 	//mTextureView = nullptr;
+	mShadowPassVertexShader = nullptr;
+	mShadowPassPixelShader = nullptr;
+
 	mLightPassVertexShader = nullptr;
 	mLightPassPixelShader = nullptr;
 	mBackbufferRTV = nullptr;
@@ -180,6 +185,7 @@ GraphicsHandler::~GraphicsHandler()
 }
 
 //TODO: clean up and write better error messages
+//		Create a seperate input layout for the shadow pass
 bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 {
 	//---------------------------------- Geometry Pass ----------------------------------------------------
@@ -237,18 +243,62 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 	
 	//---------------------------------- Light Pass ----------------------------------------------------
 
-		//compile and create vertex shader
+	//compile and create vertex shader
 	ID3DBlob* pVS2 = nullptr;
-	CompileShader(&pVS2, L"LightVertex.hlsl", "VS_main", "vs_5_0");
-	gHR = Dev->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mLightPassVertexShader);
+	CompileShader(&pVS2, L"ShadowVertex.hlsl", "VS_main", "vs_5_0");
+	gHR = Dev->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mShadowPassVertexShader);
 	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	//Create an input layout for the shadow vertex shader
+	if (!CreateInputLayout(Dev, pVS2)) {
 		exit(-1);
 	}
 
 	//compile and create pixel shader
 	ID3DBlob* pPS2 = nullptr;
-	CompileShader(&pPS2, L"LightFragment.hlsl", "PS_main", "ps_5_0");
-	gHR = Dev->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mLightPassPixelShader);
+	CompileShader(&pPS2, L"ShadowFragment.hlsl", "PS_main", "ps_5_0");
+	gHR = Dev->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mShadowPassPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	//---------------------------------- Light Pass ----------------------------------------------------
+
+		//compile and create vertex shader
+	ID3DBlob* pVS3 = nullptr;
+	CompileShader(&pVS3, L"LightVertex.hlsl", "VS_main", "vs_5_0");
+	gHR = Dev->CreateVertexShader(pVS3->GetBufferPointer(), pVS3->GetBufferSize(), nullptr, &mLightPassVertexShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	//compile and create pixel shader
+	ID3DBlob* pPS3 = nullptr;
+	CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0");
+	gHR = Dev->CreatePixelShader(pPS3->GetBufferPointer(), pPS3->GetBufferSize(), nullptr, &mLightPassPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	D3D11_SAMPLER_DESC shadowSamplerDesc{};
+	shadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	shadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSamplerDesc.MipLODBias = 0.0f;
+	shadowSamplerDesc.MaxAnisotropy = 16;
+	shadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+	shadowSamplerDesc.BorderColor[0] = 1.0f;
+	shadowSamplerDesc.BorderColor[1] = 1.0f;
+	shadowSamplerDesc.BorderColor[2] = 1.0f;
+	shadowSamplerDesc.BorderColor[3] = 1.0f;
+	shadowSamplerDesc.MinLOD = 0.0f;
+	shadowSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		// Create the texture sampler state.
+	gHR = Dev->CreateSamplerState(&shadowSamplerDesc, &mShadowSampler);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
@@ -269,10 +319,10 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 void GraphicsHandler::SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon)
 {
 	//Clear the render targets
-	DevCon->ClearRenderTargetView(mGraphicsBuffer[0].renderTargetView, Colors::fBlack);
-	DevCon->ClearRenderTargetView(mGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);
-	DevCon->ClearRenderTargetView(mGraphicsBuffer[2].renderTargetView, Colors::fLightSteelBlue);
-	DevCon->ClearRenderTargetView(mGraphicsBuffer[3].renderTargetView, Colors::fBlack);
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[0].renderTargetView, Colors::fBlack);				//Normal
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[1].renderTargetView, Colors::fLightSteelBlue);	//Position
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[2].renderTargetView, Colors::fBlack);				//Diffuse
+	DevCon->ClearRenderTargetView(mGraphicsBuffer[3].renderTargetView, Colors::fBlack);				//Specular
 	DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
@@ -311,6 +361,8 @@ void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 {
+	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
+
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
@@ -318,12 +370,12 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	SetGeometryPassShaderResources(DevCon);
 
-	mObjectHandler.SetGeometryPassHeightMapBuffer(DevCon);
+	mObjectHandler.SetHeightMapBuffer(DevCon, 1);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
 	{
-		mObjectHandler.SetGeometryPassObjectBufferWithIndex(DevCon, i);
+		mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 1);
 
 		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
 		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
@@ -331,6 +383,62 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 	}
 	//LOOP OVER OBJECTS TO HERE
+}
+
+// ------------------------------ Shadow Map Pass ------------------------------------------------------
+
+
+//TODO: move to LightHandler.cpp
+void GraphicsHandler::SetShadowMapPassRenderTargets(ID3D11DeviceContext* DevCon)
+{
+	DevCon->OMSetRenderTargets(0, 0, mLightHandler.mShadowMapDepthView);
+	DevCon->ClearDepthStencilView(mLightHandler.mShadowMapDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
+}
+
+//TODO: make a seperate input layout for the shadow pass since it only needs the position
+void GraphicsHandler::SetShadowMapPassShaders(ID3D11DeviceContext* DevCon)
+{
+	// Set Vertex Shader input
+	DevCon->IASetInputLayout(mVertexLayout);
+	DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	// Set shaders
+	DevCon->VSSetShader(mShadowPassVertexShader, nullptr, 0);
+	DevCon->HSSetShader(nullptr, nullptr, 0);
+	DevCon->DSSetShader(nullptr, nullptr, 0);
+	DevCon->GSSetShader(nullptr, nullptr, 0);
+	DevCon->PSSetShader(mShadowPassPixelShader, nullptr, 0);
+}
+
+void GraphicsHandler::SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCon)
+{
+	//doesn't need any resources since it only cares about depth.
+	//remove this function later
+}
+
+//TODO: set the position and whatnot for the light
+void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
+{
+	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
+	SetShadowMapPassRenderTargets(DevCon);
+	SetShadowMapPassShaders(DevCon);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 1);
+
+	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
+
+	mObjectHandler.SetHeightMapBuffer(DevCon, 2);
+
+	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
+
+	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+	{
+		mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 2);
+
+		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+
+		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	}
 }
 
 // ------------------------------ Light Pass ------------------------------------------------------
@@ -373,6 +481,7 @@ bool GraphicsHandler::SetLightPassShaders(ID3D11DeviceContext* DevCon)
 	DevCon->DSSetShader(nullptr, nullptr, 0);
 	DevCon->GSSetShader(nullptr, nullptr, 0);
 	DevCon->PSSetShader(mLightPassPixelShader, nullptr, 0);
+	DevCon->PSSetSamplers(0, 1, &mShadowSampler);
 
 	return true;
 }
@@ -396,10 +505,16 @@ bool GraphicsHandler::SetLightPassGBuffers(ID3D11DeviceContext* DevCon)
 //DONE
 void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
+	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 2);
+	
+	DevCon->PSSetShaderResources(4, 1, &mLightHandler.mShadowMapSRView);
+
 	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
+
 
 	// Draw full screen triangle
 	DevCon->Draw(3, 0);

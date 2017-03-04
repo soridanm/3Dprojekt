@@ -6,15 +6,18 @@
 // public ------------------------------------------------------------------------------
 
 //TODO: Create all objects here
-bool Engine::Initialize()
+bool Engine::Initialize(ShadowQuality shadowQuality)
 {
-	mGraphicsHandler.InitializeGraphics(gDevice, gDeviceContext);
+	
+	mGraphicsHandler.InitializeGraphics(gDevice, gDeviceContext, shadowQuality);
 	return true;
 }
 
 bool Engine::Render()
 {
+
 	mGraphicsHandler.RenderGeometryPass(gDeviceContext);
+	mGraphicsHandler.RenderShadowPass(gDeviceContext);
 	mGraphicsHandler.RenderLightPass(gDevice, gDeviceContext, gSwapChain);
 	
 	return true;
@@ -37,19 +40,32 @@ HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
 	scd.SampleDesc.Count = 1;                               // how many multisamples
 	scd.Windowed = TRUE;                            // windowed/full-screen mode
 
-													// create a device, device context and swap chain using the information in the scd struct
-	HRESULT hr = D3D11CreateDeviceAndSwapChain(NULL,
+	D3D_FEATURE_LEVEL MaxSupportedFeatureLevel = D3D_FEATURE_LEVEL_9_1;
+	D3D_FEATURE_LEVEL FeatureLevels[] = {
+		D3D_FEATURE_LEVEL_11_1,
+		D3D_FEATURE_LEVEL_11_0,
+		D3D_FEATURE_LEVEL_10_1,
+		D3D_FEATURE_LEVEL_10_0,
+		D3D_FEATURE_LEVEL_9_3,
+		D3D_FEATURE_LEVEL_9_2,
+		D3D_FEATURE_LEVEL_9_1
+	};
+
+	// create a device, device context and swap chain using the information in the scd struct
+	HRESULT hr = D3D11CreateDeviceAndSwapChain(
+		NULL,
 		D3D_DRIVER_TYPE_HARDWARE,
 		NULL,
 		NULL,
-		NULL,
-		NULL,
+		FeatureLevels,
+		ARRAYSIZE(FeatureLevels),
 		D3D11_SDK_VERSION,
 		&scd,
 		&gSwapChain,
 		&gDevice,
-		NULL,
+		&MaxSupportedFeatureLevel,
 		&gDeviceContext);
+
 
 	if (SUCCEEDED(hr))
 	{

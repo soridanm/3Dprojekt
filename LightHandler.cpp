@@ -17,6 +17,7 @@ LightHandler::LightHandler(DirectX::XMFLOAT4 CAM_POS)
 	mLightBufferData.cameraPositionWS = CAM_POS;
 	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 0.05f);
 
+	//TODO: This for loop is already in .hpp
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
 		mLightBufferData.LightArray[i] = Light();
@@ -57,16 +58,28 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 	CreateLightBuffer(Dev);
 
 	DirectX::XMFLOAT4 light_position = { 10.0f, 10.0f, 100.0f, 1.0f };
-	DirectX::XMFLOAT4 light_color = Colors::White;
+	DirectX::XMFLOAT3 light_color = Colors::Red;
+	int has_s = 0;
 	float c_att = 1.0f;
 	float l_att = 0.0001f;
 	float q_att = 0.001f;
-	float amb = 0.0001f;
+	float amb   = 0.0001f;
 
-	Light test_light(light_position, light_color, c_att, l_att, q_att, amb);
+	Light test_light(light_position, light_color, has_s, c_att, l_att, q_att, amb);
 	mLightBufferData.LightArray[0] = test_light;
 
-	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 1.0f);
+	DirectX::XMFLOAT4 shadowlight_position = { 100.0f, 100.0f, 100.0f, 0.0f };
+	DirectX::XMFLOAT3 shadowlight_color = Colors::White;
+	int sm_has_s = 1;
+	float sm_c_att = 1.0f;
+	float sm_l_att = 0.00001f;
+	float sm_q_att = 0.0002f;
+	float sm_amb   = 0.00001f;
+
+	Light shadow_light(shadowlight_position, shadowlight_color, sm_has_s, sm_c_att, sm_l_att, sm_q_att, sm_amb);
+	mLightBufferData.LightArray[1] = shadow_light;
+
+	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
 	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
 	mLightBufferData.cameraPositionWS = CAM_POS;
 
@@ -78,13 +91,13 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 CAM_POS)
 {
 	// Move light up and down
-	static int lightYMovement = 249;
-	lightYMovement = (lightYMovement + 1) % 1000;
-	float yMovement = (lightYMovement < 500) ? -100.1f : -100.1f;
-	DirectX::XMMATRIX yMove = DirectX::XMMatrixTranslation(yMovement, 0.0f, 0.0f);
+	//static int lightYMovement = 249;
+	//lightYMovement = (lightYMovement + 1) % 1000;
+	//float yMovement = (lightYMovement < 500) ? -100.1f : -100.1f;
+	//DirectX::XMMATRIX yMove = DirectX::XMMatrixTranslation(yMovement, 0.0f, 0.0f);
 
-	DirectX::XMVECTOR lightPos = DirectX::XMLoadFloat4(&mLightBufferData.LightArray[0].PositionWS);
-	lightPos = DirectX::XMVector4Transform(lightPos, yMove);
+	//DirectX::XMVECTOR lightPos = DirectX::XMLoadFloat4(&mLightBufferData.LightArray[0].PositionWS);
+	//lightPos = DirectX::XMVector4Transform(lightPos, yMove);
 
 	//static double lightMovement = 0.01;
 	//DirectX::XMVECTOR testMove = DirectX::XMVECTOR()
@@ -107,4 +120,45 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 	return true;
 }
 
+//TODO: look up what format is best to use. Do this for the GBuffer as well
+bool LightHandler::CreateShadowMap(ID3D11Device* Dev, ShadowQuality shadowQuality)
+{
+	//Shadow map texture desc
+	D3D11_TEXTURE2D_DESC smTexDesc;
+	smTexDesc.Width = shadowQuality;
+	smTexDesc.Height = shadowQuality;
+	smTexDesc.MipLevels = 1;
+	smTexDesc.ArraySize = 1;
+	smTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+	smTexDesc.SampleDesc.Count = 1;
+	smTexDesc.SampleDesc.Quality = 0;
+	smTexDesc.Usage = D3D11_USAGE_DEFAULT;
+	smTexDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE; //
+	smTexDesc.CPUAccessFlags = 0;
+	smTexDesc.MiscFlags = 0;
+
+	//Shadow map depth stencil view desc
+	D3D11_DEPTH_STENCIL_VIEW_DESC smDescDSV{}; //{} might be unnecessary
+	smDescDSV.Format = DXGI_FORMAT_D32_FLOAT;
+	smDescDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+	smDescDSV.Texture2D.MipSlice = 0;
+	smDescDSV.Flags = 0;
+
+	//Shadow map shader resource view desc
+	D3D11_SHADER_RESOURCE_VIEW_DESC smSrvDesc {};
+	smSrvDesc.Format = DXGI_FORMAT_R32_FLOAT;
+	smSrvDesc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+	smSrvDesc.Texture2D.MipLevels = smTexDesc.MipLevels;
+	smSrvDesc.Texture2D.MostDetailedMip = 0;
+
+	HRESULT hr;
+	hr = Dev->CreateTexture2D(&smTexDesc, nullptr, &mShadowMap);
+	if (FAILED(hr)) { return false; }
+	hr = Dev->CreateDepthStencilView(mShadowMap, &smDescDSV, &mShadowMapDepthView);
+	if (FAILED(hr)) { return false; }
+	hr = Dev->CreateShaderResourceView(mShadowMap, &smSrvDesc, &mShadowMapSRView);
+	if (FAILED(hr)) { return false; }
+
+	return true;
+}
 

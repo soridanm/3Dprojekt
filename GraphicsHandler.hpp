@@ -1,6 +1,5 @@
 /*
 * TODO: See what functions should be made private
-*		Loop over objects in render function
 *		Rename member pointers to mPointerName
 *		Make a seperate shader class
 *
@@ -23,15 +22,14 @@ public:
 	GraphicsHandler();
 	~GraphicsHandler();
 
-	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
+	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
 	bool CreateShaders(ID3D11Device* Dev);
 	void RenderGeometryPass(ID3D11DeviceContext* DevCon);
+	void RenderShadowPass(ID3D11DeviceContext* DevCon);
 	void RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
 
 	ID3D11ShaderResourceView* gTextureView = nullptr; //SHOULD BE MOVED TO MODEL
 	ID3D11RenderTargetView* mBackbufferRTV; //might be moved to Engine
-
-
 	//Really not sure if it's best to have these public or not
 	LightHandler mLightHandler;
 	//ShaderHandler mShaderHandler;
@@ -57,6 +55,11 @@ private:
 	void SetGeometryPassShaders(ID3D11DeviceContext* DevCon); //move to shader class
 	void SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon);
 
+	// Shadow mapping Pass ----------------------
+	void SetShadowMapPassRenderTargets(ID3D11DeviceContext* DevCon);
+	void SetShadowMapPassShaders(ID3D11DeviceContext* DevCon);
+	void SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCon);
+
 	// Light Pass -------------------------------
 	bool SetLightPassRenderTargets(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
 	bool SetLightPassShaders(ID3D11DeviceContext* DevCon);
@@ -75,14 +78,20 @@ private:
 	ID3D11DepthStencilView* mDepthStecilView;
 	ID3D11Texture2D* mDepthStencilTexture;
 	ID3D11InputLayout* mVertexLayout;
+
+	//Geometry Pass
 	ID3D11VertexShader* mGeometryPassVertexShader;
 	ID3D11GeometryShader* mGeometryPassGeometryShader;
 	ID3D11PixelShader* mGeometryPassPixelShader;
+	//Shadow Pass
+	ID3D11VertexShader* mShadowPassVertexShader;
+	ID3D11PixelShader* mShadowPassPixelShader;
+	//Light Pass
 	ID3D11SamplerState* mSampleState;
 	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
 	ID3D11VertexShader* mLightPassVertexShader;
 	ID3D11PixelShader* mLightPassPixelShader;
-
+	ID3D11SamplerState* mShadowSampler;
 };
 
 

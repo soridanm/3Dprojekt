@@ -8,8 +8,8 @@ cbuffer MaterialBuffer		: register(b0)
 	float3 SpecularAlbedo;
 	float SpecularPower;
 	float3 DiffuseAlbedo;
-	bool hasTexture;
 	int TexArrayIndex;
+	int hasTexture;
 
 	float3 padding;
 };
@@ -36,7 +36,7 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	PS_OUT output = (PS_OUT)0;
 
 	// Sample the diffuse map
-	float3 diffuseAlbedo = (hasTexture) ? DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb : DiffuseAlbedo;
+	float3 diffuseAlbedo = (hasTexture == 1) ? DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb : DiffuseAlbedo;
 	
 	// Normalize the normal after interpolation
 	float3 normalWS	= normalize(input.NormalWS);

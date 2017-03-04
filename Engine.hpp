@@ -13,7 +13,7 @@ public:
 	//Engine(const Engine& other);
 	~Engine();
 
-	bool Initialize();
+	bool Initialize(ShadowQuality shadowQuality = SHADOWS_ULTRA);
 	bool Render();
 
 	HRESULT eCreateDirect3DContext(HWND &wndHandle);

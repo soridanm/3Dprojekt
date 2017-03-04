@@ -2,13 +2,15 @@
 
 // public ------------------------------------------------------------------------------
 
-CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(2.0f, 5.0f, 2.0f, 1.0f))
+CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f, 40.0f, 10.0f, 1.0f))
 {
 	VPBufferData	= cPerFrameBuffer();
+	SMBufferData = cPerFrameBuffer();
 	mPerFrameBuffer = nullptr;
+	mShadowMapBuffer = nullptr;
 
 	CAM_POS		= CAMERA_STARTING_POS;
-	CAM_TARGET	= DirectX::XMVectorZero();
+	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
 	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	CAM_RIGHT	= DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	CAM_UP		= DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -91,25 +93,49 @@ void CameraHandler::UpdateCamera()
 
 bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 {
+
+	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
+	DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
+
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	DevCon->Map(mPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
-
-	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
-	XMStoreFloat4x4(&VPBufferData.View, view);
-
 	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
-	//DevCon->Unmap(mPerFrameBuffer, 0);
+	DevCon->Unmap(mPerFrameBuffer, 0);
+
 	DevCon->GSSetConstantBuffers(0, 1, &mPerFrameBuffer);
 
 	return true;
 }
 
-//used in 
-void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
+bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID)
 {
-	SetViewPort(DevCon);
+	//TODO: this code block might not be needed
+	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
+	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
+	DevCon->Map(mShadowMapBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
+	memcpy(viewProjectionMatrixPtr.pData, &SMBufferData, sizeof(cPerFrameBuffer));
+	DevCon->Unmap(mShadowMapBuffer, 0);
+	
+	if (passID == 1) //ShadowVertex.hlsl
+	{
+		DevCon->VSSetConstantBuffers(0, 1, &mShadowMapBuffer);
+	}
+	
+	if (passID == 2) //LightFragment.hlsl
+	{
+		DevCon->PSSetConstantBuffers(0, 1, &mShadowMapBuffer);
+	}
+
+	return true;
+}
+
+//used in GraphicsHandler::InitializeGraphics
+void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
+{
+	CreateViewPorts(shadowQuality);
 	CreatePerFrameConstantBuffer(Dev);
+	CreateShadowMapConstantBuffer(Dev);
 }
 
 //move to input class?
@@ -167,7 +193,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	//reset camera directions and position
 	if (keyboardState[DIK_Q] & 0x80) {
 		CAM_POS = CAMERA_STARTING_POS;
-		CAM_TARGET = DirectX::XMVectorZero();
+		CAM_TARGET = DirectX::XMVectorSet(0.0f, 20.0f, 20.0f, 0.0f);
 		CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 		CAM_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 		CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -204,17 +230,21 @@ const LONG CameraHandler::GetScreenHeight()
 
 // private ------------------------------------------------------------------------------
 
-void CameraHandler::SetViewPort(ID3D11DeviceContext* DevCon)
+void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
 {
-	D3D11_VIEWPORT vp;
-	vp.Width	= (FLOAT)SCREEN_WIDTH;
-	vp.Height	= (FLOAT)SCREEN_HEIGHT;
-	vp.MinDepth = 0.0f;
-	vp.MaxDepth = 1.0f;
-	vp.TopLeftX = 0.f;
-	vp.TopLeftY = 0.f;
+	playerVP.Width	  = static_cast<FLOAT>(SCREEN_WIDTH);
+	playerVP.Height	  = static_cast<FLOAT>(SCREEN_HEIGHT);
+	playerVP.MinDepth = 0.0f;
+	playerVP.MaxDepth = 1.0f;
+	playerVP.TopLeftX = 0.f;
+	playerVP.TopLeftY = 0.f;
 
-	DevCon->RSSetViewports(1, &vp);
+	lightVP.Width    = static_cast<FLOAT>(shadowQuality);
+	lightVP.Height	 = static_cast<FLOAT>(shadowQuality);
+	lightVP.MinDepth = 0.0f;
+	lightVP.MaxDepth = 1.0f;
+	lightVP.TopLeftX = 0.f;
+	lightVP.TopLeftY = 0.f;
 }
 
 bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
@@ -222,7 +252,7 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
 	float degrees_field_of_view = 90.0f;
 	float near_plane			= 0.1f;
-	float far_plane				= 1000.f;
+	float far_plane				= 500.f;
 
 	//camera, look at, up
 	DirectX::XMVECTOR camera	= CAMERA_STARTING_POS;
@@ -246,6 +276,41 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	VPBufferDesc.StructureByteStride	= 0;
 
 	HRESULT gHR = Dev->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	return true;
+}
+
+bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
+{
+	float aspect_ratio = 1.0f;
+	float degrees_field_of_view = 90.0f;
+	float near_plane = 0.1f;
+	float far_plane = 150.f;
+
+	DirectX::XMVECTOR LIGHT_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
+	DirectX::XMVECTOR LIGHT_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 99.0f, 0.0f);
+	DirectX::XMVECTOR LIGHT_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+
+	DirectX::XMMATRIX projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(
+		DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
+
+	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(LIGHT_POS, LIGHT_TARGET, LIGHT_UP));
+	
+	DirectX::XMStoreFloat4x4(&SMBufferData.View, view);
+	DirectX::XMStoreFloat4x4(&SMBufferData.Projection, projection);
+
+	D3D11_BUFFER_DESC SMBufferDesc;
+	SMBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
+	SMBufferDesc.ByteWidth = sizeof(cPerFrameBuffer);
+	SMBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+	SMBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+	SMBufferDesc.MiscFlags = 0;
+	SMBufferDesc.StructureByteStride = 0;
+
+	HRESULT gHR = Dev->CreateBuffer(&SMBufferDesc, nullptr, &mShadowMapBuffer);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}

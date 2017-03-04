@@ -19,7 +19,8 @@ public:
 
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
-	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
+	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID);
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 	const LONG GetScreenWidth();
@@ -30,11 +31,14 @@ public:
 	IDirectInputDevice8* DIMouse = nullptr;
 	LPDIRECTINPUT8 DirectInput;
 
+	D3D11_VIEWPORT playerVP;
+	D3D11_VIEWPORT lightVP;
 
 	DirectX::XMVECTOR CAM_POS;
 private:
-	void SetViewPort(ID3D11DeviceContext* DevCon);
+	void CreateViewPorts(ShadowQuality shadowQuality);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
+	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
 
 	struct cPerFrameBuffer
 	{
@@ -46,7 +50,11 @@ private:
 
 
 	cPerFrameBuffer VPBufferData;
+	cPerFrameBuffer SMBufferData; //TODO: Move this to somewhere else
+
 	ID3D11Buffer* mPerFrameBuffer;
+	ID3D11Buffer* mShadowMapBuffer;
+
 
 	const DirectX::XMVECTOR CAMERA_STARTING_POS;
 	DirectX::XMVECTOR CAM_TARGET;
@@ -66,6 +74,7 @@ private:
 
 
 	DIMOUSESTATE MOUSE_LAST_STATE;
+
 
 	//TODO: Move these two somewhere else. They're way too deep
 	const LONG SCREEN_WIDTH = 1280;
