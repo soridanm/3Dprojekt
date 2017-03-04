@@ -38,6 +38,7 @@ namespace Materials
 {
 	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 32.0f);
 	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(/*L"Black rubber",*/	0.4f, 0.4f, 0.4f, 10.0f);
+	static const cMaterialBuffer Grass = cMaterialBuffer(/*L"Grass",*/	0.024f, 0.05f, 0.01f, 1.5f);
 }
 
 class ObjectHandler

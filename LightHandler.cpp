@@ -71,10 +71,10 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 	DirectX::XMFLOAT4 shadowlight_position = { 100.0f, 100.0f, 100.0f, 0.0f };
 	DirectX::XMFLOAT3 shadowlight_color = Colors::White;
 	int sm_has_s = 1;
-	float sm_c_att = 1.0f;
-	float sm_l_att = 0.00001f;
-	float sm_q_att = 0.0002f;
-	float sm_amb   = 0.00001f;
+	float sm_c_att = 1.3f;
+	float sm_l_att = 0.0001f;
+	float sm_q_att = 0.0003f;
+	float sm_amb   = 0.08f;
 
 	Light shadow_light(shadowlight_position, shadowlight_color, sm_has_s, sm_c_att, sm_l_att, sm_q_att, sm_amb);
 	mLightBufferData.LightArray[1] = shadow_light;

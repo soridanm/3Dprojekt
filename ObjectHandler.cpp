@@ -74,7 +74,7 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID)
 	// Map material properties buffer
 
 	//SetMaterial(Materials::Black_plastic);
-	gMaterialBufferData = Materials::Black_plastic;
+	gMaterialBufferData = Materials::Grass;
 	gMaterialBufferData.HasTexture = 1;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
@@ -956,6 +956,16 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		}
 		texUIndex = 0;
 		texVIndex++;
+	}
+
+	// Change the scale of the texture.
+	// Definitely not the best (nor the most elegant) way to do it but at least it works
+	DirectX::XMVECTOR temp;
+	for (int i = 0; i < NUMBER_OF_VERTICES; i++)
+	{
+		using DirectX::operator*;
+		temp = DirectX::XMLoadFloat2(&mapVertex[i].texCoord);
+		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05);
 	}
 
 	//calculates the normal for each face
