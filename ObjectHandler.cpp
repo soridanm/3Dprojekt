@@ -103,15 +103,17 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i,
 	//set world matrix for the object
 
 	static float rotation = 0.0f;
-	rotation += 0.01f;
+	rotation += 0.001f;
 	int scale = 10.0f;
 	//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
-
-	DirectX::XMMATRIX scaleMatrix	= DirectX::XMMatrixScaling(scale, scale, scale);
-	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationY(rotation);
-	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f, 20.0f, 100.0f);
+	
 
 	using DirectX::operator*;
+
+	DirectX::XMMATRIX scaleMatrix	= DirectX::XMMatrixScaling(scale, scale, scale);
+	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
+	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f, 20.0f, 100.0f);
+
 
 	DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 

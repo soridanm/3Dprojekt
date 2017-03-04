@@ -6,10 +6,10 @@
 // public ------------------------------------------------------------------------------
 
 //TODO: Create all objects here
-bool Engine::Initialize()
+bool Engine::Initialize(ShadowQuality shadowQuality)
 {
 	
-	mGraphicsHandler.InitializeGraphics(gDevice, gDeviceContext);
+	mGraphicsHandler.InitializeGraphics(gDevice, gDeviceContext, shadowQuality);
 	return true;
 }
 

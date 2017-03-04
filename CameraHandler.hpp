@@ -20,7 +20,7 @@ public:
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
 	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID);
-	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 	const LONG GetScreenWidth();
@@ -36,7 +36,7 @@ public:
 
 	DirectX::XMVECTOR CAM_POS;
 private:
-	void CreateViewPorts();
+	void CreateViewPorts(ShadowQuality shadowQuality);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
 

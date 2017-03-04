@@ -127,13 +127,13 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 
 // public ------------------------------------------------------------------------------
 
-bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
+bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
 {
-	mCameraHandler.InitializeCamera(Dev, DevCon);
+	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality);
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
-	mLightHandler.CreateShadowMap(Dev);
+	mLightHandler.CreateShadowMap(Dev, shadowQuality);
 
 	mObjectHandler.InitializeObjects(Dev);
 
@@ -259,6 +259,27 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 	ID3DBlob* pPS3 = nullptr;
 	CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0");
 	gHR = Dev->CreatePixelShader(pPS3->GetBufferPointer(), pPS3->GetBufferSize(), nullptr, &mLightPassPixelShader);
+	if (FAILED(gHR)) {
+		exit(-1);
+	}
+
+	D3D11_SAMPLER_DESC shadowSamplerDesc{};
+	shadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+	shadowSamplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSamplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSamplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
+	shadowSamplerDesc.MipLODBias = 0.0f;
+	shadowSamplerDesc.MaxAnisotropy = 16;
+	shadowSamplerDesc.ComparisonFunc = D3D11_COMPARISON_LESS;
+	shadowSamplerDesc.BorderColor[0] = 1.0f;
+	shadowSamplerDesc.BorderColor[1] = 1.0f;
+	shadowSamplerDesc.BorderColor[2] = 1.0f;
+	shadowSamplerDesc.BorderColor[3] = 1.0f;
+	shadowSamplerDesc.MinLOD = 0.0f;
+	shadowSamplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+		// Create the texture sampler state.
+	gHR = Dev->CreateSamplerState(&shadowSamplerDesc, &mShadowSampler);
 	if (FAILED(gHR)) {
 		exit(-1);
 	}
@@ -440,6 +461,7 @@ bool GraphicsHandler::SetLightPassShaders(ID3D11DeviceContext* DevCon)
 	DevCon->DSSetShader(nullptr, nullptr, 0);
 	DevCon->GSSetShader(nullptr, nullptr, 0);
 	DevCon->PSSetShader(mLightPassPixelShader, nullptr, 0);
+	DevCon->PSSetSamplers(0, 1, &mShadowSampler);
 
 	return true;
 }

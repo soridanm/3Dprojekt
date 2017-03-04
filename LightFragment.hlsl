@@ -1,6 +1,6 @@
-/* Base code from the book "Practical Rendering and Computation with Direct3D 11", page 504 */
 
 // TODO: Rename buffers and variables
+// TODO: look up if doubles are more suitable for the shadow calculations
 // TODO? Gamma correction
 
 #define NR_OF_LIGHTS 2
@@ -14,6 +14,7 @@ Texture2D DiffuseAlbedoTexture	: register(t2); // r-g-b-unused
 Texture2D SpecularAlbedoTexture	: register(t3); // r-g-b-specularPower
 Texture2D ShadowMap				: register(t4); // r
 
+SamplerComparisonState compSampler : register(s0);
 SamplerState textureSampler; // TODO: look up sampler settings
 
 cbuffer shadowMapMatrix			: register(b0)
@@ -40,76 +41,86 @@ cbuffer pointLightProperties	: register (b1)
 	Light Lights[NR_OF_LIGHTS];
 };
 
-
-
 struct PS_IN
 {
 	float4 PositionCS	: SV_Position; //pixel location
 	float2 TexCoord		: TEXCOORD1;
 };
 
-
 float4 PS_main ( PS_IN input ) : SV_Target
 {
-	float3 normal			= NormalTexture.Sample(textureSampler, input.TexCoord).xyz; 
-	float3 positionWS		= PositionTexture.Sample(textureSampler, input.TexCoord).rgb;
-	float3 diffuseColor		= DiffuseAlbedoTexture.Sample(textureSampler, input.TexCoord).rgb;
-	float4 specularValues	= SpecularAlbedoTexture.Sample(textureSampler, input.TexCoord);
+	// Values from the G-Buffers
+	float3 normal			= NormalTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
+	float3 positionWS		= PositionTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
+	float3 diffuseColor		= DiffuseAlbedoTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
+	float4 specularValues	= SpecularAlbedoTexture.Load(int3(input.PositionCS.xy, 0));
 
-	float3 to_camera	= normalize(camera_positionWS.xyz - positionWS); // vectore from surface to camera
-// LOOP OVER LIGHTS FROM HERE ---------------------------------------------------------------------------
+	// Phong lighting variables
+	float attenuation, diffuse_coefficient, specular_coefficient;
+	float3 ambient_component, diffuse_component, specular_component, light_contribution;
+	float3 final_color = global_ambient.rgb * diffuseColor.rgb; // All positions are hit by the global ambient light
+
+	// Used for the diffuse and specular calculations
+	float3 to_camera = normalize(camera_positionWS.xyz - positionWS); // vector from surface to camera
+	float3 to_light;			// vector from light source to surface
+	float3 reflection;			// vector of reflected light after light hits surface
+	float distance_to_light;	// distance between the light and the surface point
+
+	// Used for the shadow map calculations
+	float4x4 lightViewProjection = mul(lightView, lightProjection); //TODO: change the cbuffer to a single matrix
+	float4 light_view_pos = mul(float4(positionWS, 1.0), lightViewProjection); // The clip space position of the point from the light's point of view
+	float bias = 0.00001;
+	
+	float2 shadow_tex_coord;
+	shadow_tex_coord.x =  light_view_pos.x / light_view_pos.w / 2.0 + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
+	shadow_tex_coord.y = -light_view_pos.y / light_view_pos.w / 2.0 + 0.5;  // Dividing by 2.0 and adding 0.5 gives position as uv coordinates [0, 1]
+
+	// calculate the distance from the light to the texel (the z value in NDC)
+	float light_depth_value = light_view_pos.z / light_view_pos.w;
+
+	//subtract the bias to avoid self-shadowing
+	light_depth_value -= bias;
+
+	// Test if the point is outside the light's view frustum
+	bool outside_shadow_map = (saturate(shadow_tex_coord.x) != shadow_tex_coord.x && saturate(shadow_tex_coord.y) != shadow_tex_coord.y) ? true : false;
+	// Percentage-Closer Filtering using a comparison sampler
+	float shadow_coefficient = (!outside_shadow_map) ? ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord, light_depth_value) : 1.0;
 
 
-	//shadow map
-	float4x4 lightViewProjection = mul(lightView, lightProjection);
-
-
-	float4 test = mul(float4(positionWS, 1.0), lightViewProjection);
-
-	float bias = 0.001f;
-	float2 shadowTexCoord;
-	shadowTexCoord.x = test.x / test.w / 2.0 + 0.5;
-	shadowTexCoord.y = test.y / test.w / 2.0 + 0.5;
-	//Dividing by w gives positions in clip-space [-1, 1]
-	//Dividing by 2.0 and adding 0.5 gives uv coordinates [0, 1]
-
-
-
-	float3 final_color = global_ambient * diffuseColor;
+	// FOR DEBUGGING: Overwrites the Percentage-Closer Filtering
+	//shadow_coefficient = (light_depth_value < ShadowMap.Sample(textureSampler, shadow_tex_coord).r) ? 1.0 : 0.0;
+	// !FOR DEBUGGING
 
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
-		
-		//float3 normal = normalTex.xyz; // normal vector from surface
-		float3 to_light = normalize(Lights[i].light_positionWS.xyz - positionWS); // vector from light source to surface
-		float3 reflection = reflect(-to_light, normal); // vector of reflected light after light hits surface
-		float distance1 = distance(Lights[i].light_positionWS, positionWS);
+		// The light contributes with its ambient part even if the pixel is in shadow
+		ambient_component = Lights[i].ambient_coefficient * Lights[i].color * diffuseColor; // light intesities
 
-		// Diffuse part
-		float diffuse_coefficient = max(dot(to_light, normal), 0.0);
-		float3 diffuse_component = diffuse_coefficient * diffuseColor * Lights[i].color;
+		// If the pixel is in full shadow then the diffuse and specular parts won't contribute to the final color so we won't calculate them
+		if (!(Lights[i].hasShadow == 1 && shadow_coefficient == 0.0))
+		{
+			to_light = normalize(Lights[i].light_positionWS.xyz - positionWS);
+			reflection = reflect(-to_light, normal);
+			distance_to_light = distance(Lights[i].light_positionWS.xyz, positionWS);
 
-		// Specular part
-		/* specular_coefficient = 0.0 if the light is behind the surface */
-		float specular_coefficient = diffuse_coefficient > 0.0 ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
-		float3 specular_component = specular_coefficient * specularValues.rgb * Lights[i].color;
+			// Diffuse part
+			diffuse_coefficient = max(dot(to_light, normal), 0.0);
+			diffuse_component = diffuse_coefficient * diffuseColor * Lights[i].color;
 
-		// ambient part
-		float3 ambient_component = Lights[i].ambient_coefficient * Lights[i].color * diffuseColor; // light intesities
+			// Specular part
+			/* specular_coefficient equals 0.0 if the light is behind the surface */
+			specular_coefficient = (diffuse_coefficient > 0.0) ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
+			specular_component = specular_coefficient * specularValues.rgb * Lights[i].color;
 
-		float attenuation = 1.0 / (Lights[i].constant_attenuation + distance1 * (Lights[i].linear_attenuation + distance1 * Lights[i].quadratic_attenuation));
+			attenuation = 1.0 / (Lights[i].constant_attenuation + distance_to_light * (Lights[i].linear_attenuation + distance_to_light * Lights[i].quadratic_attenuation));
 
-		float3 light_contribution = saturate(ambient_component + attenuation * (diffuse_component + specular_component));
-		final_color = saturate(final_color + light_contribution);
+			final_color = saturate(final_color + attenuation * (diffuse_component + specular_component) * ((Lights[i].hasShadow == 1) ? shadow_coefficient : 1.0));
+		}
+		final_color = saturate(final_color + ambient_component);
 	}
 
-// LOOP OVER LIGHTS TO HERE ---------------------------------------------------------------------------
-
-	//final_color = saturate(final_color + global_ambient * diffuseColor );
-	// In case you want to set it to one of the G-Buffers
-
 	//float3 finalColor = normal;
-	//float3 finalColor = positionWS;
+	//float3 finalColor = positionWS/255.0;
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
 
@@ -118,9 +129,10 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = float3(specular_coefficient, specular_coefficient, specular_coefficient);
 	//float3 finalColor = float3(1.0, 0.0, 0.0);
 
-	//float3 finalColor = final_color;
+	//float3 finalColor = float3(shadow_tex_coord, 0.0);
+	//float3 finalColor = float3(shadow_coefficient, 0.0, 0.0);
 
-	float3 finalColor = float3(shadowTexCoord, 0.0);
+	float3 finalColor = final_color;
 
 	return float4(finalColor, 1.0);
 }

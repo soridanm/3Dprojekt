@@ -121,16 +121,12 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 }
 
 //TODO: look up what format is best to use. Do this for the GBuffer as well
-bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
+bool LightHandler::CreateShadowMap(ID3D11Device* Dev, ShadowQuality shadowQuality)
 {
-	//Shadow map height and width
-	UINT smHeight = 512;
-	UINT smWidth = 512;
-
 	//Shadow map texture desc
 	D3D11_TEXTURE2D_DESC smTexDesc;
-	smTexDesc.Width = smWidth;
-	smTexDesc.Height = smHeight;
+	smTexDesc.Width = shadowQuality;
+	smTexDesc.Height = shadowQuality;
 	smTexDesc.MipLevels = 1;
 	smTexDesc.ArraySize = 1;
 	smTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;

@@ -130,10 +130,10 @@ bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* Dev
 	return true;
 }
 
-//used in 
-void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
+//used in GraphicsHandler::InitializeGraphics
+void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
 {
-	CreateViewPorts();
+	CreateViewPorts(shadowQuality);
 	CreatePerFrameConstantBuffer(Dev);
 	CreateShadowMapConstantBuffer(Dev);
 }
@@ -230,17 +230,17 @@ const LONG CameraHandler::GetScreenHeight()
 
 // private ------------------------------------------------------------------------------
 
-void CameraHandler::CreateViewPorts()
+void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
 {
-	playerVP.Width	= (FLOAT)SCREEN_WIDTH;
-	playerVP.Height	= (FLOAT)SCREEN_HEIGHT;
+	playerVP.Width	  = static_cast<FLOAT>(SCREEN_WIDTH);
+	playerVP.Height	  = static_cast<FLOAT>(SCREEN_HEIGHT);
 	playerVP.MinDepth = 0.0f;
 	playerVP.MaxDepth = 1.0f;
 	playerVP.TopLeftX = 0.f;
 	playerVP.TopLeftY = 0.f;
 
-	lightVP.Width    = 512.0f;
-	lightVP.Height	 = 512.0f;
+	lightVP.Width    = static_cast<FLOAT>(shadowQuality);
+	lightVP.Height	 = static_cast<FLOAT>(shadowQuality);
 	lightVP.MinDepth = 0.0f;
 	lightVP.MaxDepth = 1.0f;
 	lightVP.TopLeftX = 0.f;

@@ -22,7 +22,7 @@ public:
 	GraphicsHandler();
 	~GraphicsHandler();
 
-	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
+	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
 	bool CreateShaders(ID3D11Device* Dev);
 	void RenderGeometryPass(ID3D11DeviceContext* DevCon);
 	void RenderShadowPass(ID3D11DeviceContext* DevCon);
@@ -91,7 +91,7 @@ private:
 	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
 	ID3D11VertexShader* mLightPassVertexShader;
 	ID3D11PixelShader* mLightPassPixelShader;
-
+	ID3D11SamplerState* mShadowSampler;
 };
 
 
