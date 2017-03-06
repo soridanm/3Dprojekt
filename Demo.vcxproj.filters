@@ -42,6 +42,9 @@
     <ClCompile Include="old_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FrustumHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -86,6 +89,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TimeHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FrustumHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

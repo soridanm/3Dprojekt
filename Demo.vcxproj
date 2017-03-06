@@ -112,6 +112,7 @@
   <ItemGroup>
     <ClCompile Include="CameraHandler.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="FrustumHandler.cpp" />
     <ClCompile Include="GlobalResources.cpp" />
     <ClCompile Include="LightHandler.cpp" />
     <ClCompile Include="main.cpp" />
@@ -221,6 +222,7 @@
     <ClInclude Include="bth_image.h" />
     <ClInclude Include="CameraHandler.hpp" />
     <ClInclude Include="Engine.hpp" />
+    <ClInclude Include="FrustumHandler.hpp" />
     <ClInclude Include="LightHandler.hpp" />
     <ClInclude Include="ObjectHandler.hpp" />
     <ClInclude Include="resource.h" />
