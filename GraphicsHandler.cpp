@@ -33,9 +33,13 @@ bool GraphicsHandler::CompileShader(
 		ppErrorMsgs
 	);
 	
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CompileShader() Failed to compile shader\n\n");
 		return false;
-	} else {
+	}
+	else
+	{
 		return true;
 	}
 }
@@ -43,6 +47,7 @@ bool GraphicsHandler::CompileShader(
 //temp done
 bool GraphicsHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS)
 {
+	HRESULT hr;
 	//create input layout (verified using vertex shader)
 	D3D11_INPUT_ELEMENT_DESC inputDesc[] = 
 	{
@@ -51,8 +56,13 @@ bool GraphicsHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS)
 		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0,	20,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
-	Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &mVertexLayout);
+	hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pVS->GetBufferPointer(), pVS->GetBufferSize(), &mVertexLayout);
 
+	if (FAILED(hr))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateInputLayout() Failed to create input layout\n\n");
+		exit(-1);
+	}
 	return true;
 }
 
@@ -124,6 +134,55 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 	return true;
 }
 
+bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
+{
+	HRESULT hr;
+
+	D3D11_RASTERIZER_DESC BFSstate;
+	BFSstate.FillMode = D3D11_FILL_SOLID;
+	BFSstate.CullMode = D3D11_CULL_NONE;
+	BFSstate.FrontCounterClockwise	= FALSE;
+	BFSstate.DepthBias				= 0;
+	BFSstate.DepthBiasClamp			= 0.0f;
+	BFSstate.SlopeScaledDepthBias	= 0.0f;
+	BFSstate.DepthClipEnable		= TRUE;
+	BFSstate.ScissorEnable			= FALSE;
+	BFSstate.MultisampleEnable		= FALSE;
+	BFSstate.AntialiasedLineEnable	= FALSE;
+
+	hr = Dev->CreateRasterizerState(&BFSstate, &mRasterizerState[0]);
+	if (FAILED(hr)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateRasterizerStates() Failed to create first rasterizer state\n\n");
+		exit(-1);
+	}
+
+
+	D3D11_RASTERIZER_DESC noBFSstate;
+	noBFSstate.FillMode = D3D11_FILL_SOLID;
+	noBFSstate.CullMode = D3D11_CULL_BACK;
+	noBFSstate.FrontCounterClockwise	= FALSE;
+	noBFSstate.DepthBias				= 0;
+	noBFSstate.DepthBiasClamp			= 0.0f;
+	noBFSstate.SlopeScaledDepthBias		= 0.0f;
+	noBFSstate.DepthClipEnable			= TRUE;
+	noBFSstate.ScissorEnable			= FALSE;
+	noBFSstate.MultisampleEnable		= FALSE;
+	noBFSstate.AntialiasedLineEnable	= FALSE;
+
+	hr = Dev->CreateRasterizerState(&noBFSstate, &mRasterizerState[1]);
+	if (FAILED(hr))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateRasterizerStates() Failed to create second rasterizer state\n\n");
+		exit(-1);
+	}
+	return true;
+}
+
+void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, int passID)
+{
+	DevCon->RSSetState(mRasterizerState[passID - 1]);
+}
 
 // public ------------------------------------------------------------------------------
 
@@ -139,6 +198,8 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	CreateShaders(Dev); //TODO: rewrite with shader class
 
+	CreateRasterizerStates(Dev);
+
 	InitializeGraphicsBuffer(Dev);
 
 
@@ -146,8 +207,10 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	ID3D11Resource* texture;
 	HRESULT hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"grass-free-texture.jpg", &texture, &gTextureView);
-	if (FAILED(hr)) {
-		return false;
+	if (FAILED(hr)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create WIC texture from file\n\n");
+		exit(-1);
 	}
 
 	return true;
@@ -192,44 +255,57 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 
 	//compile and create vertex shader
 	ID3DBlob* pVS = nullptr;
-	CompileShader(&pVS, L"GBufferVertex.hlsl", "VS_main", "vs_5_0");
-
+	if (!CompileShader(&pVS, L"GBufferVertex.hlsl", "VS_main", "vs_5_0"))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile geometry pass geometry shader\n\n");
+		exit(-1);
+	}
 	HRESULT gHR = Dev->CreateVertexShader(pVS->GetBufferPointer(), pVS->GetBufferSize(), nullptr, &mGeometryPassVertexShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass vertex shader\n\n");
 		exit(-1);
 	}
 
 	//Create an input layout for the vertex shader
-	if (!CreateInputLayout(Dev, pVS)) {
-		exit(-1);
-	}
+	CreateInputLayout(Dev, pVS);
 
 	//compile and create geometry shader
 	ID3DBlob* pGS = nullptr;
-	CompileShader(&pGS, L"GBufferGeometry.hlsl", "GS_main", "gs_5_0");
-
+	if (!CompileShader(&pGS, L"GBufferGeometry.hlsl", "GS_main", "gs_5_0"))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile geometry pass geometry shader\n\n");
+		exit(-1);
+	}
 	gHR = Dev->CreateGeometryShader(pGS->GetBufferPointer(), pGS->GetBufferSize(), nullptr, &mGeometryPassGeometryShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass geometry shader\n\n");
 		exit(-1);
 	}
 
 	//compile and create pixel shader
 	ID3DBlob* pPS = nullptr;
-	CompileShader(&pPS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0");
-
+	if (!CompileShader(&pPS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0"))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile geometry pass pixel shader\n\n");
+		exit(-1);
+	}
 	gHR = Dev->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &mGeometryPassPixelShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass pixel shader\n\n");
 		exit(-1);
 	}
 
 	//describe and create sampler state
 	D3D11_SAMPLER_DESC samplerDesc;
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.Filter	 = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
 	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
 	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.MipLODBias     = 0.0f;
+	samplerDesc.MaxAnisotropy  = 1;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
 	samplerDesc.BorderColor[0] = 0;
 	samplerDesc.BorderColor[1] = 0;
@@ -239,28 +315,44 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
-	gHR=Dev->CreateSamplerState(&samplerDesc, &mSampleState);
-	
-	//---------------------------------- Light Pass ----------------------------------------------------
+	gHR = Dev->CreateSamplerState(&samplerDesc, &mSampleState);
+	if (FAILED(gHR))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass sampler state\n\n");
+		exit(-1);
+	}
+
+
+	//---------------------------------- Shadow Pass ----------------------------------------------------
 
 	//compile and create vertex shader
 	ID3DBlob* pVS2 = nullptr;
-	CompileShader(&pVS2, L"ShadowVertex.hlsl", "VS_main", "vs_5_0");
+	if (!CompileShader(&pVS2, L"ShadowVertex.hlsl", "VS_main", "vs_5_0"))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile shadow pass vertex shader\n\n");
+		exit(-1);
+	}
 	gHR = Dev->CreateVertexShader(pVS2->GetBufferPointer(), pVS2->GetBufferSize(), nullptr, &mShadowPassVertexShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create shadow pass vertex shader\n\n");
 		exit(-1);
 	}
 
 	//Create an input layout for the shadow vertex shader
-	if (!CreateInputLayout(Dev, pVS2)) {
-		exit(-1);
-	}
+	CreateInputLayout(Dev, pVS2);
 
 	//compile and create pixel shader
 	ID3DBlob* pPS2 = nullptr;
-	CompileShader(&pPS2, L"ShadowFragment.hlsl", "PS_main", "ps_5_0");
+	if (!CompileShader(&pPS2, L"ShadowFragment.hlsl", "PS_main", "ps_5_0"))
+	{
+	OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile shadow pass pixel shader\n\n");
+	exit(-1);
+	}
 	gHR = Dev->CreatePixelShader(pPS2->GetBufferPointer(), pPS2->GetBufferSize(), nullptr, &mShadowPassPixelShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create shadow pass pixel shader\n\n");
 		exit(-1);
 	}
 
@@ -268,17 +360,29 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 
 		//compile and create vertex shader
 	ID3DBlob* pVS3 = nullptr;
-	CompileShader(&pVS3, L"LightVertex.hlsl", "VS_main", "vs_5_0");
+	if (!CompileShader(&pVS3, L"LightVertex.hlsl", "VS_main", "vs_5_0"))
+	{
+	OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile light pass vertex shader\n\n");
+	exit(-1);
+	}
 	gHR = Dev->CreateVertexShader(pVS3->GetBufferPointer(), pVS3->GetBufferSize(), nullptr, &mLightPassVertexShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create light pass vertex shader\n\n");
 		exit(-1);
 	}
 
 	//compile and create pixel shader
 	ID3DBlob* pPS3 = nullptr;
-	CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0");
+	if (!CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0"))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile light pass pixel shader\n\n");
+		exit(-1);
+	}
 	gHR = Dev->CreatePixelShader(pPS3->GetBufferPointer(), pPS3->GetBufferSize(), nullptr, &mLightPassPixelShader);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create light pass pixel shader\n\n");
 		exit(-1);
 	}
 
@@ -299,7 +403,9 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 
 		// Create the texture sampler state.
 	gHR = Dev->CreateSamplerState(&shadowSamplerDesc, &mShadowSampler);
-	if (FAILED(gHR)) {
+	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create shadow pass sampler state\n\n");
 		exit(-1);
 	}
 
@@ -365,6 +471,7 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
+	SetRasterizerState(DevCon, 1);
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 	//LOOP OVER OBJECTS FROM HERE
 
@@ -422,6 +529,7 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
 	SetShadowMapPassRenderTargets(DevCon);
 	SetShadowMapPassShaders(DevCon);
+	SetRasterizerState(DevCon, 2);
 	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 1);
 
 	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
@@ -509,6 +617,7 @@ void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* De
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
+	SetRasterizerState(DevCon, 2);
 	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 2);
 	
 	DevCon->PSSetShaderResources(4, 1, &mLightHandler.mShadowMapSRView);

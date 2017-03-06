@@ -35,25 +35,32 @@ TODO:
 	* Lighting pass [LightVertex -> LightFragment]
 		LightVertex shader generates a full screen triangle.
 		LightFragment shader does all the light calculations.
+DONE!
 
 ------------------------------ Geometry -----------------------------------------
- - Parsing and rendering an existing model format
+ - Parsing and rendering an existing model format. 
+ Mostly done.
+
  - Height-map terrain rendering
+ DONE!
 
 
  ------------------------ Texture and lighting ----------------------------------
- - SSAO
+ - Blend mapping
 
  ----------------------- Preojection techniques ---------------------------------
- - Shadow mapping
+ - Shadow mapping 
+ DONE!
 
  ----------------------- Acceleration techniques --------------------------------
  - view frustum culling gainst a quadtree
+ WIP
+
  - back face culling using geometry shader
+ WIP
 
  -------------------------- Other techniques ------------------------------------
- - AA
- - glow-effect
-
+ - Compute shader
+ TODO
 
  

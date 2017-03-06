@@ -49,7 +49,9 @@ private:
 	);
 	bool CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS);
 	bool InitializeGraphicsBuffer(ID3D11Device* Dev);
-	
+	bool CreateRasterizerStates(ID3D11Device* Dev);
+	void SetRasterizerState(ID3D11DeviceContext* DevCon, int passID);
+
 	// Geometry Pass ----------------------------
 	void SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon);
 	void SetGeometryPassShaders(ID3D11DeviceContext* DevCon); //move to shader class
@@ -78,6 +80,8 @@ private:
 	ID3D11DepthStencilView* mDepthStecilView;
 	ID3D11Texture2D* mDepthStencilTexture;
 	ID3D11InputLayout* mVertexLayout;
+
+	ID3D11RasterizerState* mRasterizerState[2];
 
 	//Geometry Pass
 	ID3D11VertexShader* mGeometryPassVertexShader;
