@@ -97,6 +97,8 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
 	DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
 
+	DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, CAM_POS);
+
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	DevCon->Map(mPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);

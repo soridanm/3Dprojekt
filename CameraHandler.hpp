@@ -45,6 +45,7 @@ private:
 		//XMFLOAT4X4 ViewProjection;
 		DirectX::XMFLOAT4X4 View;
 		DirectX::XMFLOAT4X4 Projection;
+		DirectX::XMFLOAT4 CameraPosition;
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
 
