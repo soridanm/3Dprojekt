@@ -45,6 +45,9 @@
     <ClCompile Include="FrustumHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="QuadtreeHandler.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -92,6 +95,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FrustumHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="QuadtreeHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

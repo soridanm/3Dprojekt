@@ -1,14 +1,19 @@
-#pragma once
 #ifndef QUADTREEHANDLER_HPP
 #define QUADTREEHANDLER_HPP
 #include "GlobalResources.hpp"
-
-class QuadNode {
-public:
-	DirectX::XMVECTOR vecBoxMin;
-	DirectX::XMVECTOR vecBoxMax;
-
-	QuadNode* children[4];
+struct Node{
+	bool isLeaf;
+	DirectX::XMVECTOR boxMin;
+	DirectX::XMVECTOR boxMax;
+	Node* children[4];
+	
 };
+
+class QuadtreeHandler {
+public:
+
+
+};
+
 
 #endif

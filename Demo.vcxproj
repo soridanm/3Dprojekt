@@ -119,6 +119,7 @@
     <ClCompile Include="GraphicsHandler.cpp" />
     <ClCompile Include="ObjectHandler.cpp" />
     <ClCompile Include="old_main.cpp" />
+    <ClCompile Include="QuadtreeHandler.cpp" />
     <ClCompile Include="TimeHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -225,6 +226,7 @@
     <ClInclude Include="FrustumHandler.hpp" />
     <ClInclude Include="LightHandler.hpp" />
     <ClInclude Include="ObjectHandler.hpp" />
+    <ClInclude Include="QuadtreeHandler.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="GraphicsHandler.hpp" />
