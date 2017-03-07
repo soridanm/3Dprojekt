@@ -9,6 +9,12 @@
 
 #include "GlobalResources.hpp"
 	
+enum ObjectType : int
+{
+	DYNAMIC_OBJECT,
+	STATIC_OBJECT
+};
+
 
 //Might be moved into the class
 struct cMaterialBuffer
@@ -48,29 +54,30 @@ public:
 	~ObjectHandler();
 
 	void InitializeObjects(ID3D11Device* Dev);
-	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID);
-	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i, int passID);
+	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
+	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
 	
 	int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();
 
 	void CreateWorld(ID3D11Device* Dev);
 
-	int GetNrOfMeshSubsets();
+	//int GetNrOfMeshSubsets();
 
-	std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
+	//std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
 private:
 	//TODO: Turn some of these into member variables
 	bool LoadObjectModel(
 		ID3D11Device* Dev, 
 		std::wstring filename,
+		ObjectType objectType,
 		bool isRHCoordSys,
 		bool computeNormals);
 
 	bool LoadHeightMap(char* filename, HeightMapInfo &hminfo);
 
-	void CreatePerObjectConstantBuffer(ID3D11Device* Dev);
-	void CreateMaterialConstantBuffer(ID3D11Device* Dev);
+	void CreatePerObjectConstantBuffers(ID3D11Device* Dev);
+	void CreateMaterialConstantBuffers(ID3D11Device* Dev);
 
 	struct cPerObjectBuffer
 	{
@@ -78,30 +85,57 @@ private:
 	};
 	static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "cPerObjectBuffer size must be 16-byte aligned");
 
-	std::vector<materialStruct> materialVector;
+	struct Object
+	{
+		//From .obj
+		ID3D11Buffer* meshVertexBuffer = nullptr;
+		ID3D11Buffer* meshIndexBuffer = nullptr;
+		ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
+		cMaterialBuffer materialBufferData = cMaterialBuffer();
+		ID3D11Buffer* materialBuffer = nullptr;
+		int nrOfMeshSubsets = 0;
 
-	ID3D11Buffer* gPerObjectBuffer;
-	cPerObjectBuffer ObjectBufferData;
-	ID3D11Buffer* gMaterialBuffer;
-	cMaterialBuffer gMaterialBufferData;
-	ID3D11ShaderResourceView* mTextureView;
+		std::vector<int> meshSubsetIndexStart; // needed?
+		// TEXTURES ARE NOT YET IMPLEMENTED
+		std::vector<int> meshSubsetTexture;
+		std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
+		std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
+
+		// World Buffer. For static objects this will at some point be set to an identity matrix
+		cPerObjectBuffer objectBufferData = cPerObjectBuffer();
+		ID3D11Buffer* perObjectWorldBuffer = nullptr;
+
+		int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
+
+	};
+	std::vector<Object> mStaticObjects;  // objects that will be included in quad-tree
+	std::vector<Object> mDynamicObjects; // Objects that will NOT be included int quad-tree
+
+
+	std::vector<materialStruct> materialVector; // Stores ALL objects' materials
+
+	cPerObjectBuffer mHeightMapWorldBufferData;
+	ID3D11Buffer* mHeightMapMaterialBuffer;
+	cMaterialBuffer mHeightMapMaterialBufferData;
 
 	//Height map
 	ID3D11Buffer* gSquareIndexBuffer = nullptr;
 	ID3D11Buffer* gSquareVertBuffer = nullptr;
+	ID3D11ShaderResourceView* mTextureView;
+	ID3D11Buffer* mHeightMapWorldBuffer;
 	int NUMBER_OF_FACES = 0;
 	int NUMBER_OF_VERTICES = 0;
 	float WORLD_HEIGHT[200][200];
 
 	//Loading .obj files
-	ID3D11BlendState* Transparency;
-	ID3D11Buffer* meshVertBuff;
-	ID3D11Buffer* meshIndexBuff;
-	DirectX::XMMATRIX meshWorld;			//not used????
-	int meshSubsets = 0;					//number of objects
-	std::vector<int> meshSubsetTexture;
-	std::vector<ID3D11ShaderResourceView*> meshSRV;
-	std::vector<std::wstring> textureNameArray;
+	//ID3D11BlendState* Transparency;
+	//ID3D11Buffer* meshVertBuff;
+	//ID3D11Buffer* meshIndexBuff;
+	DirectX::XMMATRIX meshWorld; //not used????
+	//int meshSubsets = 0;					//number of subsets
+	//std::vector<int> meshSubsetTexture;
+	//std::vector<ID3D11ShaderResourceView*> meshSRV;
+	//std::vector<std::wstring> textureNameArray;
 
 };
 

@@ -480,14 +480,17 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	mObjectHandler.SetHeightMapBuffer(DevCon, 1);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
-	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+	for (int j = 0; j < mObjectHandler.mObjects.size(); j++)
 	{
-		mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 1);
+		for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+		{
+			mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 1);
 
-		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+			int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+			int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
 
-		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}
 	}
 	//LOOP OVER OBJECTS TO HERE
 }

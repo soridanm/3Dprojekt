@@ -3,11 +3,11 @@
 
 ObjectHandler::ObjectHandler()
 {
-	gPerObjectBuffer	= nullptr;
+	/*gPerObjectBuffer	= nullptr;
 	ObjectBufferData	= cPerObjectBuffer();
 	gMaterialBuffer		= nullptr;
 	gMaterialBufferData = cMaterialBuffer();
-	mTextureView		= nullptr;
+	mTextureView		= nullptr;*/
 }
 
 ObjectHandler::~ObjectHandler()
@@ -22,7 +22,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	CreatePerObjectConstantBuffer(Dev);
 	CreateMaterialConstantBuffer(Dev);
 	CreateWorld(Dev);
-	if (!LoadObjectModel(Dev, L"wt_teapot.obj", false, true))
+	if (!LoadObjectModel(Dev, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
 	{
 		exit(-1);
 	}
@@ -30,13 +30,13 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 
 //TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
 //used in GraphicsHandler.RenderGeometryPass
-bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID)
+bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
 	UINT32 squareVertexSize = sizeof(float) * 8;
 	UINT32 offset = 0;
 
 	//set textures and constant buffers
-	if (passID == 1)
+	if (passID == GEOMETRY_PASS)
 	{
 		DevCon->PSSetShaderResources(0, 1, &mTextureView);
 	}
@@ -53,114 +53,192 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, int passID)
 	static float rotation = 0.0f;
 	//rotation += CUBE_ROTATION_SPEED;
 
-	DirectX::XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
+	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	DevCon->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	DevCon->Map(mHeightMapWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
 	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
+	memcpy(worldMatrixPtr.pData, &mHeightMapWorldBufferData, sizeof(cPerObjectBuffer));
 	// Unmap constant buffer so that we can use it again in the GPU
-	DevCon->Unmap(gPerObjectBuffer, 0);
+	DevCon->Unmap(mHeightMapWorldBuffer, 0);
 	// set resource to Geometry Shader
-	if (passID == 1)
+	if (passID == GEOMETRY_PASS)
 	{
-		DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+		DevCon->GSSetConstantBuffers(1, 1, &mHeightMapWorldBuffer);
 	}
-	else 
+	if (passID == SHADOW_PASS)
 	{
-		DevCon->VSSetConstantBuffers(1, 1, &gPerObjectBuffer);
+		DevCon->VSSetConstantBuffers(1, 1, &mHeightMapWorldBuffer);
 	}
 
 	// Map material properties buffer
 
-	//SetMaterial(Materials::Black_plastic);
-	gMaterialBufferData = Materials::Grass;
-	gMaterialBufferData.HasTexture = 1;
+	mHeightMapMaterialBufferData = Materials::Grass;
+	mHeightMapMaterialBufferData.HasTexture = 1;
 
 	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(cMaterialBuffer));
-	DevCon->Unmap(gMaterialBuffer, 0);
-	if (passID == 1)
+	DevCon->Map(mHeightMapMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	memcpy(materialPtr.pData, &mHeightMapMaterialBufferData, sizeof(cMaterialBuffer));
+	DevCon->Unmap(mHeightMapMaterialBuffer, 0);
+	if (passID == GEOMETRY_PASS)
 	{
-		DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+		DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
 	}
 	//new code ----------------------------------------------------------------------------------------------
 	
 	return true;
 }
 
-//TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
-bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, int i, int passID)
+//TODO: Implement this better for multiple objects
+//TODO: Probably a memory leak here
+bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex)
 {
+	//TODO: make std::vector of world matrixes for each object
 	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;
 
-	DevCon->IASetIndexBuffer(meshIndexBuff, DXGI_FORMAT_R32_UINT, 0);
-	DevCon->IASetVertexBuffers(0, 1, &meshVertBuff, &vertexSize, &offset);
-
-	//TODO: make std::vector of world matrixes for each object
-	//set world matrix for the object
-
-	static float rotation = 0.0f;
-	rotation += 0.001f;
-	int scale = 10.0f;
-	//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
-	
-
-	using DirectX::operator*;
-
-	DirectX::XMMATRIX scaleMatrix	= DirectX::XMMatrixScaling(scale, scale, scale);
-	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
-	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f, 20.0f, 100.0f);
-
-
-	DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
-
-	XMStoreFloat4x4(&ObjectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
+	std::vector<Object>* objectArray; // pointer to one of the arrays of objects in ObjectHandler
+	if (objectType == STATIC_OBJECT)  { *objectArray = mStaticObjects; }
+	if (objectType == DYNAMIC_OBJECT) { *objectArray = mDynamicObjects; }
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	DevCon->Map(gPerObjectBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+
+
+	// Set index and vertex buffers
+	DevCon->IASetIndexBuffer(objectArray->at(objectIndex).meshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	DevCon->IASetVertexBuffers(0, 1, &objectArray->at(objectIndex).meshVertexBuffer, &vertexSize, &offset);
+
+	/***************************************************************************************************************************************
+													World matrix
+	***************************************************************************************************************************************/
+
+	if (objectType == DYNAMIC_OBJECT)
+	{
+		static float rotation = 0.0f;
+		rotation += 0.001f;
+		int scale = 10.0f;
+		//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
+
+		using DirectX::operator*;
+
+		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale, scale, scale);
+		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f, 20.0f * (objectIndex + 1.0f), 100.0f);
+
+
+		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+
+		XMStoreFloat4x4(&objectArray->at(objectIndex).objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
+	}
+
+	if (objectType == STATIC_OBJECT)
+	{
+		//TODO: This will be done at initialization so this part will be removed
+		// A static object has already had its geometry multiplied by a world-matrix so their shader-side matrix is set to an identity-matrix
+		XMStoreFloat4x4(&objectArray->at(objectIndex).objectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity()));
+	}
+
+	DevCon->Map(objectArray->at(objectIndex).perObjectWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
 	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &ObjectBufferData, sizeof(cPerObjectBuffer));
+	memcpy(worldMatrixPtr.pData, &objectArray->at(objectIndex).objectBufferData, sizeof(cPerObjectBuffer));
 	// Unmap constant buffer so that we can use it again in the GPU
-	DevCon->Unmap(gPerObjectBuffer, 0);
-	// set resource to Geometry Shader
-	if (passID == 1)
+	DevCon->Unmap(objectArray->at(objectIndex).perObjectWorldBuffer, 0);
+	
+
+	// The geometry pass computes the transformations in the Geometry shader and the shadow pass computes the transformations in the Vertex shader
+	if (passID == GEOMETRY_PASS) { DevCon->GSSetConstantBuffers(1, 1, &objectArray->at(objectIndex).perObjectWorldBuffer); }
+	if (passID == SHADOW_PASS)   { DevCon->VSSetConstantBuffers(1, 1, &objectArray->at(objectIndex).perObjectWorldBuffer); }
+
+
+
+	/***************************************************************************************************************************************
+															Texture
+	***************************************************************************************************************************************/
+
+	// REMOVE AFTER TEXTURES HAVE BEEN IMPLEMENTED ----------------------------------------------------
+	materialVector[objectArray->at(objectIndex).meshSubsetTexture[materialIndex]].Data.HasTexture = 0;
+	// END REMOVE -------------------------------------------------------------------------------------
+	
+	objectArray->at(objectIndex).materialBufferData.HasTexture = materialVector[objectArray->at(objectIndex).meshSubsetTexture[materialIndex]].Data.HasTexture;
+
+	if (materialVector[objectArray->at(objectIndex).meshSubsetTexture[materialIndex]].Data.HasTexture == 1)
 	{
-		DevCon->GSSetConstantBuffers(1, 1, &gPerObjectBuffer);
-	}
-	else
-	{
-		DevCon->VSSetConstantBuffers(1, 1, &gPerObjectBuffer);
-	}
-
-
-	//set material
-	gMaterialBufferData.SpecularColor = materialVector[meshSubsetTexture[i]].Data.SpecularColor;
-	gMaterialBufferData.SpecularPower = materialVector[meshSubsetTexture[i]].Data.SpecularPower;
-	gMaterialBufferData.DiffuseColor  = materialVector[meshSubsetTexture[i]].Data.DiffuseColor;
-	// REMOVE -------------------------------------------------------------------------
-	materialVector[meshSubsetTexture[i]].Data.HasTexture = 0;
-	// END REMOVE ---------------------------------------------------------------------
-	gMaterialBufferData.HasTexture = materialVector[meshSubsetTexture[i]].Data.HasTexture;
-
-	if (materialVector[meshSubsetTexture[i]].Data.HasTexture == 1)
-		DevCon->PSSetShaderResources(0, 1, &mTextureView); // NOT IMPLEMENTED YET!
-
-														   // Map material properties buffer
-	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(gMaterialBufferData));
-	DevCon->Unmap(gMaterialBuffer, 0);
-	if (passID == 1) 
-	{
-		DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+		DevCon->PSSetShaderResources(0, 1, &objectArray->at(objectIndex).meshTextureSRV[materialIndex]); // NOT IMPLEMENTED YET!!
 	}
 
-	/*int indexStart = meshSubsetIndexStart[i];
-	int indexDrawAmount = meshSubsetIndexStart[i + 1] - meshSubsetIndexStart[i];
-	DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);*/
+	/***************************************************************************************************************************************
+															Material
+	***************************************************************************************************************************************/
+
+	if (passID == GEOMETRY_PASS)
+	{
+		//set material
+		objectArray->at(objectIndex).materialBufferData.SpecularColor = materialVector[objectArray->at(objectIndex).meshSubsetTexture[materialIndex]].Data.SpecularColor;
+		objectArray->at(objectIndex).materialBufferData.SpecularPower = materialVector[objectArray->at(objectIndex).meshSubsetTexture[materialIndex]].Data.SpecularPower;
+		objectArray->at(objectIndex).materialBufferData.DiffuseColor  = materialVector[objectArray->at(objectIndex).meshSubsetTexture[materialIndex]].Data.DiffuseColor;
+		
+		// Map material properties buffer
+		D3D11_MAPPED_SUBRESOURCE materialPtr;
+		DevCon->Map(objectArray->at(objectIndex).materialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+		memcpy(materialPtr.pData, &objectArray->at(objectIndex).materialBufferData, sizeof(cMaterialBuffer));
+		DevCon->Unmap(objectArray->at(objectIndex).materialBuffer, 0);
+
+		DevCon->PSSetConstantBuffers(0, 1, &objectArray->at(objectIndex).materialBuffer);
+	}
+
+
+	// IN CASE THE ABOVE DOESN'T WORK ----------------------------------------------------------------------------------------------------------------
+	
+	//if (objectType == STATIC_OBJECT)
+	//{
+	//	DevCon->IASetIndexBuffer(mStaticObjects[objectIndex].meshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	//	DevCon->IASetVertexBuffers(0, 1, &mStaticObjects[objectIndex].meshVertexBuffer, &vertexSize, &offset);
+	//	if (passID == GEOMETRY_PASS) { DevCon->GSSetConstantBuffers(1, 1, &mStaticObjects[objectIndex].perObjectWorldBuffer); }
+	//	if (passID == SHADOW_PASS)   { DevCon->VSSetConstantBuffers(1, 1, &mStaticObjects[objectIndex].perObjectWorldBuffer); }
+	//}
+	//if (objectType == DYNAMIC_OBJECT)
+	//{
+	//	DevCon->IASetIndexBuffer(mDynamicObjects[objectIndex].meshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+	//	DevCon->IASetVertexBuffers(0, 1, &mDynamicObjects[objectIndex].meshVertexBuffer, &vertexSize, &offset);
+	//	static float rotation = 0.0f;
+	//	rotation += 0.001f;
+	//	int scale = 10.0f;
+	//	//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
+	//	using DirectX::operator*;
+	//	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale, scale, scale);
+	//	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
+	//	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f, 20.0f * (objectIndex + 1.0f), 100.0f);
+	//	DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+	//	XMStoreFloat4x4(&mDynamicObjects[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
+	//	DevCon->Map(mDynamicObjects[objectIndex].perObjectWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	//	// copy memory from CPU to GPU of the entire struct
+	//	memcpy(worldMatrixPtr.pData, &mDynamicObjects[objectIndex].objectBufferData, sizeof(cPerObjectBuffer));
+	//	// Unmap constant buffer so that we can use it again in the GPU
+	//	DevCon->Unmap(mDynamicObjects[objectIndex].perObjectWorldBuffer, 0);
+	//	// set resource to Geometry Shader
+	//	if (passID == GEOMETRY_PASS) { DevCon->GSSetConstantBuffers(1, 1, &mDynamicObjects[objectIndex].perObjectWorldBuffer); }
+	//	if (passID == SHADOW_PASS)   { DevCon->VSSetConstantBuffers(1, 1, &mDynamicObjects[objectIndex].perObjectWorldBuffer); }
+	//}
+	//cMaterialBuffer* gMaterialBufferData = &mDynamicObjects[objectIndex].materialBufferData;
+	////set material
+	//gMaterialBufferData->SpecularColor = materialVector[meshSubsetTexture[i]].Data.SpecularColor;
+	//gMaterialBufferData.SpecularPower = materialVector[meshSubsetTexture[i]].Data.SpecularPower;
+	//gMaterialBufferData.DiffuseColor  = materialVector[meshSubsetTexture[i]].Data.DiffuseColor;
+	//// REMOVE -------------------------------------------------------------------------
+	//materialVector[meshSubsetTexture[i]].Data.HasTexture = 0;
+	//// END REMOVE ---------------------------------------------------------------------
+	//gMaterialBufferData.HasTexture = materialVector[meshSubsetTexture[i]].Data.HasTexture;
+	//if (materialVector[meshSubsetTexture[i]].Data.HasTexture == 1)
+	//	DevCon->PSSetShaderResources(0, 1, &mTextureView); // NOT IMPLEMENTED YET!
+	//													   // Map material properties buffer
+	//D3D11_MAPPED_SUBRESOURCE materialPtr;
+	//DevCon->Map(gMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+	//memcpy(materialPtr.pData, &gMaterialBufferData, sizeof(gMaterialBufferData));
+	//DevCon->Unmap(gMaterialBuffer, 0);
+	//if (passID == 1) 
+	//{
+	//	DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+	//}
 
 	return true;
 }
@@ -177,10 +255,10 @@ int ObjectHandler::GetHeightMapNrOfVerticies()
 	return NUMBER_OF_VERTICES;
 }
 
-int ObjectHandler::GetNrOfMeshSubsets()
-{
-	return meshSubsets;
-}
+//int ObjectHandler::GetNrOfMeshSubsets()
+//{
+//	return meshSubsets;
+//}
 
 // private ---------------------------------------------------------------------------------------
 
@@ -188,6 +266,7 @@ int ObjectHandler::GetNrOfMeshSubsets()
 bool ObjectHandler::LoadObjectModel(
 	ID3D11Device* Dev,
 	std::wstring filename,
+	ObjectType objectType, 
 	bool isRHCoordSys,
 	bool computeNormals)
 {
@@ -223,6 +302,7 @@ bool ObjectHandler::LoadObjectModel(
 	int totalVerts = 0;
 	int meshTriangles = 0;
 
+	Object object;
 
 	//TODO: improve with an error message or something
 	if (!fileIn)	//Early exit if the file doesn't open
@@ -272,8 +352,8 @@ bool ObjectHandler::LoadObjectModel(
 			checkChar = fileIn.get();
 			if (checkChar == ' ')
 			{
-				meshSubsetIndexStart.push_back(vIndex);
-				meshSubsets++;
+				object.meshSubsetIndexStart.push_back(vIndex);
+				object.nrOfMeshSubsets++;
 				while (checkChar != '\n')		//Keep reading chars until the line ends
 					checkChar = fileIn.get();
 			}
@@ -363,10 +443,10 @@ bool ObjectHandler::LoadObjectModel(
 				} //end for j-loop
 
 				  //check to make sure there's at least one subset
-				if (meshSubsets == 0)
+				if (object.nrOfMeshSubsets == 0)
 				{
-					meshSubsetIndexStart.push_back(vIndex); //start index for this subset
-					meshSubsets++;
+					object.meshSubsetIndexStart.push_back(vIndex); //start index for this subset
+					object.nrOfMeshSubsets++;
 				}
 				//avoid duplicate vertices
 				bool vertAlreadyExists = false;
@@ -559,13 +639,13 @@ bool ObjectHandler::LoadObjectModel(
 		} //end switch .obj file
 	} //end while .obj file
 
-	meshSubsetIndexStart.push_back(vIndex); //set index start
+	object.meshSubsetIndexStart.push_back(vIndex); //set index start
 
 										//make sure the first subset does not contain "0" indices. Can happen if "g" is defined at the very top of the file
-	if (meshSubsetIndexStart[1] == 0)
+	if (object.meshSubsetIndexStart[1] == 0)
 	{
-		meshSubsetIndexStart.erase(meshSubsetIndexStart.begin() + 1);
-		meshSubsets--;
+		object.meshSubsetIndexStart.erase(object.meshSubsetIndexStart.begin() + 1);
+		object.nrOfMeshSubsets--;
 	}
 
 	//set default tex coords and norms if those are not specified in the file
@@ -668,9 +748,9 @@ bool ObjectHandler::LoadObjectModel(
 			}
 			//check if this texture has already been loaded
 			bool alreadyLoaded = false;
-			for (int i = 0; i < textureNameArray.size(); ++i)
+			for (int i = 0; i < object.textureNameArray.size(); ++i)
 			{
-				if (fileNamePath == textureNameArray[i])
+				if (fileNamePath == object.textureNameArray[i])
 				{
 					alreadyLoaded = true;
 					materialVector[matCount - 1].Data.TexArrIndex = i;
@@ -725,19 +805,19 @@ bool ObjectHandler::LoadObjectModel(
 
 
 	  //set the subset material to the index value of its material in the material array
-	for (int i = 0; i < meshSubsets; ++i)
+	for (int i = 0; i < object.nrOfMeshSubsets; ++i)
 	{
 		bool hasMat = false;
 		for (int j = 0; j < materialVector.size(); ++j)
 		{
 			if (meshMaterials[i] == materialVector[j].matName)
 			{
-				meshSubsetTexture.push_back(j);
+				object.meshSubsetTexture.push_back(j);
 				hasMat = true;
 			}
 		}
 		if (!hasMat)
-			meshSubsetTexture.push_back(0); //use first material in the array if the subset doesn't have a specified material
+			object.meshSubsetTexture.push_back(0); //use first material in the array if the subset doesn't have a specified material
 	}
 
 	//create vertices
@@ -826,6 +906,7 @@ bool ObjectHandler::LoadObjectModel(
 
 	  //create vertex and index buffers -------------------------------------------------------------------------
 
+
 	  //index buffer
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
@@ -839,7 +920,7 @@ bool ObjectHandler::LoadObjectModel(
 	D3D11_SUBRESOURCE_DATA indicesData;
 
 	indicesData.pSysMem = &indices[0];
-	Dev->CreateBuffer(&indexBufferDesc, &indicesData, &meshIndexBuff);
+	Dev->CreateBuffer(&indexBufferDesc, &indicesData, &object.meshIndexBuffer);
 
 	//vertex buffer
 	D3D11_BUFFER_DESC vertexBufferDesc;
@@ -854,7 +935,16 @@ bool ObjectHandler::LoadObjectModel(
 	D3D11_SUBRESOURCE_DATA vertexBufferData;
 
 	vertexBufferData.pSysMem = &verticies[0];
-	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &meshVertBuff);
+	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &object.meshVertexBuffer);
+
+	if (objectType == STATIC_OBJECT)
+	{
+		mStaticObjects.push_back(object);
+	}
+	if (objectType == DYNAMIC_OBJECT)
+	{
+		mDynamicObjects.push_back(object);
+	}
 
 	return true;
 }
@@ -1042,11 +1132,9 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 }
 
 //used in InitializeObjects
-void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Dev)
+void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 {
-	DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(0.0f));
-
-	DirectX::XMStoreFloat4x4(&ObjectBufferData.World, world);
+	HRESULT hr;
 
 	D3D11_BUFFER_DESC WBufferDesc;
 	WBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -1056,15 +1144,45 @@ void ObjectHandler::CreatePerObjectConstantBuffer(ID3D11Device* Dev)
 	WBufferDesc.MiscFlags = 0;
 	WBufferDesc.StructureByteStride = 0;
 
-	HRESULT gHR = Dev->CreateBuffer(&WBufferDesc, nullptr, &gPerObjectBuffer);
-	if (FAILED(gHR)) {
-		exit(-1);
+
+	D3D11_SUBRESOURCE_DATA InitData;
+	InitData.pSysMem = 0;
+	InitData.SysMemPitch = 0;
+
+	DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity());
+
+	// Static Objects
+	for (size_t i = 0; i < mStaticObjects.size(); i++)
+	{
+		DirectX::XMStoreFloat4x4(&mStaticObjects[i].objectBufferData.World, world);
+		InitData.pSysMem = &mStaticObjects[i].objectBufferData;
+		hr = Dev->CreateBuffer(&WBufferDesc, &InitData, &mStaticObjects[i].perObjectWorldBuffer);
+		if (FAILED(hr)) 
+		{
+			OutputDebugString(L"\nObjectHandler::CreatePerObjectConstantBuffers() Failed to create buffer for static object\n\n");
+			exit(-1);
+		}
+	}
+
+	// Dynamic Objects
+	for (size_t i = 0; i < mDynamicObjects.size(); i++)
+	{
+		DirectX::XMStoreFloat4x4(&mDynamicObjects[i].objectBufferData.World, world);
+		InitData.pSysMem = &mDynamicObjects[i].objectBufferData;
+		hr = Dev->CreateBuffer(&WBufferDesc, nullptr, &mDynamicObjects[i].perObjectWorldBuffer);
+		if (FAILED(hr)) 
+		{
+			OutputDebugString(L"\nObjectHandler::CreatePerObjectConstantBuffers() Failed to create buffer for dynamic object\n\n");
+			exit(-1);
+		}
 	}
 }
 
 //used in InitializeObjects
-void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Dev)
+void ObjectHandler::CreateMaterialConstantBuffers(ID3D11Device* Dev)
 {
+	HRESULT hr;
+
 	D3D11_BUFFER_DESC materialBufferDesc;
 	materialBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
 	materialBufferDesc.ByteWidth = sizeof(cMaterialBuffer);
@@ -1073,14 +1191,28 @@ void ObjectHandler::CreateMaterialConstantBuffer(ID3D11Device* Dev)
 	materialBufferDesc.MiscFlags = 0;
 	materialBufferDesc.StructureByteStride = 0;
 
-	// check if the creation failed for any reason
-	HRESULT hr = 0;
-	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &gMaterialBuffer);
-	if (FAILED(hr))
+	// Static Objects
+	for (size_t i = 0; i < mStaticObjects.size(); i++)
 	{
-		// handle the error, could be fatal or a warning...
-		exit(-1);
+		hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mStaticObjects[i].materialBuffer);
+		if (FAILED(hr))
+		{
+			OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for static object\n\n");
+			exit(-1);
+		}
 	}
+
+	// Dynamic Objects
+	for (size_t i = 0; i < mDynamicObjects.size(); i++)
+	{
+		hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mDynamicObjects[i].materialBuffer);
+		if (FAILED(hr))
+		{
+			OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for dynamic object\n\n");
+			exit(-1);
+		}
+	}
+
 }
 
 

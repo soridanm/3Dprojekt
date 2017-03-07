@@ -36,6 +36,13 @@ enum ShadowQuality: UINT
 	SHADOWS_ULTRA	= 4096
 };
 
+enum RenderPassID
+{
+	GEOMETRY_PASS,
+	SHADOW_PASS,
+	LIGHT_PASS
+};
+
 //TODO? Move to some class
 struct HeightMapInfo {
 	int worldWidth;
