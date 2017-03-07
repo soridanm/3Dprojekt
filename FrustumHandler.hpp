@@ -14,7 +14,7 @@ public:
 	~FrustumHandler();
 
 	void constructFrustum(float depth, DirectX::XMFLOAT4X4* projection, DirectX::XMFLOAT4X4* view);
-	bool checkCube(float, float, float, float,float,float);
+	bool checkVisible(DirectX::XMVECTOR,DirectX::XMVECTOR);
 private:
 	Plane planes[6];
 };

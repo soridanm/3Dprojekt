@@ -61,7 +61,7 @@ void FrustumHandler::constructFrustum(float depth, DirectX::XMFLOAT4X4* projecti
 	}
 }
 
-bool FrustumHandler::checkCube(float centerX, float centerY, float centerZ, float lengthX,float lengtY,float lenghtZ) {
+bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin,DirectX::XMVECTOR boxMax) {
 	bool isVisible = false;
 	for (int i = 0; i < 6; i++) {
 
