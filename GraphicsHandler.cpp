@@ -199,7 +199,7 @@ void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPass
 
 bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
 {
-	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality);
+	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality, mObjectHandler.getWorldDepth(), mObjectHandler.getWorldWidth(), mObjectHandler.getWorldHeight());
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 

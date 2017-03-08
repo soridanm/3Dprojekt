@@ -81,7 +81,7 @@ void CameraHandler::UpdateCamera()
 
 	//following terrain
 	int a= DirectX::XMVectorGetX(CAM_POS), b = DirectX::XMVectorGetZ(CAM_POS);
-	if (a > 0 && b > 0 && a < 200 && b < 200) {
+	if (a > 0 && b > 0 && a < terrain.worldDepth && b < terrain.worldWidth) {
 		CAM_POS = DirectX::XMVectorSet(DirectX::XMVectorGetX(CAM_POS), terrain.worldHeight[b][a] + 3, DirectX::XMVectorGetZ(CAM_POS), 1.0f);
 	}
 
