@@ -92,10 +92,10 @@ HWND InitWindow(HINSTANCE hInstance, Engine engine)
 	if (!RegisterClassEx(&wcex))
 		return false;
 
-	LONG SCREEN_WIDTH = engine.mGraphicsHandler.mCameraHandler.GetScreenWidth();
-	LONG SCREEN_HEIGHT = engine.mGraphicsHandler.mCameraHandler.GetScreenHeight();
+	//LONG SCREEN_WIDTH = engine.mGraphicsHandler.mCameraHandler.GetScreenWidth();
+	//LONG SCREEN_HEIGHT = engine.mGraphicsHandler.mCameraHandler.GetScreenHeight();
 	
-	RECT rc = { 0, 0,  SCREEN_WIDTH, SCREEN_HEIGHT };
+	RECT rc = { 0, 0,  ScreenSize::SCREEN_WIDTH, ScreenSize::SCREEN_HEIGHT };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND handle = CreateWindow(

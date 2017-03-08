@@ -71,8 +71,8 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 {
 	// Create render target textures
 	D3D11_TEXTURE2D_DESC textureDesc{};
-	textureDesc.Width = mCameraHandler.GetScreenWidth();
-	textureDesc.Height = mCameraHandler.GetScreenHeight();
+	textureDesc.Width = ScreenSize::SCREEN_WIDTH;
+	textureDesc.Height = ScreenSize::SCREEN_HEIGHT;
 	textureDesc.MipLevels = 1;
 	textureDesc.ArraySize = 1;
 	textureDesc.Format = DXGI_FORMAT_R32G32B32A32_FLOAT;
@@ -108,8 +108,8 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 
 	//Create the depth stencil buffer texture
 	D3D11_TEXTURE2D_DESC depthDesc{};
-	depthDesc.Width = mCameraHandler.GetScreenWidth();
-	depthDesc.Height = mCameraHandler.GetScreenHeight();
+	depthDesc.Width = ScreenSize::SCREEN_WIDTH;
+	depthDesc.Height = ScreenSize::SCREEN_HEIGHT;
 	depthDesc.MipLevels = 1;
 	depthDesc.ArraySize = 1;
 	depthDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;

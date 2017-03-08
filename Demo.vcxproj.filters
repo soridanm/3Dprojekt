@@ -42,6 +42,9 @@
     <ClCompile Include="old_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ComputeShadercpp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="LightFragment.hlsl">
@@ -92,6 +95,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TimeHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputeShader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

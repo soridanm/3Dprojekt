@@ -23,8 +23,8 @@ public:
 	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
-	const LONG GetScreenWidth();
-	const LONG GetScreenHeight();
+	//const LONG GetScreenWidth();
+	//const LONG GetScreenHeight();
 
 	//input ------------------------------------------------------
 	IDirectInputDevice8* DIKeyboard = nullptr;
@@ -78,8 +78,8 @@ private:
 
 
 	//TODO: Move these two somewhere else. They're way too deep
-	const LONG SCREEN_WIDTH = 1280;
-	const LONG SCREEN_HEIGHT = 720;
+	//const LONG SCREEN_WIDTH = 1280;
+	//const LONG SCREEN_HEIGHT = 720;
 };
 
 

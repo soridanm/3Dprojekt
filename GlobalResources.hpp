@@ -27,6 +27,12 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Ole32.lib")
 
+namespace ScreenSize
+{
+	const LONG SCREEN_WIDTH  = 1280;
+	const LONG SCREEN_HEIGHT = 720;
+};
+
 enum ShadowQuality: UINT 
 {
 	SHADOWS_LOW		= 256,
