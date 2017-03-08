@@ -248,8 +248,10 @@
     <ClInclude Include="bth_image.h" />
     <ClInclude Include="CameraHandler.hpp" />
     <ClInclude Include="Engine.hpp" />
+    <ClInclude Include="FrustumHandler.hpp" />
     <ClInclude Include="LightHandler.hpp" />
     <ClInclude Include="ObjectHandler.hpp" />
+    <ClInclude Include="QuadtreeHandler.hpp" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="GraphicsHandler.hpp" />
