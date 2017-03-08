@@ -227,6 +227,15 @@ std::vector<Object>* ObjectHandler::GetObjectArrayPtr(ObjectType objectType)
 //	return meshSubsets;
 //}
 
+float** ObjectHandler::getWorldHeight() {
+	return WORLD_HEIGHT;
+}
+int ObjectHandler::getWorldDepth() {
+	return WORLD_DEPTH;
+}
+int ObjectHandler::getWorldWidth() {
+	return WORLD_WIDTH;
+}
 // private ---------------------------------------------------------------------------------------
 
 //TODO: Split into multiple functions
@@ -978,9 +987,14 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	NUMBER_OF_VERTICES = rows*columns;
 	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
 
+	WORLD_WIDTH = rows;
+	WORLD_DEPTH = columns;
+	WORLD_HEIGHT = new float*[WORLD_WIDTH];
+
 	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
 
 	for (DWORD i = 0; i < rows; i++) {
+		WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
 		for (DWORD j = 0; j < columns; j++) {
 			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
 			mapVertex[i*columns + j].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal

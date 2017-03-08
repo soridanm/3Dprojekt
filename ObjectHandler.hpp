@@ -95,6 +95,9 @@ public:
 
 	std::vector<Object>* GetObjectArrayPtr(ObjectType objectType);
 
+	float** getWorldHeight();
+	int getWorldDepth();
+	int getWorldWidth();
 	//int GetNrOfMeshSubsets();
 
 	//std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
@@ -129,7 +132,8 @@ private:
 	ID3D11Buffer* mHeightMapWorldBuffer = nullptr;
 	int NUMBER_OF_FACES = 0;
 	int NUMBER_OF_VERTICES = 0;
-	float WORLD_HEIGHT[200][200];
+	float** WORLD_HEIGHT;
+	int WORLD_WIDTH = 0, WORLD_DEPTH = 0;
 
 	//Loading .obj files
 	//ID3D11BlendState* Transparency;
