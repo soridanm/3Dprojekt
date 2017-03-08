@@ -903,10 +903,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	int columns = hminfo.worldWidth;
 	int rows = hminfo.worldHeight;
 
-	//int columns = hminfo.worldHeight;
-	//int rows = hminfo.worldWidth;
-
-
 	NUMBER_OF_VERTICES = rows*columns;
 	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
 
