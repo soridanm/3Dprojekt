@@ -112,12 +112,14 @@
   <ItemGroup>
     <ClCompile Include="CameraHandler.cpp" />
     <ClCompile Include="Engine.cpp" />
+    <ClCompile Include="FrustumHandler.cpp" />
     <ClCompile Include="GlobalResources.cpp" />
     <ClCompile Include="LightHandler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="GraphicsHandler.cpp" />
     <ClCompile Include="ObjectHandler.cpp" />
     <ClCompile Include="old_main.cpp" />
+    <ClCompile Include="QuadtreeHandler.cpp" />
     <ClCompile Include="TimeHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
