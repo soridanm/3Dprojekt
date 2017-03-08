@@ -50,7 +50,7 @@ private:
 	bool CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS);
 	bool InitializeGraphicsBuffer(ID3D11Device* Dev);
 	bool CreateRasterizerStates(ID3D11Device* Dev);
-	void SetRasterizerState(ID3D11DeviceContext* DevCon, int passID);
+	void SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPassID passID);
 
 	// Geometry Pass ----------------------------
 	void SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon);

@@ -179,9 +179,20 @@ bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
 	return true;
 }
 
-void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, int passID)
+void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
-	DevCon->RSSetState(mRasterizerState[passID - 1]);
+	if (passID == GEOMETRY_PASS)
+	{
+		DevCon->RSSetState(mRasterizerState[0]);
+	}
+	if (passID == SHADOW_PASS)
+	{
+		DevCon->RSSetState(mRasterizerState[1]);
+	}
+	if (passID == LIGHT_PASS)
+	{
+		DevCon->RSSetState(mRasterizerState[1]);
+	}
 }
 
 // public ------------------------------------------------------------------------------
@@ -467,36 +478,58 @@ void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 {
+	std::vector<Object>* objectArray = nullptr;
+
 	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
 
 	SetGeometryPassRenderTargets(DevCon);
 	SetGeometryPassShaders(DevCon);
-	SetRasterizerState(DevCon, 1);
+	SetRasterizerState(DevCon, GEOMETRY_PASS);
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
-	//LOOP OVER OBJECTS FROM HERE
 
+	// ------------------------------ Height Map ------------------------------------------------------
 	SetGeometryPassShaderResources(DevCon);
-
-	mObjectHandler.SetHeightMapBuffer(DevCon, 1);
+	mObjectHandler.SetHeightMapBuffer(DevCon, GEOMETRY_PASS);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
-	for (int j = 0; j < mObjectHandler.mObjects.size(); j++)
+	// ------------------------------ Static Objects ------------------------------------------------------
+	// NOTE: Quad-tree stuff goes here
+	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
+	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
-		for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
 		{
-			mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 1);
+			mObjectHandler.SetObjectBufferWithIndex(DevCon, GEOMETRY_PASS, STATIC_OBJECT, i, j);
 
-			int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-			int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
+			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
+			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
 
 			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 		}
 	}
-	//LOOP OVER OBJECTS TO HERE
+
+	// ------------------------------ Dynamic Objects ------------------------------------------------------
+	// NOTE: Quad-tree stuff goes here
+	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
+	for (size_t i = 0; i < (*objectArray).size(); i++)
+	{
+		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
+		{
+			mObjectHandler.SetObjectBufferWithIndex(DevCon, GEOMETRY_PASS, DYNAMIC_OBJECT, i, j);
+
+			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
+			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
+			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+
+			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}
+	}
 }
 
 // ------------------------------ Shadow Map Pass ------------------------------------------------------
-
 
 //TODO: move to LightHandler.cpp
 void GraphicsHandler::SetShadowMapPassRenderTargets(ID3D11DeviceContext* DevCon)
@@ -529,26 +562,53 @@ void GraphicsHandler::SetShadowMapPassShaderResources(ID3D11DeviceContext* DevCo
 //TODO: set the position and whatnot for the light
 void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 {
+	std::vector<Object>* objectArray = nullptr;
+
 	DevCon->RSSetViewports(1, &mCameraHandler.lightVP);
 	SetShadowMapPassRenderTargets(DevCon);
 	SetShadowMapPassShaders(DevCon);
-	SetRasterizerState(DevCon, 2);
-	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 1);
+	SetRasterizerState(DevCon, SHADOW_PASS);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, SHADOW_PASS);
 
+	// ------------------------------ Height Map -----------------------------------------------------
 	SetShadowMapPassShaderResources(DevCon); // Currently does nothing
-
-	mObjectHandler.SetHeightMapBuffer(DevCon, 2);
-
+	mObjectHandler.SetHeightMapBuffer(DevCon, SHADOW_PASS);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
-	for (int i = 0; i < mObjectHandler.GetNrOfMeshSubsets(); i++)
+	// ------------------------------ Static Objects ------------------------------------------------------
+	// NOTE: Quad-tree stuff goes here
+	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
+	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
-		mObjectHandler.SetObjectBufferWithIndex(DevCon, i, 2);
+		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
+		{
+			mObjectHandler.SetObjectBufferWithIndex(DevCon, SHADOW_PASS, STATIC_OBJECT, i, j);
 
-		int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-		int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
+			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
+			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
 
-		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}
+	}
+
+	// ------------------------------ Dynamic Objects ------------------------------------------------------
+	// NOTE: Quad-tree stuff goes here
+	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
+	for (size_t i = 0; i < (*objectArray).size(); i++)
+	{
+		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
+		{
+			mObjectHandler.SetObjectBufferWithIndex(DevCon, SHADOW_PASS, DYNAMIC_OBJECT, i, j);
+
+			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
+			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
+			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+
+			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+		}
 	}
 }
 
@@ -620,8 +680,8 @@ void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* De
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
-	SetRasterizerState(DevCon, 2);
-	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, 2);
+	SetRasterizerState(DevCon, LIGHT_PASS);
+	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, LIGHT_PASS);
 	
 	DevCon->PSSetShaderResources(4, 1, &mLightHandler.mShadowMapSRView);
 

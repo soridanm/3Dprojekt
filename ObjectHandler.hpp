@@ -40,6 +40,36 @@ struct materialStruct
 	std::wstring matName;
 };
 
+struct cPerObjectBuffer
+{
+	DirectX::XMFLOAT4X4 World;
+};
+static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "cPerObjectBuffer size must be 16-byte aligned");
+
+struct Object
+{
+	//From .obj
+	ID3D11Buffer* meshVertexBuffer = nullptr;
+	ID3D11Buffer* meshIndexBuffer = nullptr;
+	ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
+	cMaterialBuffer materialBufferData = cMaterialBuffer();
+	ID3D11Buffer* materialBuffer = nullptr;
+	int nrOfMeshSubsets = 0;
+
+	std::vector<int> meshSubsetIndexStart; // needed?
+										   // TEXTURES ARE NOT YET IMPLEMENTED
+	std::vector<int> meshSubsetTexture;
+	std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
+	std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
+
+												// World Buffer. For static objects this will at some point be set to an identity matrix
+	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
+	ID3D11Buffer* perObjectWorldBuffer = nullptr;
+
+	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
+
+};
+
 namespace Materials
 {
 	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 32.0f);
@@ -50,6 +80,7 @@ namespace Materials
 class ObjectHandler
 {
 public:
+	
 	ObjectHandler();
 	~ObjectHandler();
 
@@ -57,10 +88,12 @@ public:
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
 	
-	int GetHeightMapNrOfFaces();
+	const int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();
 
 	void CreateWorld(ID3D11Device* Dev);
+
+	std::vector<Object>* GetObjectArrayPtr(ObjectType objectType);
 
 	//int GetNrOfMeshSubsets();
 
@@ -79,50 +112,21 @@ private:
 	void CreatePerObjectConstantBuffers(ID3D11Device* Dev);
 	void CreateMaterialConstantBuffers(ID3D11Device* Dev);
 
-	struct cPerObjectBuffer
-	{
-		DirectX::XMFLOAT4X4 World;
-	};
-	static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "cPerObjectBuffer size must be 16-byte aligned");
-
-	struct Object
-	{
-		//From .obj
-		ID3D11Buffer* meshVertexBuffer = nullptr;
-		ID3D11Buffer* meshIndexBuffer = nullptr;
-		ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
-		cMaterialBuffer materialBufferData = cMaterialBuffer();
-		ID3D11Buffer* materialBuffer = nullptr;
-		int nrOfMeshSubsets = 0;
-
-		std::vector<int> meshSubsetIndexStart; // needed?
-		// TEXTURES ARE NOT YET IMPLEMENTED
-		std::vector<int> meshSubsetTexture;
-		std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
-		std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
-
-		// World Buffer. For static objects this will at some point be set to an identity matrix
-		cPerObjectBuffer objectBufferData = cPerObjectBuffer();
-		ID3D11Buffer* perObjectWorldBuffer = nullptr;
-
-		int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
-
-	};
+	
 	std::vector<Object> mStaticObjects;  // objects that will be included in quad-tree
 	std::vector<Object> mDynamicObjects; // Objects that will NOT be included int quad-tree
 
-
 	std::vector<materialStruct> materialVector; // Stores ALL objects' materials
 
-	cPerObjectBuffer mHeightMapWorldBufferData;
-	ID3D11Buffer* mHeightMapMaterialBuffer;
-	cMaterialBuffer mHeightMapMaterialBufferData;
+	cPerObjectBuffer mHeightMapWorldBufferData = cPerObjectBuffer();
+	ID3D11Buffer* mHeightMapMaterialBuffer = nullptr;
+	cMaterialBuffer mHeightMapMaterialBufferData = cMaterialBuffer();
 
 	//Height map
 	ID3D11Buffer* gSquareIndexBuffer = nullptr;
 	ID3D11Buffer* gSquareVertBuffer = nullptr;
-	ID3D11ShaderResourceView* mTextureView;
-	ID3D11Buffer* mHeightMapWorldBuffer;
+	ID3D11ShaderResourceView* mTextureView = nullptr;
+	ID3D11Buffer* mHeightMapWorldBuffer = nullptr;
 	int NUMBER_OF_FACES = 0;
 	int NUMBER_OF_VERTICES = 0;
 	float WORLD_HEIGHT[200][200];

@@ -110,7 +110,7 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 	return true;
 }
 
-bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, int passID)
+bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
 	//TODO: this code block might not be needed
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
@@ -119,12 +119,12 @@ bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* Dev
 	memcpy(viewProjectionMatrixPtr.pData, &SMBufferData, sizeof(cPerFrameBuffer));
 	DevCon->Unmap(mShadowMapBuffer, 0);
 	
-	if (passID == 1) //ShadowVertex.hlsl
+	if (passID == SHADOW_PASS) //ShadowVertex.hlsl
 	{
 		DevCon->VSSetConstantBuffers(0, 1, &mShadowMapBuffer);
 	}
 	
-	if (passID == 2) //LightFragment.hlsl
+	if (passID == LIGHT_PASS) //LightFragment.hlsl
 	{
 		DevCon->PSSetConstantBuffers(0, 1, &mShadowMapBuffer);
 	}
