@@ -20,7 +20,7 @@ public:
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
 	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
-	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality, int worldWidth, int worldDepth, float** worldHeight);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 	const LONG GetScreenWidth();
@@ -39,7 +39,7 @@ private:
 	void CreateViewPorts(ShadowQuality shadowQuality);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
-
+	bool freemoovingCamera;
 	struct cPerFrameBuffer
 	{
 		//XMFLOAT4X4 ViewProjection;
@@ -49,7 +49,12 @@ private:
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
 
-
+	struct terrainValues {
+		int worldWidth;
+		int worldDepth;
+		float** worldHeight;
+	};
+	terrainValues terrain;
 	cPerFrameBuffer VPBufferData;
 	cPerFrameBuffer SMBufferData; //TODO: Move this to somewhere else
 
