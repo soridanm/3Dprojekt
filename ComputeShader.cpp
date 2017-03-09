@@ -146,7 +146,13 @@ void ComputeShader::RenderComputeShader(
 	ID3D11UnorderedAccessView* uav[] = { mTempTextureUAV };
 	DevCon->CSSetUnorderedAccessViews(0U, 1U, uav, nullptr);
 
+	DevCon->VSSetShader(nullptr, nullptr, 0);
+	DevCon->HSSetShader(nullptr, nullptr, 0);
+	DevCon->DSSetShader(nullptr, nullptr, 0);
+	DevCon->GSSetShader(nullptr, nullptr, 0);
+	DevCon->PSSetShader(nullptr, nullptr, 0);
 	DevCon->CSSetShader(mComputeShader, nullptr, 0U);
+
 	DevCon->CSSetShaderResources(0U, 1U, &mRenderTextureSRV);
 
 	DevCon->Dispatch(1U, ScreenSize::SCREEN_HEIGHT, 1U);
