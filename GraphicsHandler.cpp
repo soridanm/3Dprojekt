@@ -694,6 +694,7 @@ bool GraphicsHandler::SetLightPassGBuffers(ID3D11DeviceContext* DevCon)
 //DONE
 void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
+
 	DevCon->RSSetViewports(1U, &mCameraHandler.playerVP);
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
@@ -712,8 +713,8 @@ void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* De
 	// Set render target to nullptr since the renderTexture can not be bound as a render target 
 	// and used as a shader resource view at the same time
 	// NOTE: If this doesn't work then DevCon->ClearState()
-	DevCon->OMSetRenderTargets(1U, nullptr, nullptr);
-	
+	//DevCon->OMSetRenderTargets(1U, nullptr, nullptr);
+	DevCon->ClearState();
 }
 
 // ------------------------------ Compute Pass ------------------------------------------------------
