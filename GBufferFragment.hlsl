@@ -1,6 +1,7 @@
 // G-Buffer fragment shader
 
 Texture2D DiffuseMap		: register(t1);
+Texture2D DiffuseMap2        : register(t2);
 SamplerState AnisoSampler	: register(s0);
 
 cbuffer MaterialBuffer		: register(b0)
@@ -34,9 +35,9 @@ struct PS_OUT
 PS_OUT PS_main(in PS_IN input) //: SV_Target
 {
 	PS_OUT output = (PS_OUT)0;
-
+	float height = input.PositionWS.y / 20.0;
 	// Sample the diffuse map
-	float3 diffuseAlbedo = (hasTexture == 1) ? DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb : DiffuseAlbedo;
+	float3 diffuseAlbedo = (hasTexture == 1) ? (((1-height)*DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb)+(height*DiffuseMap2.Sample(AnisoSampler,input.TexCoord))) : DiffuseAlbedo;
 	
 	// Normalize the normal after interpolation
 	float3 normalWS	= normalize(input.NormalWS);

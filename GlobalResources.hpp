@@ -12,6 +12,7 @@
 #include <vector>
 #include <dinput.h>
 #include <WICTextureLoader.h>
+#include <DDSTextureLoader.h>
 #include <objbase.h>
 
 // for reading obj

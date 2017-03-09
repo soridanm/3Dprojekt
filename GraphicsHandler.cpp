@@ -217,14 +217,36 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 	quadtree = Node::Node(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(mObjectHandler.getWorldWidth(), 200.0f, mObjectHandler.getWorldDepth(), 0), 1);
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	ID3D11Resource* texture;
-	HRESULT hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"grass-free-texture.jpg", &texture, &gTextureView);
+
+	//ID3D11Resource* textureStone;
+	//HRESULT hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"stone.jpg", &textureStone, &sTextureView);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create WIC stone texture from file\n\n");
+	//	exit(-1);
+	//}
+	//ID3D11Resource* textureGrass;
+	// hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"grass-free-texture.jpg", &textureGrass, &gTextureView);
+	//if (FAILED(hr)) 
+	//{
+	//	OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create WIC grass texture from file\n\n");
+	//	exit(-1);
+	//}
+
+	ID3D11Resource* textureGrass;
+	HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"grass.dds", &textureGrass, &gTextureView);
 	if (FAILED(hr)) 
 	{
-		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create WIC texture from file\n\n");
+		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS grass texture from file\n\n");
 		exit(-1);
 	}
-
+	ID3D11Resource* textureStone;
+	 hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"stone.dds", &textureStone, &sTextureView);
+	if (FAILED(hr))
+	{
+		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS stone texture from file\n\n");
+		exit(-1);
+	}
 	return true;
 }
 
@@ -477,7 +499,8 @@ void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon)
 
 void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon)
 {
-	DevCon->PSSetShaderResources(1, 1, &gTextureView);
+	DevCon->PSSetShaderResources(1,1, &gTextureView);
+	DevCon->PSSetShaderResources(2, 1, &sTextureView);
 }
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)

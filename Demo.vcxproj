@@ -266,7 +266,10 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="grass-free-texture.jpg" />
+    <Image Include="grass.dds" />
     <Image Include="heightmap.bmp" />
+    <Image Include="stone.dds" />
+    <Image Include="stone.jpg" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Demo.rc" />

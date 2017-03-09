@@ -123,7 +123,16 @@
       <Filter>Resource Files</Filter>
     </Image>
     <Image Include="grass-free-texture.jpg">
-      <Filter>Source Files</Filter>
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="grass.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="stone.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="stone.jpg">
+      <Filter>Resource Files</Filter>
     </Image>
   </ItemGroup>
   <ItemGroup>
