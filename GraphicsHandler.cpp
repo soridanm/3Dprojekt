@@ -241,7 +241,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 		exit(-1);
 	}
 	ID3D11Resource* textureStone;
-	 hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"stone.dds", &textureStone, &sTextureView);
+	 hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"seamlessstone.dds", &textureStone, &sTextureView);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS stone texture from file\n\n");
