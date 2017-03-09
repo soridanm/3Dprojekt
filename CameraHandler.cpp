@@ -8,7 +8,7 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	SMBufferData = cPerFrameBuffer();
 	mPerFrameBuffer = nullptr;
 	mShadowMapBuffer = nullptr;
-	freemoovingCamera = true;
+	freemoovingCamera = false;
 
 	CAM_POS		= CAMERA_STARTING_POS;
 	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
@@ -80,8 +80,8 @@ void CameraHandler::UpdateCamera()
 	CAM_POS += MOVE_UD * CAM_UP;
 
 	//following terrain
-	int a= DirectX::XMVectorGetX(CAM_POS), b = DirectX::XMVectorGetZ(CAM_POS);
-	if (a > 0 && b > 0 && a < terrain.worldDepth && b < terrain.worldWidth) {
+	int a= (int)DirectX::XMVectorGetX(CAM_POS), b =(int) DirectX::XMVectorGetZ(CAM_POS);
+	if (a > 0 && b > 0 && a < terrain.worldDepth && b < terrain.worldWidth&&!freemoovingCamera) {
 		CAM_POS = DirectX::XMVectorSet(DirectX::XMVectorGetX(CAM_POS), terrain.worldHeight[b][a] + 3, DirectX::XMVectorGetZ(CAM_POS), 1.0f);
 	}
 

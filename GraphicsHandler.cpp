@@ -199,13 +199,13 @@ void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPass
 
 bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
 {
+	mObjectHandler.InitializeObjects(Dev);
+
 	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality, mObjectHandler.getWorldDepth(), mObjectHandler.getWorldWidth(), mObjectHandler.getWorldHeight());
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
 	mLightHandler.CreateShadowMap(Dev, shadowQuality);
-
-	mObjectHandler.InitializeObjects(Dev);
 
 	CreateShaders(Dev); //TODO: rewrite with shader class
 

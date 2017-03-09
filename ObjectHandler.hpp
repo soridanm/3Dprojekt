@@ -87,7 +87,6 @@ public:
 	void InitializeObjects(ID3D11Device* Dev);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
-	
 	const int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();
 
