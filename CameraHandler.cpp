@@ -221,14 +221,6 @@ void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //cr
 	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 }
 
-//const LONG CameraHandler::GetScreenWidth() 
-//{
-//	return SCREEN_WIDTH;
-//}
-//const LONG CameraHandler::GetScreenHeight()
-//{
-//	return SCREEN_HEIGHT;
-//}
 
 // private ------------------------------------------------------------------------------
 

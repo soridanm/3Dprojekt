@@ -13,6 +13,7 @@
 #include "LightHandler.hpp"
 #include "CameraHandler.hpp"
 #include "ObjectHandler.hpp"
+#include "ComputeShader.hpp"
 
 const UINT GBUFFER_COUNT = 4;
 
@@ -27,6 +28,8 @@ public:
 	void RenderGeometryPass(ID3D11DeviceContext* DevCon);
 	void RenderShadowPass(ID3D11DeviceContext* DevCon);
 	void RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
+	void RenderComputePass(ID3D11DeviceContext* DevCon);
+
 
 	ID3D11ShaderResourceView* gTextureView = nullptr; //SHOULD BE MOVED TO MODEL
 	ID3D11RenderTargetView* mBackbufferRTV; //might be moved to Engine
@@ -67,6 +70,10 @@ private:
 	bool SetLightPassShaders(ID3D11DeviceContext* DevCon);
 	bool SetLightPassGBuffers(ID3D11DeviceContext* DevCon);
 
+	// Compute Pass -------------------------------
+	/*void SetComputePassUnorderedAccessViews(ID3D11DeviceContext* DevCon);
+	void SetComputePassShaders(ID3D11DeviceContext* DevCon);
+	void SetComputePassShaderResources(ID3D11DeviceContext* DevCon);*/
 
 	struct GraphicsBuffer {
 		ID3D11Texture2D* texture = nullptr;
@@ -96,6 +103,9 @@ private:
 	ID3D11VertexShader* mLightPassVertexShader;
 	ID3D11PixelShader* mLightPassPixelShader;
 	ID3D11SamplerState* mShadowSampler;
+
+	//Compute Pass
+	ComputeShader mComputeShader;
 };
 
 

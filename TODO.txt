@@ -3,6 +3,7 @@ TODO:
 	Error blob messages are probably a good idea
 	ShaderHandler
 	Rename Fragment shaders to pixel shaders
+	Write a funtion for the error handling
 
 
 

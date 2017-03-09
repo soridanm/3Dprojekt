@@ -3,6 +3,9 @@
 *		Update code with code from the .obj branch
 *		See if the order of things should be changed
 *		viewport and whatnot
+*
+* TODO? Instead of having one SetRenderPassWhatever() function per render pass have them all use 
+*		the same one with RenderPassID as an input
 */
 
 #include "GraphicsHandler.hpp"
@@ -157,7 +160,6 @@ bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
 		exit(-1);
 	}
 
-
 	D3D11_RASTERIZER_DESC noBFSstate;
 	noBFSstate.FillMode = D3D11_FILL_SOLID;
 	noBFSstate.CullMode = D3D11_CULL_BACK;
@@ -193,6 +195,10 @@ void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPass
 	{
 		DevCon->RSSetState(mRasterizerState[1]);
 	}
+	if (passID == COMPUTE_PASS)
+	{
+		DevCon->RSSetState(mRasterizerState[1]);
+	}
 }
 
 // public ------------------------------------------------------------------------------
@@ -208,6 +214,8 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 	mObjectHandler.InitializeObjects(Dev);
 
 	CreateShaders(Dev); //TODO: rewrite with shader class
+
+	mComputeShader.CreateRenderTextures(Dev);
 
 	CreateRasterizerStates(Dev);
 
@@ -427,6 +435,10 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 	pVS2->Release();
 	pPS2->Release();
 
+	//---------------------------------- Compute Pass ----------------------------------------------------
+	
+	mComputeShader.CreateComputePassShaders(Dev);
+
 	return true;
 }
 
@@ -618,18 +630,24 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 bool GraphicsHandler::SetLightPassRenderTargets(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
 	// get the address of the back buffer
-	ID3D11Texture2D* pBackBuffer = nullptr;
-	SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
+	//ID3D11Texture2D* pBackBuffer = nullptr;
+	//SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
 
 	// use the back buffer address to create the render target
-	Dev->CreateRenderTargetView(pBackBuffer, NULL, &mBackbufferRTV);
-	pBackBuffer->Release();
+	//Dev->CreateRenderTargetView(pBackBuffer, NULL, &mBackbufferRTV);
+	//pBackBuffer->Release();
 
 	// set the render target as the back buffer
-	DevCon->OMSetRenderTargets(1, &mBackbufferRTV, nullptr);
+	//DevCon->OMSetRenderTargets(1, &mBackbufferRTV, nullptr);
+
+	// set the render target as the texture that'll be used as input to the compute shader
+	DevCon->OMSetRenderTargets(1, &mComputeShader.mRenderTextureRTV, nullptr);
 
 	//Clear screen
-	DevCon->ClearRenderTargetView(mBackbufferRTV, Colors::fWhite);
+	//DevCon->ClearRenderTargetView(mBackbufferRTV, Colors::fWhite);
+
+	//Clear the render texture 
+	DevCon->ClearRenderTargetView(mComputeShader.mRenderTextureRTV, Colors::fBlack);
 
 	return true;
 }
@@ -637,7 +655,7 @@ bool GraphicsHandler::SetLightPassRenderTargets(ID3D11Device* Dev, ID3D11DeviceC
 //DONE!
 bool GraphicsHandler::SetLightPassShaders(ID3D11DeviceContext* DevCon)
 {
-	/* Full screen triangle is created in Vertex shader using vertexID so no input layout needed */
+	/* Full screen triangle is created in Vertex shader by using the vertexID so no input layout needed */
 	const uintptr_t n0 = 0;
 	DevCon->IASetInputLayout(nullptr);
 	DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -676,18 +694,31 @@ bool GraphicsHandler::SetLightPassGBuffers(ID3D11DeviceContext* DevCon)
 //DONE
 void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
-	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
+	DevCon->RSSetViewports(1U, &mCameraHandler.playerVP);
 	SetLightPassRenderTargets(Dev, DevCon, SwapChain);
 	SetLightPassShaders(DevCon);
 	SetLightPassGBuffers(DevCon);
 	SetRasterizerState(DevCon, LIGHT_PASS);
 	mCameraHandler.BindShadowMapPerFrameConstantBuffer(DevCon, LIGHT_PASS);
-	
-	DevCon->PSSetShaderResources(4, 1, &mLightHandler.mShadowMapSRView);
+
+	DevCon->PSSetShaderResources(4U, 1U, &mLightHandler.mShadowMapSRView);
 
 	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
 
 
 	// Draw full screen triangle
-	DevCon->Draw(3, 0);
+	DevCon->Draw(3U, 0U);
+
+	// Set render target to nullptr since the renderTexture can not be bound as a render target 
+	// and used as a shader resource view at the same time
+	// NOTE: If this doesn't work then DevCon->ClearState()
+	DevCon->OMSetRenderTargets(1U, nullptr, nullptr);
+	
+}
+
+// ------------------------------ Compute Pass ------------------------------------------------------
+
+void GraphicsHandler::RenderComputePass(ID3D11DeviceContext* DevCon)
+{
+	mComputeShader.RenderComputeShader(DevCon, mBackbufferRTV, &mCameraHandler.playerVP, mRasterizerState[1]);
 }
