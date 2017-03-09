@@ -8,7 +8,7 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	SMBufferData = cPerFrameBuffer();
 	mPerFrameBuffer = nullptr;
 	mShadowMapBuffer = nullptr;
-	freemoovingCamera = false;
+	freemoovingCamera = true;
 	CAM_POS		= CAMERA_STARTING_POS;
 	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
 	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -225,7 +225,7 @@ void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //cr
 	hr = DirectInput->CreateDevice(GUID_SysMouse, &DIMouse, NULL);
 
 	hr = DIKeyboard->SetDataFormat(&c_dfDIKeyboard);
-	hr = DIKeyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE);
+	hr = DIKeyboard->SetCooperativeLevel(hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
 
 	hr = DIMouse->SetDataFormat(&c_dfDIMouse);
 	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);

@@ -38,15 +38,15 @@ void Node::storeObjects(DirectX::XMFLOAT4 box) {
 
 std::vector<DirectX::XMFLOAT4> Node::getObjects(Node* child) {
 	std::vector<DirectX::XMFLOAT4> objectsToReturn;
-	if (FrustumHandler::checkVisible(boxMin, boxMax)) {
-		if (levels < maxLevel) {
-			for (int i = 0; i < 4; i++) {
-				objectsToReturn.insert(objectsToReturn.end(), getObjects(children[i]).begin(), getObjects(children[i]).end());
-			}
-		}
-		else {
-			objectsToReturn.insert(objectsToReturn.end(),objects.begin(), objects.end());
-		}
-	}
+	//if (FrustumHandler::checkVisible(boxMin, boxMax)) {
+	//	if (levels < maxLevel) {
+	//		for (int i = 0; i < 4; i++) {
+	//			objectsToReturn.insert(objectsToReturn.end(), getObjects(children[i]).begin(), getObjects(children[i]).end());
+	//		}
+	//	}
+	//	else {
+	//		objectsToReturn.insert(objectsToReturn.end(),objects.begin(), objects.end());
+	//	}
+	//}
 	return objectsToReturn;
 }

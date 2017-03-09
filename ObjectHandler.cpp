@@ -28,18 +28,30 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	{
 		exit(-1);
 	}
-	if (!LoadObjectModel(Dev, L"wt_teapot.obj", STATIC_OBJECT, false, true))
-	{
-		exit(-1);
+	for (int i = 0; i < 10; i++) {
+		if (!LoadObjectModel(Dev, L"wt_teapot.obj", STATIC_OBJECT, false, true))
+		{
+			exit(-1);
+		}
 	}
-//	moveObjects();
+	moveObjects();
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
 }
 
 void ObjectHandler::moveObjects() {
-	for (int i = 0;i < mStaticObjects.size();i++) {
 
+	for (int i = 0;i < mStaticObjects.size();i++) {
+		
+		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
+		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0,0,0);
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation( 10.f * (i + 1.0f),WORLD_HEIGHT[10 * (i + 1)][10 * (i + 1)], 10.0f * (i + 1.0f));
+
+		using DirectX::operator*;
+		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+
+
+		mStaticObjects[i].worldMatrixPerObject= DirectX::XMMatrixTranspose(finalMatrix);
 	}
 }
 
@@ -157,7 +169,11 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		//TODO: This will be done at initialization so this part will be removed
 		// A static object has already had its geometry multiplied by a world-matrix so their shader-side matrix is set to an identity-matrix
 
-		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity()));
+
+		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World,(*objectArray)[objectIndex].worldMatrixPerObject);
+		//XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
+
+		//XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity()));
 	}
 
 	HRESULT hr;
