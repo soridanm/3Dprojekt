@@ -32,8 +32,15 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	{
 		exit(-1);
 	}
+//	moveObjects();
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
+}
+
+void ObjectHandler::moveObjects() {
+	for (int i = 0;i < mStaticObjects.size();i++) {
+
+	}
 }
 
 //TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
@@ -149,6 +156,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	{
 		//TODO: This will be done at initialization so this part will be removed
 		// A static object has already had its geometry multiplied by a world-matrix so their shader-side matrix is set to an identity-matrix
+
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity()));
 	}
 

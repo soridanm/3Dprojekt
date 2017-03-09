@@ -10,12 +10,10 @@ struct Plane {
 };
 class FrustumHandler {
 public:
-	FrustumHandler();
+	FrustumHandler(DirectX::XMFLOAT4X4 projection= DirectX::XMFLOAT4X4(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), DirectX::XMFLOAT4X4 view= DirectX::XMFLOAT4X4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
 	~FrustumHandler();
 
-	void constructFrustum(float depth, DirectX::XMFLOAT4X4* projection, DirectX::XMFLOAT4X4* view);
 	bool checkVisible(DirectX::XMVECTOR, DirectX::XMVECTOR);
-private:
 	Plane planes[6];
 };
 

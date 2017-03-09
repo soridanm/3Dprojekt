@@ -65,8 +65,9 @@ struct Object
 												// World Buffer. For static objects this will at some point be set to an identity matrix
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
 	ID3D11Buffer* perObjectWorldBuffer = nullptr;
-
+	DirectX::XMFLOAT4X4 worldMatrixPerObject;
 	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
+
 
 };
 
@@ -98,7 +99,7 @@ public:
 	int getWorldDepth();
 	int getWorldWidth();
 	//int GetNrOfMeshSubsets();
-
+	void moveObjects();
 	//std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
 private:
 	//TODO: Turn some of these into member variables

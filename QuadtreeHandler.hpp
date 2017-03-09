@@ -3,7 +3,7 @@
 #include "GlobalResources.hpp"
 #include "FrustumHandler.hpp"
 #include <vector>
-template<typename T>
+
 class Node {
 public:
 
@@ -12,13 +12,13 @@ public:
 	DirectX::XMVECTOR boxMin;
 	DirectX::XMVECTOR boxMax;
 	Node* children[4];
-	std::vector<T>objects;
-	Node(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level);
+	std::vector<DirectX::XMFLOAT4>objects;
+	Node(DirectX::XMVECTOR newMin=DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level=5);
 	~Node();
-	std::vector<T> getObjects(Node*);
+	std::vector<DirectX::XMFLOAT4> getObjects(Node*);
+	void storeObjects(DirectX::XMFLOAT4);
 
 	//what more is needed?
-	//traverse nodes
 	//store geometry
 };
 

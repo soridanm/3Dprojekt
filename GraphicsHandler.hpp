@@ -13,6 +13,8 @@
 #include "LightHandler.hpp"
 #include "CameraHandler.hpp"
 #include "ObjectHandler.hpp"
+#include "QuadtreeHandler.hpp"
+#include "FrustumHandler.hpp"
 
 const UINT GBUFFER_COUNT = 4;
 
@@ -27,7 +29,8 @@ public:
 	void RenderGeometryPass(ID3D11DeviceContext* DevCon);
 	void RenderShadowPass(ID3D11DeviceContext* DevCon);
 	void RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
-
+	FrustumHandler frustum;
+	Node quadtree;
 	ID3D11ShaderResourceView* gTextureView = nullptr; //SHOULD BE MOVED TO MODEL
 	ID3D11RenderTargetView* mBackbufferRTV; //might be moved to Engine
 	//Really not sure if it's best to have these public or not

@@ -1,17 +1,11 @@
 #include "FrustumHandler.hpp"
 
-FrustumHandler::FrustumHandler() {
-}
-FrustumHandler::~FrustumHandler() {
-
-}
-
-void FrustumHandler::constructFrustum(float depth, DirectX::XMFLOAT4X4* projection, DirectX::XMFLOAT4X4* view) {
+FrustumHandler::FrustumHandler(DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT4X4 view) {
 
 	DirectX::XMFLOAT4X4* matrix;
 
 	//create frustummatrix
-	DirectX::XMStoreFloat4x4(matrix, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(view), DirectX::XMLoadFloat4x4(projection)));
+	DirectX::XMStoreFloat4x4(matrix, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&view), DirectX::XMLoadFloat4x4(&projection)));
 
 	//near plane
 	planes[0].a = matrix->_14 + matrix->_13;
@@ -58,6 +52,9 @@ void FrustumHandler::constructFrustum(float depth, DirectX::XMFLOAT4X4* projecti
 		planes[i].c /= length;
 		planes[i].d /= length;
 	}
+}
+FrustumHandler::~FrustumHandler() {
+
 }
 
 bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR boxMax) {

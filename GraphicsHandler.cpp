@@ -213,7 +213,8 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	InitializeGraphicsBuffer(Dev);
 
-
+	frustum = FrustumHandler::FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
+	quadtree = Node::Node(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(mObjectHandler.getWorldWidth(), 200.0f, mObjectHandler.getWorldDepth(), 0), 1);
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	ID3D11Resource* texture;
@@ -228,7 +229,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 }
 
 //TODO: Should probably be rewritten
-GraphicsHandler::GraphicsHandler() 
+GraphicsHandler::GraphicsHandler()
 	: mCameraHandler(), mLightHandler(mCameraHandler.GetCameraPosition())
 {
 	for (int i = 0; i < GBUFFER_COUNT; i++)
@@ -442,6 +443,9 @@ void GraphicsHandler::SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon)
 	DevCon->ClearRenderTargetView(mGraphicsBuffer[3].renderTargetView, Colors::fBlack);				//Specular
 	DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 	//DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+
+	//construct frustum again every frame
+	frustum = FrustumHandler::FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
 
 	ID3D11RenderTargetView* renderTargets[] =
 	{

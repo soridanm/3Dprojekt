@@ -8,7 +8,7 @@
 #define CAMERAHANDLER_HPP
 
 #include "GlobalResources.hpp"
-
+#include "FrustumHandler.hpp"
 class CameraHandler
 {
 public:
@@ -35,11 +35,14 @@ public:
 	D3D11_VIEWPORT lightVP;
 
 	DirectX::XMVECTOR CAM_POS;
+	DirectX::XMFLOAT4X4 getView();
+	DirectX::XMFLOAT4X4 getProjection();
 private:
 	void CreateViewPorts(ShadowQuality shadowQuality);
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
 	bool freemoovingCamera;
+	
 	struct cPerFrameBuffer
 	{
 		//XMFLOAT4X4 ViewProjection;

@@ -9,7 +9,6 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	mPerFrameBuffer = nullptr;
 	mShadowMapBuffer = nullptr;
 	freemoovingCamera = false;
-
 	CAM_POS		= CAMERA_STARTING_POS;
 	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
 	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -331,3 +330,9 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	return true;
 }
 
+DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
+	return VPBufferData.Projection;
+}
+DirectX::XMFLOAT4X4 CameraHandler::getView() {
+	return VPBufferData.View;
+}
