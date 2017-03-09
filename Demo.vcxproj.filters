@@ -42,7 +42,7 @@
     <ClCompile Include="old_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ComputeShadercpp.cpp">
+    <ClCompile Include="ComputeShader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -66,6 +66,15 @@
       <Filter>Source Files</Filter>
     </FxCompile>
     <FxCompile Include="ShadowFragment.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputePassVertex.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="FXAACompute.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputePassPixel.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
   </ItemGroup>

@@ -29,7 +29,7 @@
 
 namespace ScreenSize
 {
-	const UINT SCREEN_WIDTH  = 1280U;
+	const UINT SCREEN_WIDTH  = 1024U;
 	const UINT SCREEN_HEIGHT = 720U;
 };
 

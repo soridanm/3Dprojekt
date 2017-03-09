@@ -43,7 +43,7 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 	// Vertex Shader
 	ID3DBlob* pVS = nullptr;
 	D3DCompileFromFile(
-		L"ComputeVertex.hlsl",
+		L"ComputePassVertex.hlsl",
 		nullptr,
 		nullptr,
 		"VS_main",
@@ -66,7 +66,7 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 	// Pixel Shader
 	ID3DBlob* pPS = nullptr;
 	D3DCompileFromFile(
-		L"ComputeFragment.hlsl",
+		L"ComputePassPixel.hlsl",
 		nullptr,
 		nullptr,
 		"PS_main",
@@ -97,7 +97,7 @@ void ComputeShader::CreateRenderTextures(ID3D11Device* Dev)
 	// Texture that will be used as input for the Compute shader
 	ID3D11Texture2D* texture;
 	D3D11_TEXTURE2D_DESC texDesc;
-	ZeroMemory(&texDesc, sizeof(texture));
+	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 	texDesc.Width = ScreenSize::SCREEN_WIDTH;
 	texDesc.Height = ScreenSize::SCREEN_HEIGHT;
@@ -179,8 +179,9 @@ void ComputeShader::RenderComputeShader(
 		reinterpret_cast<const UINT *>(&n0)
 	);
 
+	DevCon->PSSetShaderResources(0U, 1U, &mTempTextureSRV);
 
+	DevCon->Draw(3U, 0U);
 
-
-
+	DevCon->ClearState();
 }
