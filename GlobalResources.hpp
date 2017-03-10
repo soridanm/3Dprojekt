@@ -35,18 +35,21 @@
 
 struct ScreenSize
 {
-	ScreenSize(UINT w, UINT h) : SCREEN_WIDTH(w), SCREEN_HEIGHT(h) {}
+	ScreenSize(UINT w, UINT h, LPCSTR ws, LPCSTR hs) 
+		: SCREEN_WIDTH(w), SCREEN_HEIGHT(h), WIDTH_STRING(ws), HEIGHT_STRING(hs) {}
 
 	const UINT SCREEN_WIDTH;
 	const UINT SCREEN_HEIGHT;
+	const LPCSTR WIDTH_STRING;
+	const LPCSTR HEIGHT_STRING;
 };
 
 namespace ScreenResolution
 {
-	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U);
-	static const ScreenSize HD_720p		= ScreenSize(1280U, 720U);
-	static const ScreenSize FHD_1080p	= ScreenSize(1920U, 1080U);
-	static const ScreenSize QHD_1440p	= ScreenSize(2560U, 1440U);
+	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U, "640\n", "480\n");
+	static const ScreenSize HD_720p		= ScreenSize(1280U, 720U, "1280", "720");
+	static const ScreenSize FHD_1080p	= ScreenSize(1920U, 1080U, "1920\n", "1080\n");
+	static const ScreenSize QHD_1440p	= ScreenSize(2560U, 1440U, "2560\n", "1440\n");
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;

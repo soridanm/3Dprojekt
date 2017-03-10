@@ -4,6 +4,16 @@ SamplerState samp;
 
 groupshared float4 image_square[40][20];
 
+// TODO: Improve this mess of an if-else case
+#ifdef TEXTURE_WIDTH
+#ifdef TEXTURE_HEIGHT
+groupshared float2 inverseScreenSize = float2((1.0 / TEXTURE_WIDTH), (1.0 / TEXTURE_HEIGHT));
+#else
+groupshared float2 inverseScreenSize = float2(1.0, 1.0);
+#endif
+#else
+groupshared float2 inverseScreenSize = float2(1.0, 1.0);
+#endif
 
 #define EDGE_THRESHOLD_MIN 0.0312
 #define EDGE_THRESHOLD_MAX 0.125
@@ -20,30 +30,31 @@ float rgb2luma(float3 rgb)
 [numthreads(40, 20, 1)]
 void FXAA_main(
 	uint3	dispaThreadID	: SV_DispatchThreadID,	// Global position
-	uint3	groupThreadID	: SV_GroupThreadID,		// Group position
-	uint	groupIndex		: SV_GroupIndex,
-	uint3   groupID			: SV_GroupID)
+	uint3	groupThreadID : SV_GroupThreadID,		// Group position
+	uint	groupIndex : SV_GroupIndex,
+	uint3   groupID : SV_GroupID)
 {
+
 	float texWidth;
 	float texHeight;
-	
-
+	float2 UV = (dispaThreadID.xy + float2(0.5, 0.5)) * inverseScreenSize;
 
 	float2 screen_pos = dispaThreadID.xy;
 	image_square[groupThreadID.x][groupThreadID.y] = inputTex[screen_pos];
 
 	GroupMemoryBarrierWithGroupSync();
 
-	float3 colorCenter = inputTex[screen_pos].rgb;
+	float3 colorCenter = inputTex.SampleLevel(samp, UV, 0.0).rgb;//inputTex[screen_pos].rgb;
+	float3 testCenter = inputTex[screen_pos].rgb;
 
 	// Luma at the current fragment
 	float lumaC = rgb2luma(colorCenter);
 
 	// Luma at the four direct neighbours of the current fragment
-	float lumaS	= rgb2luma(inputTex[screen_pos + float2(0.0, 1.0)].rgb);
-	float lumaN	= rgb2luma(inputTex[screen_pos + float2(0.0, -1.0)].rgb);
+	float lumaS	= rgb2luma(inputTex[screen_pos + float2( 0.0, 1.0)].rgb);
+	float lumaN	= rgb2luma(inputTex[screen_pos + float2( 0.0,-1.0)].rgb);
 	float lumaW	= rgb2luma(inputTex[screen_pos + float2(-1.0, 0.0)].rgb);
-	float lumaE = rgb2luma(inputTex[screen_pos + float2(1.0, 0.0)].rgb);
+	float lumaE = rgb2luma(inputTex[screen_pos + float2( 1.0, 0.0)].rgb);
 
 	// Find the max and min luma around the current fragment
 	float lumaMin = min(lumaC, min(min(lumaS, lumaN), min(lumaW, lumaE)));
@@ -54,19 +65,28 @@ void FXAA_main(
 
 	float4 result = float4(1.0, 1.0, 1.0, 1.0);
 
+//#ifdef TEXTURE_WIDTH
+//	if (TEXTURE_WIDTH == 1280)
+//	{
+//		result = float4(1.0, 0.0, 0.0, 1.0);
+//	}
+//#endif
 	// Early exit if no edge is detected in the area or if the area is really dark
 	if (lumaRange < max(EDGE_THRESHOLD_MIN, (lumaMax * EDGE_THRESHOLD_MAX)))
 	{
 		result = float4(colorCenter, 1.0);
-		//return;
+		/*if (testCenter.r == colorCenter.r && testCenter.g == colorCenter.g && testCenter.b == colorCenter.b)
+		{
+			result = float4(1.0, 0.0, 0.0, 1.0);
+		}*/
 	}
 	else
 	{
 		// The four remaining corner lumas
-		float lumaSE = rgb2luma(inputTex[screen_pos + float2(1.0, 1.0)].rgb);
+		float lumaSE = rgb2luma(inputTex[screen_pos + float2( 1.0, 1.0)].rgb);
 		float lumaSW = rgb2luma(inputTex[screen_pos + float2(-1.0, 1.0)].rgb);
-		float lumaNE = rgb2luma(inputTex[screen_pos + float2(1.0, -1.0)].rgb);
-		float lumaNW = rgb2luma(inputTex[screen_pos + float2(-1.0, -1.0)].rgb);
+		float lumaNE = rgb2luma(inputTex[screen_pos + float2( 1.0,-1.0)].rgb);
+		float lumaNW = rgb2luma(inputTex[screen_pos + float2(-1.0,-1.0)].rgb);
 
 		// Combine the four edges' lumas
 		float lumaSN = lumaS + lumaN;
@@ -97,9 +117,8 @@ void FXAA_main(
 		// Normalized gradient in the corresponding directino
 		float gradScaled = 0.25 * max(abs(grad1), abs(grad2));
 
-		// All texture accessing will be done with Load() so texel coordinates are used. 
-		// Same step length in both horizontal and verical directions.
-		float stepLength = 1.0;
+		// Choose the step size (one pixel) according to the edge direction
+		float stepLength = isHorizontal ? inverseScreenSize.y : inverseScreenSize.x;
 
 		// average loma in the correct direction
 		float lumaLocalAverage = 0.0;
@@ -115,7 +134,7 @@ void FXAA_main(
 		}
 
 		// Shift the texel coordinate by half a pixel
-
+	//	float2 currentUV = 
 
 	}
 
@@ -146,4 +165,5 @@ void FXAA_main(
 
 
 	outputTex[screen_pos] = result;
+
 }

@@ -20,11 +20,20 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 {
 	HRESULT hr;
 
+
+	D3D_SHADER_MACRO ComputeShaderMacros[] = 
+	{
+		"TEXTURE_WIDTH",  SCREEN_RESOLUTION.WIDTH_STRING,
+		"TEXTURE_HEIGHT", SCREEN_RESOLUTION.HEIGHT_STRING,
+		NULL, NULL
+	};
+
+
 	// Compute Shader
 	ID3DBlob* pCS = nullptr;
-	D3DCompileFromFile(
+	hr = D3DCompileFromFile(
 		L"FXAACompute.hlsl",
-		nullptr,
+		ComputeShaderMacros,
 		nullptr,
 		"FXAA_main",
 		"cs_5_0",
@@ -34,10 +43,17 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 		nullptr
 	);
 	
+	if (FAILED(hr))
+	{
+		OutputDebugString(L"\nComputeShader::CreateComputePassShaders() Failed to create Compute Shader\n\n");
+		exit(-1);
+	}
+
 	hr = Dev->CreateComputeShader(pCS->GetBufferPointer(), pCS->GetBufferSize(), nullptr, &mComputeShader);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nComputeShader::CreateComputePassShaders() Failed to create Compute Shader\n\n");
+		exit(-1);
 	}
 	
 	// Vertex Shader
@@ -58,6 +74,7 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nComputeShader::CreateComputePassShaders() Failed to create vertex Shader\n\n");
+		exit(-1);
 	}
 
 	// Input Layout
@@ -81,6 +98,7 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nComputeShader::CreateComputePassShaders() Failed to create pixel Shader\n\n");
+		exit(-1);
 	}
 
 	pCS->Release();
