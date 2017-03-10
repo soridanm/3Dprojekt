@@ -226,8 +226,8 @@ void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //cr
 
 void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
 {
-	playerVP.Width	  = static_cast<FLOAT>(ScreenSize::SCREEN_WIDTH);
-	playerVP.Height	  = static_cast<FLOAT>(ScreenSize::SCREEN_HEIGHT);
+	playerVP.Width	  = static_cast<FLOAT>(SCREEN_RESOLUTION.SCREEN_WIDTH);
+	playerVP.Height	  = static_cast<FLOAT>(SCREEN_RESOLUTION.SCREEN_HEIGHT);
 	playerVP.MinDepth = 0.0f;
 	playerVP.MaxDepth = 1.0f;
 	playerVP.TopLeftX = 0.f;
@@ -243,7 +243,7 @@ void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
 
 bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 {
-	float aspect_ratio = (float)ScreenSize::SCREEN_WIDTH / (float)ScreenSize::SCREEN_HEIGHT;
+	float aspect_ratio = (float)SCREEN_RESOLUTION.SCREEN_WIDTH / (float)SCREEN_RESOLUTION.SCREEN_HEIGHT;
 	float degrees_field_of_view = 90.0f;
 	float near_plane			= 0.1f;
 	float far_plane				= 500.f;

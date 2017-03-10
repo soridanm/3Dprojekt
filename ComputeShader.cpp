@@ -99,8 +99,8 @@ void ComputeShader::CreateRenderTextures(ID3D11Device* Dev)
 	D3D11_TEXTURE2D_DESC texDesc;
 	ZeroMemory(&texDesc, sizeof(texDesc));
 	texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
-	texDesc.Width = ScreenSize::SCREEN_WIDTH;
-	texDesc.Height = ScreenSize::SCREEN_HEIGHT;
+	texDesc.Width = SCREEN_RESOLUTION.SCREEN_WIDTH;
+	texDesc.Height = SCREEN_RESOLUTION.SCREEN_HEIGHT;
 	texDesc.MipLevels = 1U;
 	texDesc.ArraySize = 1U;
 	texDesc.SampleDesc.Count = 1U;
@@ -155,7 +155,10 @@ void ComputeShader::RenderComputeShader(
 
 	DevCon->CSSetShaderResources(0U, 1U, &mRenderTextureSRV);
 
-	DevCon->Dispatch(1U, ScreenSize::SCREEN_HEIGHT, 1U);
+	const UINT squaresWide = SCREEN_RESOLUTION.SCREEN_WIDTH / 20U;
+	const UINT squaresHigh = SCREEN_RESOLUTION.SCREEN_HEIGHT / 20U;
+
+	DevCon->Dispatch(squaresWide, squaresHigh, 1U);
 
 	//TODO: See if this can be done without doing something as drastic as ClearState()
 	DevCon->ClearState(); // Used to make sure that mTempTextureUAV is free to use

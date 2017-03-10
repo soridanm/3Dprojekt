@@ -27,11 +27,31 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Ole32.lib")
 
-namespace ScreenSize
+//namespace ScreenSize
+//{
+//	const UINT SCREEN_WIDTH  = 1024U;
+//	const UINT SCREEN_HEIGHT = 720U;
+//};
+
+struct ScreenSize
 {
-	const UINT SCREEN_WIDTH  = 1024U;
-	const UINT SCREEN_HEIGHT = 720U;
+	ScreenSize(UINT w, UINT h) : SCREEN_WIDTH(w), SCREEN_HEIGHT(h) {}
+
+	const UINT SCREEN_WIDTH;
+	const UINT SCREEN_HEIGHT;
 };
+
+namespace ScreenResolution
+{
+	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U);
+	static const ScreenSize MEDIUM_720p = ScreenSize(1280U, 720U);
+	static const ScreenSize HIGH_1080p	= ScreenSize(1920U, 1080U);
+};
+
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::MEDIUM_720p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HIGH_1080p;
+
 
 enum ShadowQuality: UINT 
 {
