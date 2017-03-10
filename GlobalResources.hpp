@@ -44,14 +44,15 @@ struct ScreenSize
 namespace ScreenResolution
 {
 	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U);
-	static const ScreenSize MEDIUM_720p = ScreenSize(1280U, 720U);
-	static const ScreenSize HIGH_1080p	= ScreenSize(1920U, 1080U);
+	static const ScreenSize HD_720p		= ScreenSize(1280U, 720U);
+	static const ScreenSize FHD_1080p	= ScreenSize(1920U, 1080U);
+	static const ScreenSize QHD_1440p	= ScreenSize(2560U, 1440U);
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::MEDIUM_720p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HIGH_1080p;
-
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
 
 enum ShadowQuality: UINT 
 {

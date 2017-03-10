@@ -155,7 +155,7 @@ void ComputeShader::RenderComputeShader(
 
 	DevCon->CSSetShaderResources(0U, 1U, &mRenderTextureSRV);
 
-	const UINT squaresWide = SCREEN_RESOLUTION.SCREEN_WIDTH / 20U;
+	const UINT squaresWide = SCREEN_RESOLUTION.SCREEN_WIDTH / 40U;
 	const UINT squaresHigh = SCREEN_RESOLUTION.SCREEN_HEIGHT / 20U;
 
 	DevCon->Dispatch(squaresWide, squaresHigh, 1U);
