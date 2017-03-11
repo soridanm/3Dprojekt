@@ -34,6 +34,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 			exit(-1);
 		}
 	}
+
 	moveObjects();
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
@@ -821,7 +822,6 @@ bool ObjectHandler::LoadObjectModel(
 	}
 
 	//create vertices
-	std::vector<Vertex> verticies;
 	Vertex tempVert;
 
 	//store the verticies from the file in a vector
@@ -831,7 +831,7 @@ bool ObjectHandler::LoadObjectModel(
 		tempVert.texCoord = vertTexCoord[vertTCIndex[j]];
 		tempVert.normal = vertNorm[vertNormIndex[j]];
 
-		verticies.push_back(tempVert);
+		object.meshVertexData.push_back(tempVert);
 	}
 
 	//Compute face normals
@@ -853,15 +853,15 @@ bool ObjectHandler::LoadObjectModel(
 		for (int i = 0; i < meshTriangles; ++i)
 		{
 			//get the vector describing one edge of the triangle (edge 0,2)
-			vecX = verticies[indices[(i * 3)]].pos.x - verticies[indices[(i * 3) + 2]].pos.x;
-			vecY = verticies[indices[(i * 3)]].pos.y - verticies[indices[(i * 3) + 2]].pos.y;
-			vecZ = verticies[indices[(i * 3)]].pos.z - verticies[indices[(i * 3) + 2]].pos.z;
+			vecX = object.meshVertexData[indices[(i * 3)]].pos.x - object.meshVertexData[indices[(i * 3) + 2]].pos.x;
+			vecY = object.meshVertexData[indices[(i * 3)]].pos.y - object.meshVertexData[indices[(i * 3) + 2]].pos.y;
+			vecZ = object.meshVertexData[indices[(i * 3)]].pos.z - object.meshVertexData[indices[(i * 3) + 2]].pos.z;
 			edge1 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f); //first edge
 
 														 //get the vector describing one edge of the triangle (edge 2,1)
-			vecX = verticies[indices[(i * 3) + 2]].pos.x - verticies[indices[(i * 3) + 1]].pos.x;
-			vecY = verticies[indices[(i * 3) + 2]].pos.y - verticies[indices[(i * 3) + 1]].pos.y;
-			vecZ = verticies[indices[(i * 3) + 2]].pos.z - verticies[indices[(i * 3) + 1]].pos.z;
+			vecX = object.meshVertexData[indices[(i * 3) + 2]].pos.x - object.meshVertexData[indices[(i * 3) + 1]].pos.x;
+			vecY = object.meshVertexData[indices[(i * 3) + 2]].pos.y - object.meshVertexData[indices[(i * 3) + 1]].pos.y;
+			vecZ = object.meshVertexData[indices[(i * 3) + 2]].pos.z - object.meshVertexData[indices[(i * 3) + 1]].pos.z;
 			edge2 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f); //second edge
 
 														 //Cross multiply to get the un-normalized face normal
@@ -896,7 +896,7 @@ bool ObjectHandler::LoadObjectModel(
 			normalSum = DirectX::XMVector3Normalize(normalSum / facesUsing);
 
 			//store it in the current vertex
-			DirectX::XMStoreFloat3(&verticies[i].normal, normalSum);
+			DirectX::XMStoreFloat3(&object.meshVertexData[i].normal, normalSum);
 
 			//clear normalSum and facesUsing
 			normalSum = DirectX::XMVectorZero();
@@ -934,7 +934,7 @@ bool ObjectHandler::LoadObjectModel(
 
 	D3D11_SUBRESOURCE_DATA vertexBufferData;
 
-	vertexBufferData.pSysMem = &verticies[0];
+	vertexBufferData.pSysMem = &object.meshVertexData[0];
 	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &object.meshVertexBuffer);
 
 	if (objectType == STATIC_OBJECT)

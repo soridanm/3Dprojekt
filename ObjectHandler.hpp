@@ -49,6 +49,7 @@ static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "cPerObjectBuffer size must 
 struct Object
 {
 	//From .obj
+	std::vector<Vertex> meshVertexData;
 	ID3D11Buffer* meshVertexBuffer = nullptr;
 	ID3D11Buffer* meshIndexBuffer = nullptr;
 	ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
