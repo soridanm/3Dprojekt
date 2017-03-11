@@ -214,7 +214,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 	InitializeGraphicsBuffer(Dev);
 
 	
-	quadtree = Quadtree::Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(mObjectHandler.getWorldWidth(), 200.0f, mObjectHandler.getWorldDepth(), 0), 1);
+	quadtree = Quadtree::Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(mObjectHandler.getWorldWidth(), 1000.0f, mObjectHandler.getWorldDepth(), 0), 1);
 	quadtree.frustum=FrustumHandler::FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);

@@ -72,7 +72,7 @@ struct Node {
 	DirectX::XMVECTOR boxMin;
 	DirectX::XMVECTOR boxMax;
 	Node* children[4];
-	std::vector<DirectX::XMFLOAT4>objects;
+	std::vector<Vertex>objects;
 };
 namespace Colors
 {

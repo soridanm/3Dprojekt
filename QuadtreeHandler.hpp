@@ -6,14 +6,14 @@
 
 class Quadtree {
 public:
-	Node node;
+	Node* node;
 	FrustumHandler frustum;
 	int maxLevel = 5;
 	Quadtree(DirectX::XMVECTOR newMin=DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level=5);
 	~Quadtree();
 	void constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level,Node* parent);
-	std::vector<DirectX::XMFLOAT4> getObjects(Node*);
-	void storeObjects(DirectX::XMFLOAT4);
+	std::vector<Vertex> getObjects(Node*);
+	void storeObjects(Vertex,Node*);
 
 	//what more is needed?
 	//store geometry

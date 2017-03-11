@@ -2,7 +2,8 @@
 using namespace DirectX;
 
 Quadtree::Quadtree(XMVECTOR newMin, XMVECTOR newMax, int level) {
-	constructNode(newMin, newMax, level,&node);
+	node = new Node();
+	constructNode(newMin, newMax, level,node);
 }
 
 Quadtree::~Quadtree() {
@@ -15,34 +16,43 @@ void Quadtree::constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax,
 		parent->boxMin = newMin;
 		parent->boxMax = newMax;
 		parent->levels = level;
+		for (int i = 0; i < 4; i++) {
+			parent->children[i] = new Node();
+		}
 		constructNode(newMin, XMVectorSet(xmiddle, XMVectorGetY(newMax), zmiddle, 0), level + 1,parent->children[0]);
 		constructNode(XMVectorSet(XMVectorGetX(newMin), XMVectorGetY(newMin), zmiddle, 0), XMVectorSet(xmiddle, XMVectorGetY(newMax), XMVectorGetZ(newMax), 0), level + 1, parent->children[1]);
 		constructNode(XMVectorSet(xmiddle, XMVectorGetY(newMin), XMVectorGetZ(newMin), 0), XMVectorSet(XMVectorGetX(newMax), XMVectorGetY(newMax), zmiddle, 0), level + 1, parent->children[2]);
 		constructNode(XMVectorSet(xmiddle, XMVectorGetY(newMin), zmiddle, 0), newMax, level + 1, parent->children[3]);
 	}
 }
-void Quadtree::storeObjects(DirectX::XMFLOAT4 box) {
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
-	//
+void Quadtree::storeObjects(Vertex vertex,Node* parent) {
+	if (parent->levels < maxLevel) {
+		float xmiddle = (XMVectorGetX(parent->boxMin) + XMVectorGetX(parent->boxMax)) / 2;
+		float zmiddle = (XMVectorGetZ(parent->boxMin) + XMVectorGetZ(parent->boxMax)) / 2;
+		if (vertex.pos.x < xmiddle) {
+			if (vertex.pos.z < zmiddle) {
+				storeObjects(vertex, parent->children[0]);
+			}
+			else {
+				storeObjects(vertex, parent->children[1]);
+			}
+		}
+		else {
+			if (vertex.pos.z < zmiddle) {
+				storeObjects(vertex, parent->children[2]);
+			}
+			else {
+				storeObjects(vertex, parent->children[3]);
+			}
+		}
+	}
+	else {
+		parent->objects.push_back(vertex);
+	}
 }
 
-std::vector<DirectX::XMFLOAT4> Quadtree::getObjects(Node* child) {
-	std::vector<DirectX::XMFLOAT4> objectsToReturn;
+std::vector<Vertex> Quadtree::getObjects(Node* child) {
+	std::vector<Vertex> objectsToReturn;
 	if (frustum.checkVisible(child->boxMin,child-> boxMax)) {
 		if (child->levels < maxLevel) {
 			for (int i = 0; i < 4; i++) {
