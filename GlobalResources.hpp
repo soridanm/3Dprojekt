@@ -67,6 +67,13 @@ struct BoundingBox {
 	DirectX::XMFLOAT3 boxMin;
 	DirectX::XMFLOAT3 boxMax;
 };
+struct Node {
+	int levels;
+	DirectX::XMVECTOR boxMin;
+	DirectX::XMVECTOR boxMax;
+	Node* children[4];
+	std::vector<DirectX::XMFLOAT4>objects;
+};
 namespace Colors
 {
 	static const DirectX::XMFLOAT3 White = { 1.0f, 1.0f, 1.0f };
