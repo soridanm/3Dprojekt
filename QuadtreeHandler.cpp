@@ -1,22 +1,27 @@
 #include"QuadtreeHandler.hpp"
 using namespace DirectX;
 
-Node::Node(XMVECTOR newMin, XMVECTOR newMax, int level) {
+Quadtree::Quadtree(XMVECTOR newMin, XMVECTOR newMax, int level) {
+	constructNode(newMin, newMax, level,&node);
+}
+
+Quadtree::~Quadtree() {
+
+}
+void Quadtree::constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level,Node* parent) {
 	if (level < maxLevel) {
 		float xmiddle = (XMVectorGetX(newMin) + XMVectorGetX(newMax)) / 2;
 		float zmiddle = (XMVectorGetZ(newMin) + XMVectorGetZ(newMax)) / 2;
-		children[0] = new Node(newMin, XMVectorSet(xmiddle, XMVectorGetY(newMax), zmiddle, 0), level + 1);
-		children[1] = new Node(XMVectorSet(XMVectorGetX(newMin), XMVectorGetY(newMin), zmiddle, 0), XMVectorSet(xmiddle, XMVectorGetY(newMax), XMVectorGetZ(newMax), 0), level + 1);
-		children[2] = new Node(XMVectorSet(xmiddle, XMVectorGetY(newMin), XMVectorGetZ(newMin), 0), XMVectorSet(XMVectorGetX(newMax), XMVectorGetY(newMax), zmiddle, 0), level + 1);
-		children[3] = new Node(XMVectorSet(xmiddle, XMVectorGetY(newMin), zmiddle, 0), newMax, level + 1);
+		parent->boxMin = newMin;
+		parent->boxMax = newMax;
+		parent->levels = level;
+		constructNode(newMin, XMVectorSet(xmiddle, XMVectorGetY(newMax), zmiddle, 0), level + 1,parent->children[0]);
+		constructNode(XMVectorSet(XMVectorGetX(newMin), XMVectorGetY(newMin), zmiddle, 0), XMVectorSet(xmiddle, XMVectorGetY(newMax), XMVectorGetZ(newMax), 0), level + 1, parent->children[1]);
+		constructNode(XMVectorSet(xmiddle, XMVectorGetY(newMin), XMVectorGetZ(newMin), 0), XMVectorSet(XMVectorGetX(newMax), XMVectorGetY(newMax), zmiddle, 0), level + 1, parent->children[2]);
+		constructNode(XMVectorSet(xmiddle, XMVectorGetY(newMin), zmiddle, 0), newMax, level + 1, parent->children[3]);
 	}
 }
-
-Node::~Node() {
-
-}
-
-void Node::storeObjects(DirectX::XMFLOAT4 box) {
+void Quadtree::storeObjects(DirectX::XMFLOAT4 box) {
 	//
 	//
 	//
@@ -36,17 +41,17 @@ void Node::storeObjects(DirectX::XMFLOAT4 box) {
 	//
 }
 
-std::vector<DirectX::XMFLOAT4> Node::getObjects(Node* child) {
+std::vector<DirectX::XMFLOAT4> Quadtree::getObjects(Node* child) {
 	std::vector<DirectX::XMFLOAT4> objectsToReturn;
-	//if (FrustumHandler::checkVisible(boxMin, boxMax)) {
-	//	if (levels < maxLevel) {
-	//		for (int i = 0; i < 4; i++) {
-	//			objectsToReturn.insert(objectsToReturn.end(), getObjects(children[i]).begin(), getObjects(children[i]).end());
-	//		}
-	//	}
-	//	else {
-	//		objectsToReturn.insert(objectsToReturn.end(),objects.begin(), objects.end());
-	//	}
-	//}
+	if (frustum.checkVisible(child->boxMin,child-> boxMax)) {
+		if (child->levels < maxLevel) {
+			for (int i = 0; i < 4; i++) {
+				objectsToReturn.insert(objectsToReturn.end(), getObjects(child->children[i]).begin(), getObjects(child->children[i]).end());
+			}
+		}
+		else {
+			objectsToReturn.insert(objectsToReturn.end(),child->objects.begin(), child->objects.end());
+		}
+	}
 	return objectsToReturn;
 }

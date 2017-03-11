@@ -4,17 +4,14 @@
 #include "FrustumHandler.hpp"
 #include <vector>
 
-class Node {
+class Quadtree {
 public:
-
-	int levels;
+	Node node;
+	FrustumHandler frustum;
 	int maxLevel = 5;
-	DirectX::XMVECTOR boxMin;
-	DirectX::XMVECTOR boxMax;
-	Node* children[4];
-	std::vector<DirectX::XMFLOAT4>objects;
-	Node(DirectX::XMVECTOR newMin=DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level=5);
-	~Node();
+	Quadtree(DirectX::XMVECTOR newMin=DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level=5);
+	~Quadtree();
+	void constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level,Node* parent);
 	std::vector<DirectX::XMFLOAT4> getObjects(Node*);
 	void storeObjects(DirectX::XMFLOAT4);
 
