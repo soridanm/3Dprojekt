@@ -8,7 +8,7 @@
 #define OBJECTHANDLER_HPP
 
 #include "GlobalResources.hpp"
-	
+#include "QuadtreeHandler.hpp"	
 enum ObjectType : int
 {
 	DYNAMIC_OBJECT,
@@ -85,7 +85,7 @@ public:
 	
 	ObjectHandler();
 	~ObjectHandler();
-
+	Quadtree quadtree;
 	void InitializeObjects(ID3D11Device* Dev);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);

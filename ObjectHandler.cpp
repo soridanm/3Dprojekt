@@ -28,32 +28,49 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	{
 		exit(-1);
 	}
-	for (int i = 0; i < 10; i++) {
+	for (int i = 0; i < 900; i++) {
 		if (!LoadObjectModel(Dev, L"wt_teapot.obj", STATIC_OBJECT, false, true))
 		{
 			exit(-1);
 		}
 	}
-
 	moveObjects();
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
+	quadtree = Quadtree::Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(WORLD_WIDTH, 1000.0f,WORLD_DEPTH, 0), 1);
+	for (UINT i = 0; i < mStaticObjects.size();i++) {
+		DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(mStaticObjects[i].worldMatrixPerObject);
+		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) {
+			DirectX::XMVECTOR modelVertexPos = DirectX::XMLoadFloat3(&mStaticObjects[i].meshVertexData[j].pos);
+			DirectX::XMVECTOR worldVertexPos = DirectX::XMVector3Transform(modelVertexPos, world);
+			quadtree.storeObjects(i, worldVertexPos, quadtree.root);
+		}
+	}
 }
 
 void ObjectHandler::moveObjects() {
 
-	for (int i = 0;i < mStaticObjects.size();i++) {
-		
-		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
-		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0,0,0);
-		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation( 10.f * (i + 1.0f),WORLD_HEIGHT[10 * (i + 1)][10 * (i + 1)], 10.0f * (i + 1.0f));
+	for (int i = 0; i < mStaticObjects.size(); i++) {
+			DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
+			DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0, 0, 0);
+			DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(5.f * (i/30 + 1.0f), WORLD_HEIGHT[5 * (i%30 + 1)][5 * (i/30 + 1)], 5.0f * (i%30 + 1.0f));
 
-		using DirectX::operator*;
-		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+			using DirectX::operator*;
+			DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
 
-		mStaticObjects[i].worldMatrixPerObject= DirectX::XMMatrixTranspose(finalMatrix);
-	}
+			mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
+		}
+
+	//for (int i = 0;i < mStaticObjects.size();i++) {
+	//	
+	//	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
+	//	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0,0,0);
+	//	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation( 5.f * (i + 1.0f),WORLD_HEIGHT[5 * (i + 1)][5 * (i + 1)], 5.0f * (i + 1.0f));
+	//	using DirectX::operator*;
+	//	DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+	//	mStaticObjects[i].worldMatrixPerObject= DirectX::XMMatrixTranspose(finalMatrix);
+	//}
 }
 
 //TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
