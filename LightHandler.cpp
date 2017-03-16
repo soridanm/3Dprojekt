@@ -58,7 +58,7 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 	CreateLightBuffer(Dev);
 
 	DirectX::XMFLOAT4 light_position = { 10.0f, 10.0f, 100.0f, 1.0f };
-	DirectX::XMFLOAT3 light_color = Colors::Red;
+	DirectX::XMFLOAT3 light_color = Colors::Black;
 	int has_s = 0;
 	float c_att = 1.0f;
 	float l_att = 0.0001f;
@@ -121,12 +121,12 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 }
 
 //TODO: look up what format is best to use. Do this for the GBuffer as well
-bool LightHandler::CreateShadowMap(ID3D11Device* Dev, ShadowQuality shadowQuality)
+bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
 {
 	//Shadow map texture desc
 	D3D11_TEXTURE2D_DESC smTexDesc;
-	smTexDesc.Width = shadowQuality;
-	smTexDesc.Height = shadowQuality;
+	smTexDesc.Width = SHADOW_QUALITY.SHADOW_MAP_SIZE;
+	smTexDesc.Height = SHADOW_QUALITY.SHADOW_MAP_SIZE;
 	smTexDesc.MipLevels = 1;
 	smTexDesc.ArraySize = 1;
 	smTexDesc.Format = DXGI_FORMAT_R32_TYPELESS;

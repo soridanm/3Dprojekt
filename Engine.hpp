@@ -13,7 +13,7 @@ public:
 	//Engine(const Engine& other);
 	~Engine();
 
-	bool Initialize(ShadowQuality shadowQuality = SHADOWS_HIGH);
+	bool Initialize();
 	bool Render();
 
 	HRESULT eCreateDirect3DContext(HWND &wndHandle);
@@ -34,11 +34,6 @@ public:
 	GraphicsHandler mGraphicsHandler;
 	TimeHandler		mTimeHandler;
 private:
-
-
-	//std::vector<Object> mObjects;
-
-
 
 };
 

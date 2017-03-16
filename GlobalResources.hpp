@@ -57,14 +57,29 @@ static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
 
-enum ShadowQuality: UINT 
+struct ShadowQuality
 {
-	SHADOWS_LOW		= 256U,
-	SHADOWS_MEDIUM	= 512U,
-	SHADOWS_HIGH	= 1024U,
-	SHADOWS_EXTREME = 2048U,
-	SHADOWS_ULTRA	= 4096U
+	ShadowQuality(UINT w, LPCSTR s) 
+		: SHADOW_MAP_SIZE(w), SIZE_STRING(s) {}
+
+	const UINT SHADOW_MAP_SIZE;
+	const LPCSTR SIZE_STRING;
 };
+
+namespace ShadowMapPresets
+{
+	static const ShadowQuality LOW		= ShadowQuality(256U, "256\n");
+	static const ShadowQuality MEDIUM	= ShadowQuality(512U, "512\n");
+	static const ShadowQuality HIGH		= ShadowQuality(1024U, "1024");
+	static const ShadowQuality EXTREME	= ShadowQuality(2048U, "2048\n");
+	static const ShadowQuality ULTRA	= ShadowQuality(4096U, "4096\n");
+};
+
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::LOW;
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::MEDIUM;
+static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::HIGH;
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::EXTREME;
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::ULTRA;
 
 enum RenderPassID
 {

@@ -137,6 +137,7 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 	return true;
 }
 
+//TODO: Look through settings again before handing in
 bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
 {
 	HRESULT hr;
@@ -203,13 +204,13 @@ void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPass
 
 // public ------------------------------------------------------------------------------
 
-bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality)
+bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality);
+	mCameraHandler.InitializeCamera(Dev, DevCon);
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
-	mLightHandler.CreateShadowMap(Dev, shadowQuality);
+	mLightHandler.CreateShadowMap(Dev);
 
 	mObjectHandler.InitializeObjects(Dev);
 
@@ -391,13 +392,20 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 		exit(-1);
 	}
 
+
+	D3D_SHADER_MACRO LightPassFragmentMacros[] =
+	{
+		"SHADOW_MAP_SIZE",  SHADOW_QUALITY.SIZE_STRING,
+		NULL, NULL
+	};
 	//compile and create pixel shader
 	ID3DBlob* pPS3 = nullptr;
-	if (!CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0"))
+	if (!CompileShader(&pPS3, L"LightFragment.hlsl", "PS_main", "ps_5_0", LightPassFragmentMacros))
 	{
 		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile light pass pixel shader\n\n");
 		exit(-1);
 	}
+
 	gHR = Dev->CreatePixelShader(pPS3->GetBufferPointer(), pPS3->GetBufferSize(), nullptr, &mLightPassPixelShader);
 	if (FAILED(gHR)) 
 	{
