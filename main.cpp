@@ -11,7 +11,7 @@
 #include "Engine.hpp"
 
 
-HWND InitWindow(HINSTANCE hInstance, Engine engine);
+HWND InitWindow(HINSTANCE hInstance);
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
 
@@ -20,7 +20,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	Engine DemoEngine;
 	
 	MSG msg = { 0 };
-	HWND wndHandle = InitWindow(hInstance, DemoEngine); //1. Skapa fönster
+	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
 	//InitDirectInput(hInstance, wndHandle);//creates input
 		
 	DemoEngine.mGraphicsHandler.mCameraHandler.InitializeDirectInput(hInstance, wndHandle);
@@ -81,7 +81,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	return (int)msg.wParam;
 }
 
-HWND InitWindow(HINSTANCE hInstance, Engine engine)
+HWND InitWindow(HINSTANCE hInstance)
 {
 	WNDCLASSEX wcex		= { 0 };
 	wcex.cbSize			= sizeof(WNDCLASSEX);
@@ -92,8 +92,6 @@ HWND InitWindow(HINSTANCE hInstance, Engine engine)
 	if (!RegisterClassEx(&wcex))
 		return false;
 
-	//LONG SCREEN_WIDTH = engine.mGraphicsHandler.mCameraHandler.GetScreenWidth();
-	//LONG SCREEN_HEIGHT = engine.mGraphicsHandler.mCameraHandler.GetScreenHeight();
 	
 	RECT rc = { 0L, 0L,  static_cast<LONG>(SCREEN_RESOLUTION.SCREEN_WIDTH), static_cast<LONG>(SCREEN_RESOLUTION.SCREEN_HEIGHT) };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);

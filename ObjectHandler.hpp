@@ -127,8 +127,8 @@ private:
 	ID3D11Buffer* gSquareVertBuffer = nullptr;
 	ID3D11ShaderResourceView* mTextureView = nullptr;
 	ID3D11Buffer* mHeightMapWorldBuffer = nullptr;
-	int NUMBER_OF_FACES = 0;
-	int NUMBER_OF_VERTICES = 0;
+	unsigned int NUMBER_OF_FACES = 0;
+	unsigned int NUMBER_OF_VERTICES = 0;
 	float WORLD_HEIGHT[200][200];
 
 	//Loading .obj files

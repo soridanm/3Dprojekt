@@ -130,7 +130,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	{
 		static float rotation = 0.0f;
 		rotation += 0.001f;
-		int scale = 10.0f;
+		float scale = 10.0f;
 		//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
 
 		using DirectX::operator*;
@@ -152,7 +152,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity()));
 	}
 
-	HRESULT hr;
+//	HRESULT hr;
 
 	DevCon->Map((*objectArray)[objectIndex].perObjectWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
 	// copy memory from CPU to GPU of the entire struct
@@ -362,7 +362,7 @@ bool ObjectHandler::LoadObjectModel(
 				std::wstring vertPart;
 				int whichPart = 0; //vPos = 0, vTexCoord = 1, vNorm = 2
 								   //Parse the string
-				for (int j = 0; j < VertDef.length(); j++)
+				for (unsigned int j = 0; j < VertDef.length(); j++)
 				{
 					if (VertDef[j] != '/')		//if there's no divider add char to vertPart
 						vertPart += VertDef[j];
@@ -478,7 +478,7 @@ bool ObjectHandler::LoadObjectModel(
 
 				//TODO: see if this duplicate code can be eliminated
 				//parse this string (same procedure as in the for i-loop)
-				for (int j = 0; j < VertDef.length(); j++)
+				for (unsigned int j = 0; j < VertDef.length(); j++)
 				{
 					if (VertDef[j] != '/')		//if there's no divider add char to vertPart
 						vertPart += VertDef[j];
@@ -715,7 +715,7 @@ bool ObjectHandler::LoadObjectModel(
 			}
 			//check if this texture has already been loaded
 			bool alreadyLoaded = false;
-			for (int i = 0; i < object.textureNameArray.size(); ++i)
+			for (unsigned int i = 0; i < object.textureNameArray.size(); ++i)
 			{
 				if (fileNamePath == object.textureNameArray[i])
 				{
@@ -775,7 +775,7 @@ bool ObjectHandler::LoadObjectModel(
 	for (int i = 0; i < object.nrOfMeshSubsets; ++i)
 	{
 		bool hasMat = false;
-		for (int j = 0; j < materialVector.size(); ++j)
+		for (unsigned int j = 0; j < materialVector.size(); ++j)
 		{
 			if (meshMaterials[i] == materialVector[j].matName)
 			{
@@ -860,7 +860,7 @@ bool ObjectHandler::LoadObjectModel(
 
 			using DirectX::operator/;
 			  //divide the unnormalized normal by the number of faces sharing the vertex and the normalize it to get the actual normal
-			normalSum = DirectX::XMVector3Normalize(normalSum / facesUsing);
+			normalSum = DirectX::XMVector3Normalize(normalSum / static_cast<float>(facesUsing));
 
 			//store it in the current vertex
 			DirectX::XMStoreFloat3(&verticies[i].normal, normalSum);
@@ -926,7 +926,7 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	unsigned char height;
 
 	//open and load file
-	fileptr = fopen(filename, "rb");
+	fopen_s(&fileptr, filename, "rb");
 	if (fileptr == NULL) {
 		return false;
 	}
@@ -955,7 +955,7 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 			height = bitmapImage[offset];
 			index = (hminfo.worldHeight*j) + i;
 
-			hminfo.heightMap[index] = DirectX::XMFLOAT3(i, static_cast<float>(height) / smoothingValue, j);
+			hminfo.heightMap[index] = DirectX::XMFLOAT3(static_cast<float>(i), static_cast<float>(height) / smoothingValue, static_cast<float>(j));
 			offset += 3;
 		}
 	}
@@ -972,8 +972,8 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	//creating what is needed for the heightmap
 	HeightMapInfo hminfo;
 	LoadHeightMap("heightmap.bmp", hminfo);
-	int columns = hminfo.worldWidth;
-	int rows = hminfo.worldHeight;
+	unsigned int columns = hminfo.worldWidth;
+	unsigned int rows = hminfo.worldHeight;
 
 	NUMBER_OF_VERTICES = rows*columns;
 	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
@@ -1018,11 +1018,11 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	// Change the scale of the texture.
 	// Definitely not the best (nor the most elegant) way to do it but at least it works
 	DirectX::XMVECTOR temp;
-	for (int i = 0; i < NUMBER_OF_VERTICES; i++)
+	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
 	{
 		using DirectX::operator*;
 		temp = DirectX::XMLoadFloat2(&mapVertex[i].texCoord);
-		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05);
+		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05f);
 	}
 
 	//calculates the normal for each face
@@ -1031,7 +1031,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	float vecX, vecY, vecZ;
 	DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	for (int i = 0; i < NUMBER_OF_FACES; i++) {
+	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++) {
 		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
 		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
 		vecZ = mapVertex[drawOrder[(i * 3)]].pos.z - mapVertex[drawOrder[(i * 3) + 2]].pos.z;
@@ -1046,27 +1046,31 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		tempNormal.push_back(nonNormalized);
 	}
 
-	//this part is still really slow
+	//this part is still really slow. NOTE: Obly in Debug configurations
 	//calculates the average normal in order to make the world smooth
 	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	int facesUsing = 0;
-	float tx, ty, tz;
-	for (int i = 0; i < NUMBER_OF_VERTICES; i++) {
-		for (int j = 0; j < NUMBER_OF_FACES; j++) {
-			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
-				tx = DirectX::XMVectorGetX(averageNormal) + tempNormal[j].x;
-				ty = DirectX::XMVectorGetY(averageNormal) + tempNormal[j].y;
-				tz = DirectX::XMVectorGetZ(averageNormal) + tempNormal[j].z;
+	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	unsigned int facesUsing = 0;
 
-				averageNormal = DirectX::XMVectorSet(tx, ty, tz, 0.0f);
+	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) {
+		for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) {
+			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+				avgNorm.x += tempNormal[j].x;
+				avgNorm.y += tempNormal[j].y;
+				avgNorm.z += tempNormal[j].z;
+
 				facesUsing++;
 			}
 		}
-		averageNormal = averageNormal / facesUsing;
+		avgNorm.x /= facesUsing;
+		avgNorm.y /= facesUsing;
+		avgNorm.z /= facesUsing;
+
+		averageNormal = DirectX::XMLoadFloat3(&avgNorm);
 		averageNormal = DirectX::XMVector3Normalize(averageNormal);
-		mapVertex[i].normal.x = DirectX::XMVectorGetX(averageNormal);
-		mapVertex[i].normal.y = DirectX::XMVectorGetY(averageNormal);
-		mapVertex[i].normal.z = DirectX::XMVectorGetZ(averageNormal);
+
+		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
+
 		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		facesUsing = 0;
 	}
