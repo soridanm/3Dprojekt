@@ -49,20 +49,24 @@ void Quadtree::storeObjects(UINT index,DirectX::XMVECTOR vertex,Node* parent) {
 		}
 	}
 	else {
-		parent->objects.push_back(index);
+		if (std::find(parent->objects.begin(), parent->objects.end(), index) == parent->objects.end()) {
+			parent->objects.push_back(index);
+		}
 	}
 }
 
-std::vector<UINT> Quadtree::getObjects(Node* child) {
+std::vector<UINT> Quadtree::getObjects(Node* parent) {
 	std::vector<UINT> objectsToReturn;
-	if (frustum.checkVisible(child->boxMin,child-> boxMax)) {
-		if (child->levels < maxLevel) {
+	if (frustum.checkVisible(parent->boxMin, parent-> boxMax)) {
+		std::vector<UINT> currentObjects;
+		if (parent->levels < maxLevel) {
 			for (int i = 0; i < 4; i++) {
-				objectsToReturn.insert(objectsToReturn.end(), getObjects(child->children[i]).begin(), getObjects(child->children[i]).end());
+				currentObjects = getObjects(parent->children[i]);
+				objectsToReturn.insert(objectsToReturn.end(), currentObjects.begin(), currentObjects.end());
 			}
 		}
 		else {
-			objectsToReturn.insert(objectsToReturn.end(),child->objects.begin(), child->objects.end());
+			objectsToReturn.insert(objectsToReturn.end(), parent->objects.begin(), parent->objects.end());
 		}
 	}
 	return objectsToReturn;

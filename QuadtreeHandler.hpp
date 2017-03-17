@@ -8,7 +8,7 @@ class Quadtree {
 public:
 	Node* root;
 	FrustumHandler frustum;
-	int maxLevel = 5;
+	int maxLevel = 6;
 	Quadtree(DirectX::XMVECTOR newMin=DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level=5);
 	~Quadtree();
 	void constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level,Node* parent);

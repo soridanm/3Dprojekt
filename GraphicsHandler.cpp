@@ -139,7 +139,7 @@ bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
 	HRESULT hr;
 
 	D3D11_RASTERIZER_DESC BFSstate;
-	BFSstate.FillMode = D3D11_FILL_WIREFRAME;
+	BFSstate.FillMode = D3D11_FILL_SOLID;
 	BFSstate.CullMode = D3D11_CULL_NONE;
 	BFSstate.FrontCounterClockwise	= FALSE;
 	BFSstate.DepthBias				= 0;
@@ -521,12 +521,28 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	//-----------quadtree----------
-	mObjectHandler.SetQuadtreeBuffer(DevCon, GEOMETRY_PASS);
-	DevCon->DrawIndexed(mObjectHandler.mQuadtree.nrOfvertexes, 0, 0);
+	//mObjectHandler.SetQuadtreeBuffer(DevCon, GEOMETRY_PASS);
+	//DevCon->DrawIndexed(mObjectHandler.mQuadtree.nrOfvertexes, 0, 0);
 
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff goes here
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
+	//for (size_t i = 0; i < (*objectArray).size(); i++)
+	//{
+	//	for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
+	//	{
+	//		mObjectHandler.SetObjectBufferWithIndex(DevCon, GEOMETRY_PASS, STATIC_OBJECT, i, j);
+
+	//		int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
+	//		int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
+	//		//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
+	//		//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+
+	//		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
+	//	}
+	//}
+
+	std::vector<UINT> objectsToRender = mObjectHandler.mQuadtree.getObjects(mObjectHandler.mQuadtree.root);
 	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
 		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
