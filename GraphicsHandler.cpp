@@ -527,6 +527,8 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff goes here
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
+
+	// --------------------- RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE ----------------------------------------
 	//for (size_t i = 0; i < (*objectArray).size(); i++)
 	//{
 	//	for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
@@ -541,18 +543,20 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	//		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 	//	}
 	//}
+	// --------------------- END RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE ----------------------------------------
 
-	std::vector<UINT> objectsToRender = mObjectHandler.mQuadtree.getObjects(mObjectHandler.mQuadtree.root);
-	for (size_t i = 0; i < (*objectArray).size(); i++)
+
+	int objInd;
+	std::vector<UINT> toDrawIndexes = mObjectHandler.mQuadtree.getObjects(mObjectHandler.mQuadtree.root);
+	for (size_t i = 0; i < toDrawIndexes.size(); i++)
 	{
-		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
+		objInd = toDrawIndexes[i];
+		for (int j = 0; j < (*objectArray)[objInd].GetNrOfMeshSubsets(); j++)
 		{
-			mObjectHandler.SetObjectBufferWithIndex(DevCon, GEOMETRY_PASS, STATIC_OBJECT, i, j);
+			mObjectHandler.SetObjectBufferWithIndex(DevCon, GEOMETRY_PASS, STATIC_OBJECT, objInd, j);
 
-			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
-			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
-			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
+			int indexStart = (*objectArray)[objInd].meshSubsetIndexStart[j];
+			int indexDrawAmount = (*objectArray)[objInd].meshSubsetIndexStart[j + 1] - indexStart;
 
 			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 		}

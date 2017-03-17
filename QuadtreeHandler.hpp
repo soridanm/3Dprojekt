@@ -9,11 +9,11 @@ public:
 	Node* root;
 	FrustumHandler frustum;
 	int maxLevel = 6;
-	Quadtree(DirectX::XMVECTOR newMin=DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level=5);
+	Quadtree(DirectX::XMVECTOR newMin = DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level = 5);
 	~Quadtree();
-	void constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level,Node* parent);
-	std::vector<UINT> getObjects(Node*);
-	void storeObjects(UINT, DirectX::XMVECTOR , Node*);
+	void constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level, Node* parent);
+	std::vector<UINT> getObjects(Node* node);
+	void storeObjects(UINT index, DirectX::XMVECTOR vector, Node* node);
 
 	std::vector<Vertex> getVertexes(Node*);
 	ID3D11Buffer* quadVertBuffer = nullptr;
