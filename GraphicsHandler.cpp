@@ -213,7 +213,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	InitializeGraphicsBuffer(Dev);
 
-	mObjectHandler.quadtree.frustum=FrustumHandler::FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
+	mObjectHandler.quadtree.frustum = FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
 
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
@@ -468,7 +468,7 @@ void GraphicsHandler::SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon)
 	//DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 
 	//construct frustum again every frame
-	mObjectHandler.quadtree.frustum = FrustumHandler::FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
+	mObjectHandler.quadtree.frustum = FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
 
 	ID3D11RenderTargetView* renderTargets[] =
 	{
@@ -543,7 +543,7 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	}
 
 	// ------------------------------ Dynamic Objects ------------------------------------------------------
-	// NOTE: Quad-tree stuff goes here
+	// NOTE: Quad-tree stuff does NOT go here
 	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
 	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
@@ -608,7 +608,7 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 	// ------------------------------ Static Objects ------------------------------------------------------
-	// NOTE: Quad-tree stuff goes here
+	// NOTE: Quad-tree stuff does NOT go here
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
 	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
