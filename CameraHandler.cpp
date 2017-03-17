@@ -159,7 +159,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 
 	//closes the program
 	if (keyboardState[DIK_ESCAPE] & 0x80) {
-		PostMessage(hwnd, WM_DESTROY, 0, 0);
+		//PostMessage(hwnd, WM_DESTROY, 0, 0);
 	}
 	//all the different movements
 	if (keyboardState[DIK_LSHIFT] & 0x80) {

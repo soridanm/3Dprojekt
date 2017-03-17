@@ -19,7 +19,7 @@ public:
 	ID3D11Buffer* quadVertBuffer = nullptr;
 	ID3D11Buffer* quadIndexBuffer = nullptr;
 	ID3D11Buffer* quadtreeWorldBuffer = nullptr;
-	ID3D11Buffer* quadtreeWorldBufferData = nullptr;
+	//ID3D11Buffer* quadtreeWorldBufferData = nullptr; //DATA IS NOT A POINTER
 	void createQuadLines(ID3D11Device*);
 	int nrOfvertexes;
 };

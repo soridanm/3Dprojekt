@@ -85,7 +85,6 @@ public:
 	
 	ObjectHandler();
 	~ObjectHandler();
-	Quadtree quadtree;
 	void InitializeObjects(ID3D11Device* Dev);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
@@ -104,9 +103,10 @@ public:
 	void insertToQuadtree();
 	//std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
 
-	//bool SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
-	//cPerObjectBuffer quadtreeWorldBufferData = cPerObjectBuffer();
+	bool SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
+	cPerObjectBuffer quadtreeWorldBufferData = cPerObjectBuffer();
 
+	Quadtree mQuadtree; //Should probably be a member of GraphicsHandler.hpp instead
 private:
 	//TODO: Turn some of these into member variables
 	bool LoadObjectModel(
