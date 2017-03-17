@@ -60,13 +60,6 @@ struct Vertex {
 	DirectX::XMFLOAT2 texCoord;
 	DirectX::XMFLOAT3 normal;
 };
-struct BoundingBox {
-	BoundingBox(){}
-	BoundingBox(float x, float y, float z, float a, float b, float c)
-		:boxMin(x, y, z), boxMax(a, b, c) {}
-	DirectX::XMFLOAT3 boxMin;
-	DirectX::XMFLOAT3 boxMax;
-};
 struct Node {
 	int levels;
 	DirectX::XMVECTOR boxMin;

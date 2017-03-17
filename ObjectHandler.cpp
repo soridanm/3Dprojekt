@@ -38,7 +38,11 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
 	quadtree = Quadtree::Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(WORLD_WIDTH, 1000.0f,WORLD_DEPTH, 0), 1);
-	for (UINT i = 0; i < mStaticObjects.size();i++) {
+	insertToQuadtree();
+	quadtree.createQuadLines(Dev);
+}
+void ObjectHandler::insertToQuadtree() {
+	for (UINT i = 0; i < mStaticObjects.size(); i++) {
 		DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(mStaticObjects[i].worldMatrixPerObject);
 		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) {
 			DirectX::XMVECTOR modelVertexPos = DirectX::XMLoadFloat3(&mStaticObjects[i].meshVertexData[j].pos);
@@ -47,7 +51,6 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 		}
 	}
 }
-
 void ObjectHandler::moveObjects() {
 
 	for (int i = 0; i < mStaticObjects.size(); i++) {
@@ -133,6 +136,66 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	
 	return true;
 }
+
+//bool ObjectHandler::SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
+//{
+//	UINT32 squareVertexSize = sizeof(float) * 8;
+//	UINT32 offset = 0;
+//
+//	//set textures and constant buffers
+//	if (passID == GEOMETRY_PASS)
+//	{
+//		DevCon->PSSetShaderResources(0, 1, &mTextureView);
+//	}
+//	//DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
+//
+//	//HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
+//
+//	DevCon->IASetIndexBuffer(quadtree.quadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
+//	DevCon->IASetVertexBuffers(0, 1, &quadtree.quadVertBuffer, &squareVertexSize, &offset);
+//
+//	//HEIGHT-MAP END ---------------------------------------------------------------------------
+//
+//	//// update per-object buffer to spin cube
+//	static float rotation = 0.0f;
+//	//rotation += CUBE_ROTATION_SPEED;
+//
+//	DirectX::XMStoreFloat4x4(&quadtreeWorldBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
+//
+//	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
+//	DevCon->Map(quadtree.quadtreeWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+//	// copy memory from CPU to GPU of the entire struct
+//	memcpy(worldMatrixPtr.pData, &quadtreeWorldBufferData, sizeof(cPerObjectBuffer));
+//	// Unmap constant buffer so that we can use it again in the GPU
+//	DevCon->Unmap(quadtree.quadtreeWorldBuffer, 0);
+//	// set resource to Geometry Shader
+//	if (passID == GEOMETRY_PASS)
+//	{
+//		DevCon->GSSetConstantBuffers(1, 1, &quadtree.quadtreeWorldBuffer);
+//	}
+//	if (passID == SHADOW_PASS)
+//	{
+//		DevCon->VSSetConstantBuffers(1, 1, &quadtree.quadtreeWorldBuffer);
+//	}
+//
+//	// Map material properties buffer
+//
+//	//mHeightMapMaterialBufferData = Materials::Grass;
+//	//mHeightMapMaterialBufferData.HasTexture = 1;
+//
+//	//D3D11_MAPPED_SUBRESOURCE materialPtr;
+//	//DevCon->Map(mHeightMapMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+//	//memcpy(materialPtr.pData, &mHeightMapMaterialBufferData, sizeof(cMaterialBuffer));
+//	//DevCon->Unmap(mHeightMapMaterialBuffer, 0);
+//	//if (passID == GEOMETRY_PASS)
+//	//{
+//	//	DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
+//	//}
+//	//new code ----------------------------------------------------------------------------------------------
+//
+//	return true;
+//}
+
 
 //TODO: Implement this better for multiple objects
 //TODO: Probably a memory leak here
@@ -1150,7 +1213,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
 	vertexBufferData.pSysMem = &mapVertex[0];
 	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
-
 }
 
 //used in InitializeObjects
@@ -1182,6 +1244,18 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 		OutputDebugString(L"\nObjectHandler::CreatePerObjectConstantBuffers() Failed to create buffer for height map\n\n");
 		exit(-1);
 	}
+
+
+	//// Quadtree
+	//DirectX::XMStoreFloat4x4(&quadtreeWorldBufferData.World, world);
+	//InitData.pSysMem = &quadtreeWorldBufferData;
+	//hr = Dev->CreateBuffer(&WBufferDesc, &InitData, &quadtree.quadtreeWorldBuffer);
+	//if (FAILED(hr))
+	//{
+	//	OutputDebugString(L"\nObjectHandler::CreatePerObjectConstantBuffers() Failed to create buffer for quadtree\n\n");
+	//	exit(-1);
+	//}
+
 
 	// Static Objects
 	for (size_t i = 0; i < mStaticObjects.size(); i++)

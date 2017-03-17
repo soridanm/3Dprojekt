@@ -15,8 +15,13 @@ public:
 	std::vector<UINT> getObjects(Node*);
 	void storeObjects(UINT, DirectX::XMVECTOR , Node*);
 
-	//what more is needed?
-	//store geometry
+	std::vector<Vertex> getVertexes(Node*);
+	ID3D11Buffer* quadVertBuffer = nullptr;
+	ID3D11Buffer* quadIndexBuffer = nullptr;
+	ID3D11Buffer* quadtreeWorldBuffer = nullptr;
+	ID3D11Buffer* quadtreeWorldBufferData = nullptr;
+	void createQuadLines(ID3D11Device*);
+	int nrOfvertexes;
 };
 
 

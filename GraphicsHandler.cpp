@@ -139,7 +139,7 @@ bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
 	HRESULT hr;
 
 	D3D11_RASTERIZER_DESC BFSstate;
-	BFSstate.FillMode = D3D11_FILL_SOLID;
+	BFSstate.FillMode = D3D11_FILL_WIREFRAME;
 	BFSstate.CullMode = D3D11_CULL_NONE;
 	BFSstate.FrontCounterClockwise	= FALSE;
 	BFSstate.DepthBias				= 0;
@@ -519,6 +519,10 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	SetGeometryPassShaderResources(DevCon);
 	mObjectHandler.SetHeightMapBuffer(DevCon, GEOMETRY_PASS);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
+
+	//-----------quadtree----------
+	//mObjectHandler.SetQuadtreeBuffer(DevCon, GEOMETRY_PASS);
+	//DevCon->DrawIndexed(mObjectHandler.quadtree.nrOfvertexes, 0, 0);
 
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff goes here

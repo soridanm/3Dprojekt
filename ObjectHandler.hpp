@@ -101,7 +101,12 @@ public:
 	int getWorldWidth();
 	//int GetNrOfMeshSubsets();
 	void moveObjects();
+	void insertToQuadtree();
 	//std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
+
+	//bool SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
+	//cPerObjectBuffer quadtreeWorldBufferData = cPerObjectBuffer();
+
 private:
 	//TODO: Turn some of these into member variables
 	bool LoadObjectModel(

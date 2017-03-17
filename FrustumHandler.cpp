@@ -53,6 +53,7 @@ FrustumHandler::FrustumHandler(DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT4
 		planes[i].d /= length;
 	}
 }
+
 FrustumHandler::~FrustumHandler() {
 
 }
