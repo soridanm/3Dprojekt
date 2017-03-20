@@ -10,7 +10,7 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	mShadowMapBuffer = nullptr;
 	freemoovingCamera = true;
 	CAM_POS		= CAMERA_STARTING_POS;
-	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 20.0f, 20.0f, 0.0f);
+	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 5.0f, 20.0f, 0.0f);
 	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 	CAM_RIGHT	= DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 	CAM_UP		= DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -43,13 +43,13 @@ DirectX::XMFLOAT4 CameraHandler::GetCameraPosition()
 void CameraHandler::UpdateCamera()
 {
 	//limits cam pitch in order to not spin around
-	if (CAM_PITCH < -1.5f)
+	if (CAM_PITCH < -3.1414926535897932383279502884197/2.0f)
 	{
-		CAM_PITCH = -1.5f;
+		CAM_PITCH = -3.1414926535897932383279502884197 / 2.0f;
 	}
-	if (CAM_PITCH > 1.5f)
+	if (CAM_PITCH > 3.1414926535897932383279502884197 / 2.0f)
 	{
-		CAM_PITCH = 1.5f;
+		CAM_PITCH = 3.1414926535897932383279502884197 / 2.0f;
 	}
 	DirectX::XMMATRIX CAM_ROT_MAT;
 	//transforms the cameras target
@@ -81,7 +81,7 @@ void CameraHandler::UpdateCamera()
 	//following terrain
 	int a= (int)DirectX::XMVectorGetX(CAM_POS), b =(int) DirectX::XMVectorGetZ(CAM_POS);
 	if (a > 0 && b > 0 && a < terrain.worldDepth && b < terrain.worldWidth&&!freemoovingCamera) {
-		CAM_POS = DirectX::XMVectorSet(DirectX::XMVectorGetX(CAM_POS), terrain.worldHeight[b][a] + 3, DirectX::XMVectorGetZ(CAM_POS), 1.0f);
+		CAM_POS = DirectX::XMVectorSet(DirectX::XMVectorGetX(CAM_POS), terrain.worldHeight[b][a] + 5, DirectX::XMVectorGetZ(CAM_POS), 1.0f);
 	}
 
 	MOVE_LR = 0.0f;
@@ -205,7 +205,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	//reset camera directions and position
 	if (keyboardState[DIK_Q] & 0x80) {
 		CAM_POS = CAMERA_STARTING_POS;
-		CAM_TARGET = DirectX::XMVectorSet(0.0f, 20.0f, 20.0f, 0.0f);
+		CAM_TARGET = DirectX::XMVectorSet(5.0f, 5.0f, 5.0f, 0.0f);
 		CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
 		CAM_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
 		CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
@@ -262,12 +262,12 @@ void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
 bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 {
 	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
-	float degrees_field_of_view = 90.0f;
+	float degrees_field_of_view = 90.f;
 	float near_plane			= 0.1f;
 	float far_plane				= 500.f;
 
 	//camera, look at, up
-	DirectX::XMVECTOR camera	= CAMERA_STARTING_POS;
+	DirectX::XMVECTOR camera	= CAM_POS;
 	DirectX::XMVECTOR look_at	= CAM_TARGET;
 	DirectX::XMVECTOR up		= CAM_UP;
 
@@ -334,5 +334,8 @@ DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
 	return VPBufferData.Projection;
 }
 DirectX::XMFLOAT4X4 CameraHandler::getView() {
-	return VPBufferData.View;
+	DirectX::XMFLOAT4X4 temp;
+	DirectX::XMStoreFloat4x4(&temp, DirectX::XMMatrixLookAtLH(DirectX::XMVectorScale(CAM_POS, -1), DirectX::XMVectorScale(CAM_TARGET, -1), { 0,1,0 }));
+	 return temp;
+	//return VPBufferData.View;
 }

@@ -28,7 +28,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
 	{
 		exit(-1);
 	}
-	for (int i = 0; i < 100; i++) {
+	for (int i = 0; i < 400; i++) {
 		if (!LoadObjectModel(Dev, L"wt_teapot.obj", STATIC_OBJECT, false, true))
 		{
 			exit(-1);
@@ -56,7 +56,7 @@ void ObjectHandler::moveObjects() {
 	for (int i = 0; i < mStaticObjects.size(); i++) {
 			DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
 			DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0, 0, 0);
-			DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(5.f * (i/30 + 1.0f), WORLD_HEIGHT[5 * (i%30 + 1)][5 * (i/30 + 1)], 5.0f * (i%30 + 1.0f));
+			DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(10.f * (i/20 + 1.0f), WORLD_HEIGHT[10 * (i% 20 + 1)][10 * (i/ 20 + 1)], 10.0f * (i% 20 + 1.0f));
 
 			using DirectX::operator*;
 			DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;

@@ -11,8 +11,8 @@ Quadtree::~Quadtree() {
 }
 
 void Quadtree::constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level,Node* parent) {
-	float xmiddle = (XMVectorGetX(newMin) + XMVectorGetX(newMax)) / 2;
-	float zmiddle = (XMVectorGetZ(newMin) + XMVectorGetZ(newMax)) / 2;
+	float xmiddle = (XMVectorGetX(newMin) + XMVectorGetX(newMax)) / 2.0f;
+	float zmiddle = (XMVectorGetZ(newMin) + XMVectorGetZ(newMax)) / 2.0f;
 	parent->boxMin = newMin;
 	parent->boxMax = newMax;
 	parent->levels = level;

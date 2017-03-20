@@ -506,6 +506,9 @@ void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 {
+	//construct frustum again every frame
+	mObjectHandler.mQuadtree.frustum = FrustumHandler(mCameraHandler.getProjection(), mCameraHandler.getView());
+
 	std::vector<Object>* objectArray = nullptr;
 
 	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);

@@ -137,6 +137,12 @@
     <Image Include="seamlessstone.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="peninsula.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="world.bmp">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Demo.rc">
