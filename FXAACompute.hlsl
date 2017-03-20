@@ -144,7 +144,7 @@ void FXAA_main(
 		float2 currentUV = orig_uv;
 		if (isHorizontal)
 		{
-			currentUV.y += stepLength * 0.5; //TODO: look up optimization
+			currentUV.y += stepLength * 0.5;
 		} else {
 			currentUV.x += stepLength * 0.5;
 		}

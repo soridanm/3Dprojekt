@@ -60,7 +60,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 		}
 		//this REALLY should be turned into a function
-		DemoEngine.gSwapChain->SetFullscreenState(false, NULL);
+		DemoEngine.gSwapChain->SetFullscreenState(true, NULL);
 		DemoEngine.mGraphicsHandler.mCameraHandler.DIKeyboard->Unacquire();
 		DemoEngine.mGraphicsHandler.mCameraHandler.DIMouse->Unacquire();
 		DemoEngine.mGraphicsHandler.mCameraHandler.DirectInput->Release();

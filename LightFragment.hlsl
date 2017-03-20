@@ -17,7 +17,7 @@ static const float inverseShadowMapSize = 1.0;
 Texture2D<float4> NormalTexture			: register(t0); // x-y-z-unused
 Texture2D<float4> PositionTexture		: register(t1); // x-y-z-unused
 Texture2D<float4> DiffuseAlbedoTexture	: register(t2); // r-g-b-unused
-Texture2D<float4> SpecularAlbedoTexture	: register(t3); // r-g-b-specularPower
+Texture2D<float4> SpecularTexture		: register(t3); // r-g-b-specularPower
 Texture2D<float>  ShadowMap				: register(t4); // r
 
 SamplerComparisonState compSampler : register(s0);
@@ -64,7 +64,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float3 normal			= NormalTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
 	float3 positionWS		= PositionTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
 	float3 diffuseColor		= DiffuseAlbedoTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
-	float4 specularValues	= SpecularAlbedoTexture.Load(int3(input.PositionCS.xy, 0));
+	float4 specularValues	= SpecularTexture.Load(int3(input.PositionCS.xy, 0));
 
 	// Phong lighting variables
 	float attenuation, diffuse_coefficient, specular_coefficient;

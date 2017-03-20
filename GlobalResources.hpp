@@ -50,12 +50,15 @@ namespace ScreenResolution
 	static const ScreenSize HD_720p		= ScreenSize(1280U, 720U, "1280", "720");
 	static const ScreenSize FHD_1080p	= ScreenSize(1920U, 1080U, "1920\n", "1080\n");
 	static const ScreenSize QHD_1440p	= ScreenSize(2560U, 1440U, "2560\n", "1440\n");
+	static const ScreenSize UHD_1		= ScreenSize(3840U, 2160U, "3840", "2160");
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
+
 
 struct ShadowQuality
 {
