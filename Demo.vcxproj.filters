@@ -42,6 +42,9 @@
     <ClCompile Include="old_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ComputeShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="QuadtreeHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,6 +74,15 @@
     <FxCompile Include="ShadowFragment.hlsl">
       <Filter>Source Files</Filter>
     </FxCompile>
+    <FxCompile Include="ComputePassVertex.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="FXAACompute.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
+    <FxCompile Include="ComputePassPixel.hlsl">
+      <Filter>Source Files</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="bth_image.h">
@@ -98,6 +110,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="TimeHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputeShader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="QuadtreeHandler.hpp">

@@ -28,20 +28,69 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Ole32.lib")
 
-enum ShadowQuality: UINT 
+//namespace ScreenSize
+//{
+//	const UINT SCREEN_WIDTH  = 1024U;
+//	const UINT SCREEN_HEIGHT = 720U;
+//};
+
+struct ScreenSize
 {
-	SHADOWS_LOW		= 256,
-	SHADOWS_MEDIUM	= 512,
-	SHADOWS_HIGH	= 1024,
-	SHADOWS_EXTREME = 2048,
-	SHADOWS_ULTRA	= 4096
+	ScreenSize(UINT w, UINT h, LPCSTR ws, LPCSTR hs) 
+		: SCREEN_WIDTH(w), SCREEN_HEIGHT(h), WIDTH_STRING(ws), HEIGHT_STRING(hs) {}
+
+	const UINT SCREEN_WIDTH;
+	const UINT SCREEN_HEIGHT;
+	const LPCSTR WIDTH_STRING;
+	const LPCSTR HEIGHT_STRING;
 };
+
+namespace ScreenResolution
+{
+	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U, "640\n", "480\n");
+	static const ScreenSize HD_720p		= ScreenSize(1280U, 720U, "1280", "720");
+	static const ScreenSize FHD_1080p	= ScreenSize(1920U, 1080U, "1920\n", "1080\n");
+	static const ScreenSize QHD_1440p	= ScreenSize(2560U, 1440U, "2560\n", "1440\n");
+	static const ScreenSize UHD_1		= ScreenSize(3840U, 2160U, "3840", "2160");
+};
+
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
+
+
+struct ShadowQuality
+{
+	ShadowQuality(UINT w, LPCSTR s) 
+		: SHADOW_MAP_SIZE(w), SIZE_STRING(s) {}
+
+	const UINT SHADOW_MAP_SIZE;
+	const LPCSTR SIZE_STRING;
+};
+
+namespace ShadowMapPresets
+{
+	static const ShadowQuality LOW		= ShadowQuality(256U, "256\n");
+	static const ShadowQuality MEDIUM	= ShadowQuality(512U, "512\n");
+	static const ShadowQuality HIGH		= ShadowQuality(1024U, "1024");
+	static const ShadowQuality EXTREME	= ShadowQuality(2048U, "2048\n");
+	static const ShadowQuality ULTRA	= ShadowQuality(4096U, "4096\n");
+};
+
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::LOW;
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::MEDIUM;
+static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::HIGH;
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::EXTREME;
+//static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::ULTRA;
 
 enum RenderPassID
 {
 	GEOMETRY_PASS,
 	SHADOW_PASS,
-	LIGHT_PASS
+	LIGHT_PASS,
+	COMPUTE_PASS
 };
 
 //TODO? Move to some class

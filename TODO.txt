@@ -1,9 +1,9 @@
 TODO:
-	Figure out which pointers NEED to be global pointers and which should be members of various classes.
 	Error messages at gHR checks and whatnot
 	Error blob messages are probably a good idea
-	Rewriting the pointers as a ComPtr should make 
-	sending pointers to functions easier.
+	ShaderHandler. ComputeShader and Light Pass should use the same vertex shader
+	Rename Fragment shaders to pixel shaders
+	Write a funtion for the error handling
 
 
 

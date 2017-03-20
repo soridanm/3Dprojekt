@@ -23,8 +23,8 @@ public:
 	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality, int worldWidth, int worldDepth, float** worldHeight);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
-	const LONG GetScreenWidth();
-	const LONG GetScreenHeight();
+	//const LONG GetScreenWidth();
+	//const LONG GetScreenHeight();
 
 	//input ------------------------------------------------------
 	IDirectInputDevice8* DIKeyboard = nullptr;
@@ -38,7 +38,7 @@ public:
 	DirectX::XMFLOAT4X4 getView();
 	DirectX::XMFLOAT4X4 getProjection();
 private:
-	void CreateViewPorts(ShadowQuality shadowQuality);
+	void CreateViewPorts();
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
 	bool freemoovingCamera;
@@ -86,8 +86,8 @@ private:
 
 
 	//TODO: Move these two somewhere else. They're way too deep
-	const LONG SCREEN_WIDTH = 1280;
-	const LONG SCREEN_HEIGHT = 720;
+	//const LONG SCREEN_WIDTH = 1280;
+	//const LONG SCREEN_HEIGHT = 720;
 };
 
 

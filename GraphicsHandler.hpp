@@ -13,6 +13,7 @@
 #include "LightHandler.hpp"
 #include "CameraHandler.hpp"
 #include "ObjectHandler.hpp"
+#include "ComputeShader.hpp"
 
 const UINT GBUFFER_COUNT = 4;
 
@@ -22,11 +23,13 @@ public:
 	GraphicsHandler();
 	~GraphicsHandler();
 
-	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality);
+	bool InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	bool CreateShaders(ID3D11Device* Dev);
 	void RenderGeometryPass(ID3D11DeviceContext* DevCon);
 	void RenderShadowPass(ID3D11DeviceContext* DevCon);
 	void RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain);
+	void RenderComputePass(ID3D11DeviceContext* DevCon);
+
 
 	ID3D11ShaderResourceView* gTextureView;// = nullptr; //SHOULD BE MOVED TO MODEL
 	ID3D11ShaderResourceView* sTextureView;
@@ -68,6 +71,10 @@ private:
 	bool SetLightPassShaders(ID3D11DeviceContext* DevCon);
 	bool SetLightPassGBuffers(ID3D11DeviceContext* DevCon);
 
+	// Compute Pass -------------------------------
+	/*void SetComputePassUnorderedAccessViews(ID3D11DeviceContext* DevCon);
+	void SetComputePassShaders(ID3D11DeviceContext* DevCon);
+	void SetComputePassShaderResources(ID3D11DeviceContext* DevCon);*/
 
 	struct GraphicsBuffer {
 		ID3D11Texture2D* texture = nullptr;
@@ -78,25 +85,28 @@ private:
 	GraphicsBuffer mGraphicsBuffer[GBUFFER_COUNT];
 
 
-	ID3D11DepthStencilView* mDepthStecilView;
-	ID3D11Texture2D* mDepthStencilTexture;
-	ID3D11InputLayout* mVertexLayout;
+	ID3D11DepthStencilView* mDepthStecilView = nullptr;
+	ID3D11Texture2D* mDepthStencilTexture = nullptr;
+	ID3D11InputLayout* mVertexLayout = nullptr;
 
 	ID3D11RasterizerState* mRasterizerState[2];
 
 	//Geometry Pass
-	ID3D11VertexShader* mGeometryPassVertexShader;
-	ID3D11GeometryShader* mGeometryPassGeometryShader;
-	ID3D11PixelShader* mGeometryPassPixelShader;
+	ID3D11VertexShader* mGeometryPassVertexShader = nullptr;
+	ID3D11GeometryShader* mGeometryPassGeometryShader = nullptr;
+	ID3D11PixelShader* mGeometryPassPixelShader = nullptr;
 	//Shadow Pass
-	ID3D11VertexShader* mShadowPassVertexShader;
-	ID3D11PixelShader* mShadowPassPixelShader;
+	ID3D11VertexShader* mShadowPassVertexShader = nullptr;
+	ID3D11PixelShader* mShadowPassPixelShader = nullptr;
 	//Light Pass
-	ID3D11SamplerState* mSampleState;
+	ID3D11SamplerState* mSampleState = nullptr;
 	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
-	ID3D11VertexShader* mLightPassVertexShader;
-	ID3D11PixelShader* mLightPassPixelShader;
-	ID3D11SamplerState* mShadowSampler;
+	ID3D11VertexShader* mLightPassVertexShader = nullptr;
+	ID3D11PixelShader* mLightPassPixelShader = nullptr;
+	ID3D11SamplerState* mShadowSampler = nullptr;
+
+	//Compute Pass
+	ComputeShader mComputeShader;
 };
 
 

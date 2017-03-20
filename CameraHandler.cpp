@@ -231,28 +231,20 @@ void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //cr
 	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 }
 
-const LONG CameraHandler::GetScreenWidth() 
-{
-	return SCREEN_WIDTH;
-}
-const LONG CameraHandler::GetScreenHeight()
-{
-	return SCREEN_HEIGHT;
-}
 
 // private ------------------------------------------------------------------------------
 
-void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
+void CameraHandler::CreateViewPorts()
 {
-	playerVP.Width	  = static_cast<FLOAT>(SCREEN_WIDTH);
-	playerVP.Height	  = static_cast<FLOAT>(SCREEN_HEIGHT);
+	playerVP.Width	  = static_cast<FLOAT>(SCREEN_RESOLUTION.SCREEN_WIDTH);
+	playerVP.Height	  = static_cast<FLOAT>(SCREEN_RESOLUTION.SCREEN_HEIGHT);
 	playerVP.MinDepth = 0.0f;
 	playerVP.MaxDepth = 1.0f;
 	playerVP.TopLeftX = 0.f;
 	playerVP.TopLeftY = 0.f;
 
-	lightVP.Width    = static_cast<FLOAT>(shadowQuality);
-	lightVP.Height	 = static_cast<FLOAT>(shadowQuality);
+	lightVP.Width    = static_cast<FLOAT>(SHADOW_QUALITY.SHADOW_MAP_SIZE);
+	lightVP.Height	 = static_cast<FLOAT>(SHADOW_QUALITY.SHADOW_MAP_SIZE);
 	lightVP.MinDepth = 0.0f;
 	lightVP.MaxDepth = 1.0f;
 	lightVP.TopLeftX = 0.f;
@@ -261,8 +253,8 @@ void CameraHandler::CreateViewPorts(ShadowQuality shadowQuality)
 
 bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 {
-	float aspect_ratio = (float)SCREEN_WIDTH / (float)SCREEN_HEIGHT;
-	float degrees_field_of_view = 90.f;
+	float aspect_ratio = (float)SCREEN_RESOLUTION.SCREEN_WIDTH / (float)SCREEN_RESOLUTION.SCREEN_HEIGHT;
+	float degrees_field_of_view = 90.0f;
 	float near_plane			= 0.1f;
 	float far_plane				= 500.f;
 

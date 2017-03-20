@@ -31,6 +31,9 @@ http://www.neatware.com/lbstudio/web/hlsl.html
  Phong lighting
  http://www.tomdalling.com/blog/modern-opengl/07-more-lighting-ambient-specular-attenuation-gamma/
 
+ FXAA
+ http://blog.simonrodriguez.fr/articles/30-07-2016_implementing_fxaa.html
+
 ----------------------------------------------------------------------------
  * * * * * * * * * * * * * * * Trivial stuff * * * * * * * * * * * * * * * 
 ----------------------------------------------------------------------------

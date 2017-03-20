@@ -5,13 +5,19 @@
 
 #define NR_OF_LIGHTS 2
 
+#ifdef SHADOW_MAP_SIZE
+static const float inverseShadowMapSize = (1.0 / SHADOW_MAP_SIZE);
+#else 
+static const float inverseShadowMapSize = 1.0;
+#endif
+
 //TODO? Texture2D<float4>
 
 // Textures from G-Buffers
 Texture2D<float4> NormalTexture			: register(t0); // x-y-z-unused
 Texture2D<float4> PositionTexture		: register(t1); // x-y-z-unused
 Texture2D<float4> DiffuseAlbedoTexture	: register(t2); // r-g-b-unused
-Texture2D<float4> SpecularAlbedoTexture	: register(t3); // r-g-b-specularPower
+Texture2D<float4> SpecularTexture		: register(t3); // r-g-b-specularPower
 Texture2D<float>  ShadowMap				: register(t4); // r
 
 SamplerComparisonState compSampler : register(s0);
@@ -47,13 +53,18 @@ struct PS_IN
 	float2 TexCoord		: TEXCOORD1;
 };
 
+float2 texOffset(int u, int v)
+{
+	return float2(u, v) * inverseShadowMapSize;
+}
+
 float4 PS_main ( PS_IN input ) : SV_Target
 {
 	// Values from the G-Buffers
 	float3 normal			= NormalTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
 	float3 positionWS		= PositionTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
 	float3 diffuseColor		= DiffuseAlbedoTexture.Load(int3(input.PositionCS.xy, 0)).rgb;
-	float4 specularValues	= SpecularAlbedoTexture.Load(int3(input.PositionCS.xy, 0));
+	float4 specularValues	= SpecularTexture.Load(int3(input.PositionCS.xy, 0));
 
 	// Phong lighting variables
 	float attenuation, diffuse_coefficient, specular_coefficient;
@@ -69,7 +80,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	// Used for the shadow map calculations
 	float4x4 lightViewProjection = mul(lightView, lightProjection); //TODO: change the cbuffer to a single matrix
 	float4 light_view_pos = mul(float4(positionWS, 1.0), lightViewProjection); // The clip space position of the point from the light's point of view
-	float bias = 0.00001;
+	float bias = 0.00002;
 	
 	float2 shadow_tex_coord;
 	shadow_tex_coord.x =  light_view_pos.x / light_view_pos.w / 2.0 + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
@@ -83,11 +94,21 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 	// Test if the point is outside the light's view frustum
 	bool outside_shadow_map = (saturate(shadow_tex_coord.x) != shadow_tex_coord.x && saturate(shadow_tex_coord.y) != shadow_tex_coord.y) ? true : false;
-	// Percentage-Closer Filtering using a comparison sampler
-	float shadow_coefficient = (!outside_shadow_map) ? ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord, light_depth_value) : 1.0;
-
+	// 16-tap (4x4 texel area) Percentage-Closer Filtering using a comparison sampler
+	float shadow_sum = 0.0;
+	float x, y;
+	for (y = -1.5; y <= 1.5; y += 1.0)
+	{
+		for (x = -1.5; x <= 1.5; x += 1.0)
+		{
+			shadow_sum += ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord + texOffset(x, y), light_depth_value);
+		}
+	}
+	//float shadow_factor = shadow_sum * 0.0625; // Division by 16
+	float shadow_coefficient = (!outside_shadow_map) ? shadow_sum * 0.0625 : 1.0;
 
 	// FOR DEBUGGING: Overwrites the Percentage-Closer Filtering
+	//shadow_coefficient = (!outside_shadow_map) ? ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord - texOffset(0.5, 0.5), light_depth_value) : 1.0;
 	//shadow_coefficient = (light_depth_value < ShadowMap.Sample(textureSampler, shadow_tex_coord).r) ? 1.0 : 0.0;
 	// !FOR DEBUGGING
 
