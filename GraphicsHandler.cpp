@@ -206,9 +206,9 @@ void GraphicsHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPass
 
 bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	mObjectHandler.InitializeObjects(Dev);
+	mObjectHandler.InitializeObjects(Dev, DevCon);
 
-	mCameraHandler.InitializeCamera(Dev, DevCon, shadowQuality, mObjectHandler.getWorldDepth(), mObjectHandler.getWorldWidth(), mObjectHandler.getWorldHeight());
+	mCameraHandler.InitializeCamera(Dev, DevCon, mObjectHandler.getWorldDepth(), mObjectHandler.getWorldWidth(), mObjectHandler.getWorldHeight());
 
 	mLightHandler.InitializeLights(Dev, mCameraHandler.GetCameraPosition());
 
@@ -337,6 +337,26 @@ bool GraphicsHandler::CreateShaders(ID3D11Device* Dev)
 	}
 	gHR = Dev->CreatePixelShader(pPS->GetBufferPointer(), pPS->GetBufferSize(), nullptr, &mGeometryPassPixelShader);
 	if (FAILED(gHR)) 
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass pixel shader\n\n");
+		exit(-1);
+	}
+
+	//compile and create pixel heightmap shader
+	D3D_SHADER_MACRO HeightMapMacros[] =
+	{
+		"HEIGHT_MAP",  "1",
+		NULL, NULL
+	};
+
+	ID3DBlob* pPHMS = nullptr;
+	if (!CompileShader(&pPHMS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0", HeightMapMacros))
+	{
+		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to compile geometry pass pixel shader\n\n");
+		exit(-1);
+	}
+	gHR = Dev->CreatePixelShader(pPHMS->GetBufferPointer(), pPHMS->GetBufferSize(), nullptr, &mGeometryPassPixelHeightMapShader);
+	if (FAILED(gHR))
 	{
 		OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass pixel shader\n\n");
 		exit(-1);
@@ -503,7 +523,7 @@ void GraphicsHandler::SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon)
 }
 
 //TODO: update with correct code from both branches.
-void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon)
+void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon, bool isHeightMap)
 {
 	// Set Vertex Shader input
 	DevCon->IASetInputLayout(mVertexLayout);
@@ -514,14 +534,23 @@ void GraphicsHandler::SetGeometryPassShaders(ID3D11DeviceContext* DevCon)
 	DevCon->HSSetShader(nullptr, nullptr, 0);
 	DevCon->DSSetShader(nullptr, nullptr, 0);
 	DevCon->GSSetShader(mGeometryPassGeometryShader, nullptr, 0);
-	DevCon->PSSetShader(mGeometryPassPixelShader, nullptr, 0);
+	if (!isHeightMap)
+	{
+		DevCon->PSSetShader(mGeometryPassPixelShader, nullptr, 0);
+	} else {
+		DevCon->PSSetShader(mGeometryPassPixelHeightMapShader, nullptr, 0);
+	}
+	
 	DevCon->PSSetSamplers(0, 1, &mSampleState);
 }
 
-void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon)
+void GraphicsHandler::SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon, bool isHeightMap)
 {
-	DevCon->PSSetShaderResources(1,1, &gTextureView);
-	DevCon->PSSetShaderResources(2, 1, &sTextureView);
+	if (isHeightMap)
+	{
+		DevCon->PSSetShaderResources(1, 1, &gTextureView);
+		DevCon->PSSetShaderResources(2, 1, &sTextureView);
+	}
 }
 
 void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
@@ -534,12 +563,12 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	DevCon->RSSetViewports(1, &mCameraHandler.playerVP);
 
 	SetGeometryPassRenderTargets(DevCon);
-	SetGeometryPassShaders(DevCon);
 	SetRasterizerState(DevCon, GEOMETRY_PASS);
 	mCameraHandler.BindPerFrameConstantBuffer(DevCon);
 
 	// ------------------------------ Height Map ------------------------------------------------------
-	SetGeometryPassShaderResources(DevCon);
+	SetGeometryPassShaders(DevCon, true);
+	SetGeometryPassShaderResources(DevCon, true);
 	mObjectHandler.SetHeightMapBuffer(DevCon, GEOMETRY_PASS);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
@@ -549,6 +578,8 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff goes here
+	SetGeometryPassShaders(DevCon, false);
+	SetGeometryPassShaderResources(DevCon, false);
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
 
 	// --------------------- RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE ----------------------------------------

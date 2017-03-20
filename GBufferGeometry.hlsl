@@ -59,7 +59,7 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 			int d = sign(dot(cameraPosition.xyz - output.PositionWS, face_normalWS));
 			if (d == -1) 
 			{
-				//return;
+				return;
 			}
 		}
 

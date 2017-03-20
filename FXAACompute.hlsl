@@ -81,7 +81,7 @@ void FXAA_main(
 	// Early exit if no edge is DRtected in the area or if the area is really dark, 
 	// or if the TEXTURE_WIDHT/HEIGHT macros have not gotten to the shader
 	if (lumaRange < max(EDGE_THRESHOLD_MIN, (lumaMax * EDGE_THRESHOLD_MAX)) 
-		|| inverseScreenSize.x == -1.0)						//TODO: get rid of this statement and handle teh macros better
+		|| inverseScreenSize.x == -1.0)						//TODO: get rid of this statement and handle the macros better
 	{
 		result = float4(colorCenter, 1.0);
 		/*if (testCenter.r == colorCenter.r && testCenter.g == colorCenter.g && testCenter.b == colorCenter.b)
@@ -262,6 +262,9 @@ void FXAA_main(
 		}
 
 		result = inputTex.SampleLevel(samp, finalUV, 0.0);
+		
+		// FOR DEBUGGING. Highlights detected edges
+		//result = float4(1.0, 0.0, 0.0, 0.0);
 	}
 
 

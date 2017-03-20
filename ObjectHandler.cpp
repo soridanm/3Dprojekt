@@ -16,24 +16,24 @@ ObjectHandler::~ObjectHandler()
 }
 
 //used in GraphicsHandler.InitializeGraphics
-void ObjectHandler::InitializeObjects(ID3D11Device* Dev)
+void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
 	
 	CreateWorld(Dev);
-	if (!LoadObjectModel(Dev, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
+	if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
 	{
 		exit(-1);
 	}
-	if (!LoadObjectModel(Dev, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
+	if (!LoadObjectModel(Dev, DevCon, L"capsule.obj", DYNAMIC_OBJECT, false, true))
 	{
 		exit(-1);
 	}
-	for (int i = 0; i < 400; i++) {
-		if (!LoadObjectModel(Dev, L"wt_teapot.obj", STATIC_OBJECT, false, true))
+	/*for (int i = 0; i < 4; i++) {
+		if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", STATIC_OBJECT, false, true))
 		{
 			exit(-1);
 		}
-	}
+	}*/
 	moveObjects();
 	mQuadtree = Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f,WORLD_DEPTH, 0), 1);
 	CreatePerObjectConstantBuffers(Dev);
@@ -137,6 +137,7 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	return true;
 }
 
+// TODO: REMOVE!!
 bool ObjectHandler::SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
 	UINT32 squareVertexSize = sizeof(float) * 8;
@@ -281,26 +282,28 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	***************************************************************************************************************************************/
 
 	// REMOVE AFTER TEXTURES HAVE BEEN IMPLEMENTED ----------------------------------------------------
-	materialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture = 0;
+	//mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture = 1;
 	// END REMOVE -------------------------------------------------------------------------------------
 	
-	(*objectArray)[objectIndex].materialBufferData.HasTexture = materialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture;
-
-	if (materialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture == 1)
-	{
-		DevCon->PSSetShaderResources(0, 1, &(*objectArray)[objectIndex].meshTextureSRV[materialIndex]); // NOT IMPLEMENTED YET!!
-	}
-
-	/***************************************************************************************************************************************
-															Material
-	***************************************************************************************************************************************/
-
 	if (passID == GEOMETRY_PASS)
 	{
+		//(*objectArray)[objectIndex].materialBufferData.HasTexture = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture;
+
+		if ((*objectArray)[objectIndex].materialBufferData.HasTexture == 1)
+		{
+			int texIndex = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.TexArrIndex;
+			DevCon->PSSetShaderResources(1, 1, &mMeshTextureSRV[texIndex]);
+
+		}
+
+		/***************************************************************************************************************************************
+																Material
+		***************************************************************************************************************************************/
+
 		//set material
-		(*objectArray)[objectIndex].materialBufferData.SpecularColor = materialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.SpecularColor;
-		(*objectArray)[objectIndex].materialBufferData.SpecularPower = materialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.SpecularPower;
-		(*objectArray)[objectIndex].materialBufferData.DiffuseColor  = materialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.DiffuseColor;
+		(*objectArray)[objectIndex].materialBufferData.SpecularColor = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.SpecularColor;
+		(*objectArray)[objectIndex].materialBufferData.SpecularPower = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.SpecularPower;
+		(*objectArray)[objectIndex].materialBufferData.DiffuseColor  = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.DiffuseColor;
 		
 		// Map material properties buffer
 		D3D11_MAPPED_SUBRESOURCE materialPtr;
@@ -350,6 +353,7 @@ int ObjectHandler::getWorldWidth() {
 //TODO: Split into multiple functions
 bool ObjectHandler::LoadObjectModel(
 	ID3D11Device* Dev,
+	ID3D11DeviceContext* DevCon, 
 	std::wstring filename,
 	ObjectType objectType, 
 	bool isRHCoordSys,
@@ -748,7 +752,7 @@ bool ObjectHandler::LoadObjectModel(
 	fileIn.open(meshMatLib.c_str());
 
 	std::wstring lastStringRead; // ????? This is never used
-	int matCount = materialVector.size(); //total materials
+	int matCount = mMaterialVector.size(); //total materials
 
 									//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
 
@@ -772,17 +776,17 @@ bool ObjectHandler::LoadObjectModel(
 			{
 				checkChar = fileIn.get(); //read over space
 
-				fileIn >> materialVector[matCount - 1].Data.SpecularColor.x;
-				fileIn >> materialVector[matCount - 1].Data.SpecularColor.y;
-				fileIn >> materialVector[matCount - 1].Data.SpecularColor.z;
+				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.x;
+				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.y;
+				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.z;
 			}
 			else if (checkChar == 'd')
 			{
 				checkChar = fileIn.get(); //read over space
 
-				fileIn >> materialVector[matCount - 1].Data.DiffuseColor.x;
-				fileIn >> materialVector[matCount - 1].Data.DiffuseColor.y;
-				fileIn >> materialVector[matCount - 1].Data.DiffuseColor.z;
+				fileIn >> mMaterialVector[matCount - 1].Data.DiffuseColor.x;
+				fileIn >> mMaterialVector[matCount - 1].Data.DiffuseColor.y;
+				fileIn >> mMaterialVector[matCount - 1].Data.DiffuseColor.z;
 			}
 		}
 		break;
@@ -793,13 +797,13 @@ bool ObjectHandler::LoadObjectModel(
 			{
 				checkChar = fileIn.get(); //read over space
 
-				fileIn >> materialVector[matCount - 1].Data.SpecularPower;
+				fileIn >> mMaterialVector[matCount - 1].Data.SpecularPower;
 			}
 		}
 		break;
 		case 'm': //map_Kd - texture file
 		{
-			std::wstring word_m = L"ap_Kd";
+			std::wstring word_m = L"ap_Kd ";
 			bool test_m = true;
 			//loop over "ap_Kd "
 			for (int i = 0; i < 6; i++)
@@ -814,17 +818,21 @@ bool ObjectHandler::LoadObjectModel(
 			if (!test_m) //early exit if the letter following 'm' aren't "ap_Kd "
 				break;
 
+			mMaterialVector[matCount - 1].Data.HasTexture = 1;
+			object.materialBufferData.HasTexture = 1;
+
 			std::wstring fileNamePath;
+			std::wstring fileNameDDS;
 			bool texFilePathEnd = false;
 			//read the filename
 			while (!texFilePathEnd)
 			{
 				checkChar = fileIn.get();
 				fileNamePath += checkChar;
-
 				//stops reading after the filename extension (.png for example)
 				if (checkChar == '.')
 				{
+					fileNameDDS = fileNamePath + L"dds";
 					for (int i = 0; i < 3; ++i)
 						fileNamePath += fileIn.get();
 
@@ -838,12 +846,27 @@ bool ObjectHandler::LoadObjectModel(
 				if (fileNamePath == object.textureNameArray[i])
 				{
 					alreadyLoaded = true;
-					materialVector[matCount - 1].Data.TexArrIndex = i;
+					mMaterialVector[matCount - 1].Data.TexArrIndex = i;
 				}
 			}
 			//load the texture
 			if (!alreadyLoaded)
 			{
+				ID3D11Resource* tempTexture;
+				ID3D11ShaderResourceView* tempSRV;
+				//fileNameDDS.c_str(),
+				HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"grass.dds", &tempTexture, &tempSRV);
+
+				if (FAILED(hr))
+				{
+					OutputDebugString(L"\nObjectHandler::LoadObjectModel() Failed to create DDS texture \n\n");
+				}
+				else
+				{
+					object.textureNameArray.push_back(fileNameDDS);
+					mMeshTextureSRV.push_back(tempSRV);
+					mMaterialVector[matCount - 1].Data.TexArrIndex = mMeshTextureSRV.size();
+				}
 				// TEXTURE SUPPORT NOT IPMLEMENTED YET
 
 				//ID3D11ShaderResourceView* tempMeshSRV;
@@ -852,7 +875,7 @@ bool ObjectHandler::LoadObjectModel(
 				//if (SUCCEEDED(gHR))
 				//{
 				//	textureNameArray.push_back(fileNamePath.c_str());
-				//	materialVector[matCount - 1].texArrayIndex = meshSRV.size();
+				//	mMaterialVector[matCount - 1].texArrayIndex = meshSRV.size();
 				//	meshSRV.push_back(tempMeshSRV);
 				//}
 			}
@@ -875,9 +898,9 @@ bool ObjectHandler::LoadObjectModel(
 			if (test_n)
 			{
 				materialStruct tempMat;
-				materialVector.push_back(tempMat);
-				//fileIn >> materialVector[matCount].matName;
-				materialVector[matCount].Data.TexArrIndex = 0;
+				mMaterialVector.push_back(tempMat);
+				//fileIn >> mMaterialVector[matCount].matName;
+				mMaterialVector[matCount].Data.TexArrIndex = 0;
 				matCount++;
 			}
 		}
@@ -893,9 +916,9 @@ bool ObjectHandler::LoadObjectModel(
 	for (int i = 0; i < object.nrOfMeshSubsets; ++i)
 	{
 		bool hasMat = false;
-		for (unsigned int j = 0; j < materialVector.size(); ++j)
+		for (unsigned int j = 0; j < mMaterialVector.size(); ++j)
 		{
-			if (meshMaterials[i] == materialVector[j].matName)
+			if (meshMaterials[i] == mMaterialVector[j].matName)
 			{
 				object.meshSubsetTexture.push_back(j);
 				hasMat = true;

@@ -1,14 +1,19 @@
 // G-Buffer fragment shader
 
-Texture2D DiffuseMap		: register(t1);
-Texture2D DiffuseMap2        : register(t2);
+#if HEIGHT_MAP
+Texture2D DiffuseMap	: register(t1);
+Texture2D DiffuseMap2	: register(t2);
+#else 
+Texture2D Texture		: register(t1);
+#endif
+
 SamplerState AnisoSampler	: register(s0);
 
 cbuffer MaterialBuffer		: register(b0)
 {
-	float3 SpecularAlbedo;
+	float3 SpecularColor;
 	float SpecularPower;
-	float3 DiffuseAlbedo;
+	float3 DiffuseColor;
 	int TexArrayIndex;
 	int hasTexture;
 
@@ -37,16 +42,20 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	PS_OUT output = (PS_OUT)0;
 	float height = input.PositionWS.y / 20.0;
 	// Sample the diffuse map
-	float3 diffuseAlbedo = (hasTexture == 1) ? (((1-height)*DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb)+(height*DiffuseMap2.Sample(AnisoSampler,input.TexCoord).rgb)) : DiffuseAlbedo.rgb;
-	
+#if HEIGHT_MAP
+	float3 diffuse_part = (hasTexture == 1) ? (((1-height)*DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb)+(height*DiffuseMap2.Sample(AnisoSampler,input.TexCoord).rgb)) : DiffuseColor.rgb;
+#else
+	float3 diffuse_part = (hasTexture == 1) ? Texture.Sample(AnisoSampler, input.TexCoord).rgb : DiffuseColor.rgb;
+	//diffuse_part = (hasTexture == 1) ? float3(0.0, 1.0, 0.0) : float3(1.0, 0.0, 0.0);
+#endif
 	// Normalize the normal after interpolation
 	float3 normalWS	= normalize(input.NormalWS);
 
 	// Ouput G-Buffer values
 	output.Normal			= float4(normalWS, 1.0);
 	output.Position			= float4(input.PositionWS, 1.0);
-	output.DiffuseAlbedo	= float4(diffuseAlbedo, 1.0);
-	output.SpecularAlbedo	= float4(SpecularAlbedo, SpecularPower);
+	output.DiffuseAlbedo	= float4(diffuse_part, 1.0);
+	output.SpecularAlbedo	= float4(SpecularColor, SpecularPower);
 
 	return output;
 };

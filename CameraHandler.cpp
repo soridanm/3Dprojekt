@@ -133,13 +133,13 @@ bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* Dev
 }
 
 //used in GraphicsHandler::InitializeGraphics
-void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality, int worldWidth, int worldDepth, float** worldHeight)
+void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight)
 {
 
 	terrain.worldDepth = worldDepth;
 	terrain.worldWidth = worldWidth;
 	terrain.worldHeight = worldHeight;
-	CreateViewPorts(shadowQuality);
+	CreateViewPorts();
 	CreatePerFrameConstantBuffer(Dev);
 	CreateShadowMapConstantBuffer(Dev);
 }

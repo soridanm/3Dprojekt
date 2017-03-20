@@ -20,7 +20,7 @@ public:
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
 	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
-	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, ShadowQuality shadowQuality, int worldWidth, int worldDepth, float** worldHeight);
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 	//const LONG GetScreenWidth();

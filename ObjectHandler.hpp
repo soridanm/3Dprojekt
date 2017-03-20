@@ -19,7 +19,7 @@ enum ObjectType : int
 //Might be moved into the class
 struct cMaterialBuffer
 {
-	cMaterialBuffer(float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, bool hasTex = false, int texInd = 0)
+	cMaterialBuffer(float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, int hasTex = 0, int texInd = 0)
 		: SpecularColor(r, g, b), SpecularPower(specPow), DiffuseColor(r, g, b), HasTexture(hasTex), TexArrIndex(texInd), padding(0.0f, 0.0f, 0.0f)
 	{}
 	DirectX::XMFLOAT3 SpecularColor;
@@ -60,7 +60,7 @@ struct Object
 	std::vector<int> meshSubsetIndexStart; // needed?
 										   // TEXTURES ARE NOT YET IMPLEMENTED
 	std::vector<int> meshSubsetTexture;
-	std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
+	//std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
 	std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
 
 												// World Buffer. For static objects this will at some point be set to an identity matrix
@@ -85,7 +85,7 @@ public:
 	
 	ObjectHandler();
 	~ObjectHandler();
-	void InitializeObjects(ID3D11Device* Dev);
+	void InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
 	const int GetHeightMapNrOfFaces();
@@ -111,6 +111,7 @@ private:
 	//TODO: Turn some of these into member variables
 	bool LoadObjectModel(
 		ID3D11Device* Dev, 
+		ID3D11DeviceContext* DevCon, 
 		std::wstring filename,
 		ObjectType objectType,
 		bool isRHCoordSys,
@@ -125,7 +126,9 @@ private:
 	std::vector<Object> mStaticObjects;  // objects that will be included in quad-tree
 	std::vector<Object> mDynamicObjects; // Objects that will NOT be included int quad-tree
 
-	std::vector<materialStruct> materialVector; // Stores ALL objects' materials
+	std::vector<materialStruct> mMaterialVector; // Stores ALL objects' materials
+	std::vector<ID3D11ShaderResourceView*> mMeshTextureSRV; //not yet implemented
+
 
 	cPerObjectBuffer mHeightMapWorldBufferData = cPerObjectBuffer();
 	ID3D11Buffer* mHeightMapMaterialBuffer = nullptr;

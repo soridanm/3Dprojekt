@@ -332,6 +332,8 @@
     <Text Include="TODO.txt" />
   </ItemGroup>
   <ItemGroup>
+    <Image Include="capsule0.dds" />
+    <Image Include="capsule0.jpg" />
     <Image Include="grass-free-texture.jpg" />
     <Image Include="grass.dds" />
     <Image Include="heightmap.bmp" />
@@ -345,10 +347,14 @@
     <ResourceCompile Include="Demo.rc" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="capsule.mtl" />
     <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <Object Include="capsule.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Object>
     <Object Include="donut_red_lambert_20000_tris_TRIANGLULATED.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

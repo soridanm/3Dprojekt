@@ -55,10 +55,10 @@ namespace ScreenResolution
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
 
 
 struct ShadowQuality
@@ -92,6 +92,13 @@ enum RenderPassID
 	LIGHT_PASS,
 	COMPUTE_PASS
 };
+
+//TODO: Remove
+//enum ObjectType : UINT
+//{
+//	HeightMapObject = 0U,
+//	NormalObject = 1U
+//};
 
 //TODO? Move to some class
 struct HeightMapInfo {

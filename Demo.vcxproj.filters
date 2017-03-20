@@ -13,6 +13,9 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
+    <Filter Include="Source Files\Shaders">
+      <UniqueIdentifier>{c23679cc-511c-489e-8b8f-eb5661095f16}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -42,46 +45,46 @@
     <ClCompile Include="old_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ComputeShader.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="QuadtreeHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="FrustumHandler.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ComputeShader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="LightFragment.hlsl">
-      <Filter>Source Files</Filter>
-    </FxCompile>
     <FxCompile Include="GBufferFragment.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="GBufferGeometry.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="GBufferVertex.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="LightFragment.hlsl">
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="LightVertex.hlsl">
-      <Filter>Source Files</Filter>
-    </FxCompile>
-    <FxCompile Include="ShadowVertex.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ShadowFragment.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ShadowVertex.hlsl">
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ComputePassVertex.hlsl">
-      <Filter>Source Files</Filter>
-    </FxCompile>
-    <FxCompile Include="FXAACompute.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="ComputePassPixel.hlsl">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="FXAACompute.hlsl">
+      <Filter>Source Files\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,13 +115,13 @@
     <ClInclude Include="TimeHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ComputeShader.hpp">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="QuadtreeHandler.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="FrustumHandler.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ComputeShader.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -158,6 +161,12 @@
     <Image Include="world.bmp">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="capsule0.jpg">
+      <Filter>Resource Files</Filter>
+    </Image>
+    <Image Include="capsule0.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Demo.rc">
@@ -169,12 +178,18 @@
     <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="capsule.mtl">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Object Include="wt_teapot.obj">
       <Filter>Resource Files</Filter>
     </Object>
     <Object Include="donut_red_lambert_20000_tris_TRIANGLULATED.obj">
+      <Filter>Resource Files</Filter>
+    </Object>
+    <Object Include="capsule.obj">
       <Filter>Resource Files</Filter>
     </Object>
   </ItemGroup>

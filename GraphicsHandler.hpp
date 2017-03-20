@@ -58,8 +58,8 @@ private:
 
 	// Geometry Pass ----------------------------
 	void SetGeometryPassRenderTargets(ID3D11DeviceContext* DevCon);
-	void SetGeometryPassShaders(ID3D11DeviceContext* DevCon); //move to shader class
-	void SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon);
+	void SetGeometryPassShaders(ID3D11DeviceContext* DevCon, bool isHeightMap = false); //move to shader class
+	void SetGeometryPassShaderResources(ID3D11DeviceContext* DevCon, bool isHeightMap = false);
 
 	// Shadow mapping Pass ----------------------
 	void SetShadowMapPassRenderTargets(ID3D11DeviceContext* DevCon);
@@ -95,6 +95,8 @@ private:
 	ID3D11VertexShader* mGeometryPassVertexShader = nullptr;
 	ID3D11GeometryShader* mGeometryPassGeometryShader = nullptr;
 	ID3D11PixelShader* mGeometryPassPixelShader = nullptr;
+	ID3D11PixelShader* mGeometryPassPixelHeightMapShader = nullptr;
+
 	//Shadow Pass
 	ID3D11VertexShader* mShadowPassVertexShader = nullptr;
 	ID3D11PixelShader* mShadowPassPixelShader = nullptr;
