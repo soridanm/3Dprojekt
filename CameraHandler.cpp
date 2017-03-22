@@ -198,7 +198,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	if (keyboardState[DIK_3] & 0x80) {
 		frustumCullingShow = true;
 	}
-	if (keyboardState[DIK_4] & 0x80) {
+	if (keyboardState[DIK_5] & 0x80) {
 		frustumCullingShow = false;
 	}
 
@@ -331,7 +331,7 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 
 DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
 	if(frustumCullingShow){
-		float aspect_ratio = (float)SCREEN_RESOLUTION.SCREEN_WIDTH / (float)SCREEN_RESOLUTION.SCREEN_HEIGHT;
+		float aspect_ratio = (float)1280 / (float)720;
 		float degrees_field_of_view = 45.f;
 		float near_plane = 0.1f;
 		float far_plane = 500.f;
