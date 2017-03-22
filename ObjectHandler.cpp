@@ -282,16 +282,16 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	***************************************************************************************************************************************/
 
 	// REMOVE AFTER TEXTURES HAVE BEEN IMPLEMENTED ----------------------------------------------------
-	//mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture = 1;
+	//mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.HasTexture = 1;
 	// END REMOVE -------------------------------------------------------------------------------------
 	
 	if (passID == GEOMETRY_PASS)
 	{
-		//(*objectArray)[objectIndex].materialBufferData.HasTexture = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture;
+		//(*objectArray)[objectIndex].materialBufferData.HasTexture = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.HasTexture;
 
-		if (mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture == 1)
+		if (mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.HasTexture == 1)
 		{
-			int texIndex = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.TexArrIndex;
+			int texIndex = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.TexArrIndex;
 			DevCon->PSSetShaderResources(1, 1, &mMeshTextureSRV[texIndex]);
 
 		}
@@ -301,9 +301,9 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		***************************************************************************************************************************************/
 
 		//set material
-		(*objectArray)[objectIndex].materialBufferData.SpecularColor = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.SpecularColor;
-		(*objectArray)[objectIndex].materialBufferData.SpecularPower = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.SpecularPower;
-		(*objectArray)[objectIndex].materialBufferData.DiffuseColor  = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.DiffuseColor;
+		(*objectArray)[objectIndex].materialBufferData.SpecularColor = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.SpecularColor;
+		(*objectArray)[objectIndex].materialBufferData.SpecularPower = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.SpecularPower;
+		(*objectArray)[objectIndex].materialBufferData.DiffuseColor  = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.DiffuseColor;
 		
 		// Map material properties buffer
 		D3D11_MAPPED_SUBRESOURCE materialPtr;
@@ -353,9 +353,9 @@ int ObjectHandler::getWorldWidth() {
 //TODO: Split into multiple functions
 bool ObjectHandler::LoadObjectModel(
 	ID3D11Device* Dev,
-	ID3D11DeviceContext* DevCon, 
+	ID3D11DeviceContext* DevCon,
 	std::wstring filename,
-	ObjectType objectType, 
+	ObjectType objectType,
 	bool isRHCoordSys,
 	bool computeNormals)
 {
@@ -392,6 +392,7 @@ bool ObjectHandler::LoadObjectModel(
 	int meshTriangles = 0;
 
 	Object object;
+
 
 	//TODO: improve with an error message or something
 	if (!fileIn)	//Early exit if the file doesn't open
@@ -483,7 +484,7 @@ bool ObjectHandler::LoadObjectModel(
 				ss >> VertDef; //get one vertex definition [vPos/vTexCoord/vNorm]
 				std::wstring vertPart;
 				int whichPart = 0; //vPos = 0, vTexCoord = 1, vNorm = 2
-								   //Parse the string
+									//Parse the string
 				for (unsigned int j = 0; j < VertDef.length(); j++)
 				{
 					if (VertDef[j] != L'/')		//if there's no divider add char to vertPart
@@ -498,7 +499,7 @@ bool ObjectHandler::LoadObjectModel(
 							wstringToInt >> vertPosIndexTemp;
 							vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
 
-												   //check if the vert pos was the only thing specified
+													//check if the vert pos was the only thing specified
 							if (j == VertDef.length() - 1)
 							{
 								vertNormIndexTemp = 0;
@@ -531,7 +532,7 @@ bool ObjectHandler::LoadObjectModel(
 					} //end if current char is a divider or the last char in the string
 				} //end for j-loop
 
-				  //check to make sure there's at least one subset
+					//check to make sure there's at least one subset
 				if (object.nrOfMeshSubsets == 0)
 				{
 					object.meshSubsetIndexStart.push_back(vIndex); //start index for this subset
@@ -543,7 +544,7 @@ bool ObjectHandler::LoadObjectModel(
 				vertNormIndex.push_back(vertNormIndexTemp);
 				totalVerts++;						//new vertex created
 				indices.push_back(totalVerts - 1);	//set index for this vertex
-				
+
 				//make sure the rest of the triangles use the first vertex
 				if (i == 0)
 				{
@@ -559,7 +560,7 @@ bool ObjectHandler::LoadObjectModel(
 			} //end for i-loop
 			meshTriangles++; //one triangle down
 
-							 //convert the face to more than one triangle in case the face has more than three vertexes
+								//convert the face to more than one triangle in case the face has more than three vertexes
 			for (int l = 0; l < triangleCount - 1; ++l)
 			{
 				//first vertex of this triangle (the very first vertex of the face too)
@@ -592,7 +593,7 @@ bool ObjectHandler::LoadObjectModel(
 							wstringToInt >> vertPosIndexTemp;
 							vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
 
-												   //check if the vert pos was the only thing specified
+													//check if the vert pos was the only thing specified
 							if (j == VertDef.length() - 1)
 							{
 								vertNormIndexTemp = 0;
@@ -626,7 +627,7 @@ bool ObjectHandler::LoadObjectModel(
 					} //end if current char is a divider or the last char in the string
 				} //end for j-loop
 
-				  //check for duplicate vertices
+					//check for duplicate vertices
 				bool vertAlreadyExists = false;
 				if (totalVerts >= 3) //make sure there's at least one triangle to check
 				{
@@ -699,8 +700,6 @@ bool ObjectHandler::LoadObjectModel(
 			meshMaterials.push_back(meshMaterialsTemp); //store it in a vectore of wide strings
 		}
 		break;
-		case L's': //s - smoothing group [NOT SUPPORTED]
-			break;
 		default:
 			break;
 		} //end switch .obj file
@@ -732,7 +731,7 @@ bool ObjectHandler::LoadObjectModel(
 	std::wstring lastStringRead; // ????? This is never used
 	int matCount = mMaterialVector.size(); //total materials
 
-									//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
+	//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
 
 	if (!fileIn) //early exit if the material file doesn't open
 		exit(-1);
@@ -845,17 +844,6 @@ bool ObjectHandler::LoadObjectModel(
 					textureNameArray.push_back(fileNameDDS);
 					mMeshTextureSRV.push_back(tempSRV);
 				}
-				// TEXTURE SUPPORT NOT IPMLEMENTED YET
-
-				//ID3D11ShaderResourceView* tempMeshSRV;
-				//// TODO: D3DX11CreateShaderResourceViewFromFile
-
-				//if (SUCCEEDED(gHR))
-				//{
-				//	textureNameArray.push_back(fileNamePath.c_str());
-				//	mMaterialVector[matCount - 1].texArrayIndex = meshSRV.size();
-				//	meshSRV.push_back(tempMeshSRV);
-				//}
 			}
 		}
 		break;
@@ -890,20 +878,25 @@ bool ObjectHandler::LoadObjectModel(
 
 
 
-	  //set the subset material to the index value of its material in the material array
-	for (int i = 0; i < object.nrOfMeshSubsets; ++i)
+	//set the subset material to the index value of its material in the material array
+	for (int i = 0; i < object.nrOfMeshSubsets; i++)
 	{
 		bool hasMat = false;
-		for (unsigned int j = 0; j < mMaterialVector.size(); ++j)
+		for (int j = 0; j < mMaterialVector.size(); j++)
 		{
-			if (meshMaterials[i] == mMaterialVector[j].matName)
+			int int1 = i;
+			int int2 = j;
+			std::wstring temp1 = meshMaterials[i];
+			std::wstring temp2 = mMaterialVector[j].matName;
+			if (meshMaterials[i].compare(mMaterialVector[j].matName) == 0)
 			{
-				object.meshSubsetTexture.push_back(j);
+				object.meshSubsetTextureIndex.push_back(mMaterialVector[j].Data.TexArrIndex);
 				hasMat = true;
+				break;
 			}
 		}
 		if (!hasMat)
-			object.meshSubsetTexture.push_back(0); //use first material in the array if the subset doesn't have a specified material
+			object.meshSubsetTextureIndex.push_back(0); //use first material in the array if the subset doesn't have a specified material
 	}
 
 	//create vertices
@@ -918,7 +911,7 @@ bool ObjectHandler::LoadObjectModel(
 
 		object.meshVertexData.push_back(tempVert);
 	}
-
+	
 	//Compute face normals
 	if (computeNormals)
 	{

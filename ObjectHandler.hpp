@@ -55,21 +55,19 @@ struct Object
 	ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
 	cMaterialBuffer materialBufferData = cMaterialBuffer();
 	ID3D11Buffer* materialBuffer = nullptr;
+	
 	int nrOfMeshSubsets = 0;
-
 	std::vector<int> meshSubsetIndexStart; // needed?
-										   // TEXTURES ARE NOT YET IMPLEMENTED
-	std::vector<int> meshSubsetTexture;
+	std::vector<int> meshSubsetTextureIndex;
 	//std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
 	//std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
 
-												// World Buffer. For static objects this will at some point be set to an identity matrix
+	// World Buffer. For static objects this will at some point be set to an identity matrix
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
 	ID3D11Buffer* perObjectWorldBuffer = nullptr;
 	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
 
 	DirectX::XMMATRIX worldMatrixPerObject;
-
 };
 
 namespace Materials
@@ -151,9 +149,10 @@ private:
 	//ID3D11Buffer* meshIndexBuff;
 	DirectX::XMMATRIX meshWorld; //not used????
 	//int meshSubsets = 0;					//number of subsets
-	//std::vector<int> meshSubsetTexture;
+	//std::vector<int> meshSubsetTextureIndex;
 	//std::vector<ID3D11ShaderResourceView*> meshSRV;
 	//std::vector<std::wstring> textureNameArray;
+
 
 };
 

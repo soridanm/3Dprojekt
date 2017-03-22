@@ -170,6 +170,9 @@
     <Image Include="marble.dds">
       <Filter>Resource Files</Filter>
     </Image>
+    <Image Include="gray-marble.dds">
+      <Filter>Resource Files</Filter>
+    </Image>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Demo.rc">
