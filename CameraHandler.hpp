@@ -42,7 +42,7 @@ private:
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
 	bool freemoovingCamera;
-	
+	bool frustumCullingShow;
 	struct cPerFrameBuffer
 	{
 		//XMFLOAT4X4 ViewProjection;

@@ -28,12 +28,12 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 	{
 		exit(-1);
 	}
-	/*for (int i = 0; i < 4; i++) {
+	for (int i = 0; i < 400; i++) {
 		if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", STATIC_OBJECT, false, true))
 		{
 			exit(-1);
 		}
-	}*/
+	}
 	moveObjects();
 	mQuadtree = Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f,WORLD_DEPTH, 0), 1);
 	CreatePerObjectConstantBuffers(Dev);

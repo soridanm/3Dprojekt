@@ -11,9 +11,9 @@ FrustumHandler::FrustumHandler(DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT4
 	float far_plane = 500.f;
 
 	//create frustummatrix
-	//DirectX::XMStoreFloat4x4(&matrix, DirectX::XMMatrixMultiply(DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&view)), DirectX::XMMatrixTranspose( DirectX::XMLoadFloat4x4(&projection))));
-	DirectX::XMStoreFloat4x4(&matrix, DirectX::XMMatrixMultiply((DirectX::XMLoadFloat4x4(&view)),
-		( DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane))));
+	DirectX::XMStoreFloat4x4(&matrix, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&view), DirectX::XMMatrixTranspose( DirectX::XMLoadFloat4x4(&projection))));
+	//DirectX::XMStoreFloat4x4(&matrix, DirectX::XMMatrixMultiply((DirectX::XMLoadFloat4x4(&view)),
+	//	( DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane))));
 
 	//near plane
 	planes[0].a = matrix._14 + matrix._13;

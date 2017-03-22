@@ -9,6 +9,7 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	mPerFrameBuffer = nullptr;
 	mShadowMapBuffer = nullptr;
 	freemoovingCamera = true;
+	frustumCullingShow = false;
 	CAM_POS		= CAMERA_STARTING_POS;
 	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 5.0f, 20.0f, 0.0f);
 	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -194,6 +195,12 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	if (keyboardState[DIK_2] & 0x80) {
 		freemoovingCamera = false;
 	}
+	if (keyboardState[DIK_3] & 0x80) {
+		frustumCullingShow = true;
+	}
+	if (keyboardState[DIK_5] & 0x80) {
+		frustumCullingShow = false;
+	}
 
 	//mouse movement do change camera directions
 	if ((mouse_current_state.lX != MOUSE_LAST_STATE.lX) || (mouse_current_state.lY != MOUSE_LAST_STATE.lY)) {
@@ -323,7 +330,18 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 }
 
 DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
-	return VPBufferData.Projection;
+	if(frustumCullingShow){
+		float aspect_ratio = (float)1280 / (float)720;
+		float degrees_field_of_view = 45.f;
+		float near_plane = 0.1f;
+		float far_plane = 500.f;
+		DirectX::XMFLOAT4X4 temp;
+		DirectX::XMStoreFloat4x4(&temp,DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane)));
+		return temp;
+	}
+	else {
+		return VPBufferData.Projection;
+	}
 }
 DirectX::XMFLOAT4X4 CameraHandler::getView() {
 	DirectX::XMFLOAT4X4 temp;
