@@ -66,7 +66,7 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 		// Calculate clip-space position
 		output.PositionCS = mul(float4(output.PositionWS, 1.0), viewProjection);
 
-		output.NormalWS = normalize(mul(input[i].Normal, (float3x3)worldMatrix));
+		output.NormalWS = normalize(mul(float4(input[i].Normal, 0.0), worldMatrix)).xyz;
 		
 		// Pass along the texture coordinates
 		output.TexCoord = input[i].TexCoord;

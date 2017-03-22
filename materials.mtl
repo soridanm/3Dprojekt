@@ -1,0 +1,36 @@
+# Create as many materials as desired
+# Each is referenced by name before the faces it applies to in the obj file
+# Kd - diffuse color (overread if texture is used)
+# Ks - specular color
+# Ns - specular power
+
+
+newmtl material0
+Kd 1.000000 1.000000 1.000000
+Ka 0.0 0.1 0.06
+Ks 0.000000 0.000000 0.000000
+Ns 0.000000
+#map_Kd capsule0.jpg
+
+
+newmtl default
+Kd 1.0 1.0 1.0
+Ka 0.0 0.1 0.06
+Ks 0.2 0.2 0.2
+Ns 0.0
+#map_Kd cube.png
+
+
+newmtl grass
+Kd 1.0 1.0 1.0
+Ka 0.0 0.1 0.06
+Ks 0.024 0.05 0.01
+Ns 1.5
+#map_Kd grass.jpg
+
+newmtl marble
+Kd 1.0 1.0 1.0
+Ks 0.8 0.8 0.8
+Ns 120.08
+map_Kd marble.dds
+

@@ -58,12 +58,12 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 	CreateLightBuffer(Dev);
 
 	DirectX::XMFLOAT4 light_position = { 10.0f, 10.0f, 100.0f, 1.0f };
-	DirectX::XMFLOAT3 light_color = Colors::Black;
+	DirectX::XMFLOAT3 light_color = Colors::Red;
 	int has_s = 0;
-	float c_att = 1.0f;
-	float l_att = 0.0001f;
+	float c_att = 1.5f;
+	float l_att = 0.001f;
 	float q_att = 0.001f;
-	float amb   = 0.0001f;
+	float amb   = 0.001f;
 
 	Light test_light(light_position, light_color, has_s, c_att, l_att, q_att, amb);
 	mLightBufferData.LightArray[0] = test_light;

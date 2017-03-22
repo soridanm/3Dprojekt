@@ -20,11 +20,11 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 {
 	
 	CreateWorld(Dev);
-	if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
+	if (!LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false))
 	{
 		exit(-1);
 	}
-	if (!LoadObjectModel(Dev, DevCon, L"capsule.obj", DYNAMIC_OBJECT, false, true))
+	if (!LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false))
 	{
 		exit(-1);
 	}
@@ -289,7 +289,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	{
 		//(*objectArray)[objectIndex].materialBufferData.HasTexture = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture;
 
-		if ((*objectArray)[objectIndex].materialBufferData.HasTexture == 1)
+		if (mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.HasTexture == 1)
 		{
 			int texIndex = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTexture[materialIndex]].Data.TexArrIndex;
 			DevCon->PSSetShaderResources(1, 1, &mMeshTextureSRV[texIndex]);
@@ -405,53 +405,53 @@ bool ObjectHandler::LoadObjectModel(
 		checkChar = fileIn.get();			//get the next char
 		switch (checkChar)
 		{
-		case '#': //Comment line
+		case L'#': //Comment line
 		{
-			while (checkChar != '\n')		//Keep reading chars until the line ends
+			while (checkChar != L'\n')		//Keep reading chars until the line ends
 				checkChar = fileIn.get();
 		}
 		break;
-		case 'v': //Get vertex descriptions
+		case L'v': //Get vertex descriptions
 		{
 			checkChar = fileIn.get();
-			if (checkChar == ' ')			//v - vertex position
+			if (checkChar == L' ')			//v - vertex position
 			{
 				float vx, vy, vz;
 				fileIn >> vx >> vy >> vz;	//store the vertex positions
 				vertPos.push_back(DirectX::XMFLOAT3(vx, vy, (isRHCoordSys) ? vz * -1.0f : vz));		//invert Z-axiz if the OBJ is RH
 			}
-			if (checkChar == 't')			//vt - vertex texture coordinates
+			if (checkChar == L't')			//vt - vertex texture coordinates
 			{
 				float vu, vv;
 				fileIn >> vu >> vv;			//store the uv-coordinates
 				vertTexCoord.push_back(DirectX::XMFLOAT2(vu, (isRHCoordSys) ? 1.0f - vv : vv));		//Reverse the v-axis if the OBJ is RH
 				hasTexCoord = true;
 			}
-			if (checkChar == 'n')			//vn - vertex normal
+			if (checkChar == L'n')			//vn - vertex normal
 			{
 				float vnx, vny, vnz;
 				fileIn >> vnx >> vny >> vnz; //store the normal values
-				vertNorm.push_back(DirectX::XMFLOAT3(vnx, vny, (isRHCoordSys) ? -1.0f * vnz : vnz)); //Invert the z-axiz if the OBJ is RH
+				vertNorm.push_back(DirectX::XMFLOAT3(vnx, vny, ((isRHCoordSys) ? (-1.0f * vnz) : vnz))); //Invert the z-axiz if the OBJ is RH
 				hasNorm = true;
 			}
 		}
 		break;
-		case 'g': //g - group
+		case L'g': //g - group
 		{
 			checkChar = fileIn.get();
-			if (checkChar == ' ')
+			if (checkChar == L' ')
 			{
 				object.meshSubsetIndexStart.push_back(vIndex);
 				object.nrOfMeshSubsets++;
-				while (checkChar != '\n')		//Keep reading chars until the line ends
+				while (checkChar != L'\n')		//Keep reading chars until the line ends
 					checkChar = fileIn.get();
 			}
 		}
 		break;
-		case 'f': //f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
+		case L'f': //f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
 		{									//Breaks faces with more than three sides into multiple triangles
 			checkChar = fileIn.get();
-			if (checkChar != ' ')	//early exit if the next character isn't a space
+			if (checkChar != L' ')	//early exit if the next character isn't a space
 				break;
 
 			face = L"";				//clear the temporary wide string which will be used to store the line
@@ -459,16 +459,16 @@ bool ObjectHandler::LoadObjectModel(
 			triangleCount = 0;
 
 			checkChar = fileIn.get();
-			while (checkChar != '\n')	//read through the whole line
+			while (checkChar != L'\n')	//read through the whole line
 			{
 				face += checkChar;		//add every char to the face string
 				checkChar = fileIn.get();
-				if (checkChar == ' ')
+				if (checkChar == L' ')
 					triangleCount++;	//increase triangle count if it's a space
 			}
 
 			//check for space at the end of our face string
-			if (face[face.length() - 1] == ' ')
+			if (face[face.length() - 1] == L' ')
 				triangleCount--;
 			triangleCount -= 1; //every vertex in the face after the first two are new faces
 
@@ -486,10 +486,10 @@ bool ObjectHandler::LoadObjectModel(
 								   //Parse the string
 				for (unsigned int j = 0; j < VertDef.length(); j++)
 				{
-					if (VertDef[j] != '/')		//if there's no divider add char to vertPart
+					if (VertDef[j] != L'/')		//if there's no divider add char to vertPart
 						vertPart += VertDef[j];
 					//If the current char is a divider or the last character in the string
-					if (VertDef[j] == '/' || j == VertDef.length() - 1)
+					if (VertDef[j] == L'/' || j == VertDef.length() - 1)
 					{
 						std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
 
@@ -537,35 +537,13 @@ bool ObjectHandler::LoadObjectModel(
 					object.meshSubsetIndexStart.push_back(vIndex); //start index for this subset
 					object.nrOfMeshSubsets++;
 				}
-				//avoid duplicate vertices
-				bool vertAlreadyExists = false;
-				if (totalVerts >= 3) //make sure there's at least one triangle to check
-				{
-					//loop through all the verticies
-					for (int iCheck = 0; iCheck < totalVerts; ++iCheck)
-					{
-						//if the vertex position and tex coord in memory are the same as the ones currently being read then 
-						// this faces vertex index is set to the vertex's value in memory. 
-						if (vertPosIndexTemp == vertPosIndex[iCheck] && !vertAlreadyExists)
-						{
-							if (vertTCIndexTemp == vertTCIndex[iCheck])
-							{
-								indices.push_back(iCheck);	//set the index for this vertex
-								vertAlreadyExists = true;
-							}
-						}
-					} //end loop through verticies
-				} //end duplicate test
 
-				if (!vertAlreadyExists)
-				{
-					vertPosIndex.push_back(vertPosIndexTemp);
-					vertTCIndex.push_back(vertTCIndexTemp);
-					vertNormIndex.push_back(vertNormIndexTemp);
-					totalVerts++;						//new vertex created
-					indices.push_back(totalVerts - 1);	//set index for this vertex
-				}
-
+				vertPosIndex.push_back(vertPosIndexTemp);
+				vertTCIndex.push_back(vertTCIndexTemp);
+				vertNormIndex.push_back(vertNormIndexTemp);
+				totalVerts++;						//new vertex created
+				indices.push_back(totalVerts - 1);	//set index for this vertex
+				
 				//make sure the rest of the triangles use the first vertex
 				if (i == 0)
 				{
@@ -602,10 +580,10 @@ bool ObjectHandler::LoadObjectModel(
 				//parse this string (same procedure as in the for i-loop)
 				for (unsigned int j = 0; j < VertDef.length(); j++)
 				{
-					if (VertDef[j] != '/')		//if there's no divider add char to vertPart
+					if (VertDef[j] != L'/')		//if there's no divider add char to vertPart
 						vertPart += VertDef[j];
 					//If the current char is a divider or the last character in the string
-					if (VertDef[j] == '/' || j == VertDef.length() - 1)
+					if (VertDef[j] == L'/' || j == VertDef.length() - 1)
 					{
 						std::wistringstream wstringToInt(vertPart); //used to convert wstring to int
 
@@ -685,7 +663,7 @@ bool ObjectHandler::LoadObjectModel(
 			} //end for l-loop
 		}
 		break;
-		case 'm': //mtllib - material library filename
+		case L'm': //mtllib - material library filename
 		{
 			std::wstring word_m = L"tllib ";
 			bool test_m = true;
@@ -702,7 +680,7 @@ bool ObjectHandler::LoadObjectModel(
 			fileIn >> meshMatLib;			//store the material library file name 
 		}
 		break;
-		case 'u': //usemtl - which material to use
+		case L'u': //usemtl - which material to use
 		{
 			std::wstring word_u = L"semtl ";
 			bool test_u = true;
@@ -721,7 +699,7 @@ bool ObjectHandler::LoadObjectModel(
 			meshMaterials.push_back(meshMaterialsTemp); //store it in a vectore of wide strings
 		}
 		break;
-		case 's': //s - smoothing group [NOT SUPPORTED]
+		case L's': //s - smoothing group [NOT SUPPORTED]
 			break;
 		default:
 			break;
@@ -763,16 +741,16 @@ bool ObjectHandler::LoadObjectModel(
 		checkChar = fileIn.get();
 		switch (checkChar)
 		{
-		case '#': //comment
+		case L'#': //comment
 		{
-			while (checkChar != '\n')
+			while (checkChar != L'\n')
 				checkChar = fileIn.get();
 		}
 		break;
-		case 'K': //Ks - specular color
+		case L'K': //Ks - specular color
 		{
 			checkChar = fileIn.get();
-			if (checkChar == 's') // Ks - specular color
+			if (checkChar == L's') // Ks - specular color
 			{
 				checkChar = fileIn.get(); //read over space
 
@@ -780,7 +758,7 @@ bool ObjectHandler::LoadObjectModel(
 				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.y;
 				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.z;
 			}
-			else if (checkChar == 'd')
+			else if (checkChar == L'd')
 			{
 				checkChar = fileIn.get(); //read over space
 
@@ -790,10 +768,10 @@ bool ObjectHandler::LoadObjectModel(
 			}
 		}
 		break;
-		case 'N': //Ns - specular power
+		case L'N': //Ns - specular power
 		{
 			checkChar = fileIn.get();
-			if (checkChar == 's')
+			if (checkChar == L's')
 			{
 				checkChar = fileIn.get(); //read over space
 
@@ -801,7 +779,7 @@ bool ObjectHandler::LoadObjectModel(
 			}
 		}
 		break;
-		case 'm': //map_Kd - texture file
+		case L'm': //map_Kd - texture file
 		{
 			std::wstring word_m = L"ap_Kd ";
 			bool test_m = true;
@@ -830,7 +808,7 @@ bool ObjectHandler::LoadObjectModel(
 				checkChar = fileIn.get();
 				fileNamePath += checkChar;
 				//stops reading after the filename extension (.png for example)
-				if (checkChar == '.')
+				if (checkChar == L'.')
 				{
 					fileNameDDS = fileNamePath + L"dds";
 					for (int i = 0; i < 3; ++i)
@@ -841,9 +819,9 @@ bool ObjectHandler::LoadObjectModel(
 			}
 			//check if this texture has already been loaded
 			bool alreadyLoaded = false;
-			for (unsigned int i = 0; i < object.textureNameArray.size(); ++i)
+			for (unsigned int i = 0; i < textureNameArray.size(); ++i)
 			{
-				if (fileNamePath == object.textureNameArray[i])
+				if (fileNamePath == textureNameArray[i])
 				{
 					alreadyLoaded = true;
 					mMaterialVector[matCount - 1].Data.TexArrIndex = i;
@@ -854,18 +832,18 @@ bool ObjectHandler::LoadObjectModel(
 			{
 				ID3D11Resource* tempTexture;
 				ID3D11ShaderResourceView* tempSRV;
-				//fileNameDDS.c_str(),
-				HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"grass.dds", &tempTexture, &tempSRV);
+				HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, const_cast<wchar_t*>(fileNameDDS.c_str()), &tempTexture, &tempSRV);
 
 				if (FAILED(hr))
 				{
 					OutputDebugString(L"\nObjectHandler::LoadObjectModel() Failed to create DDS texture \n\n");
+					exit(-1);
 				}
 				else
 				{
-					object.textureNameArray.push_back(fileNameDDS);
-					mMeshTextureSRV.push_back(tempSRV);
 					mMaterialVector[matCount - 1].Data.TexArrIndex = mMeshTextureSRV.size();
+					textureNameArray.push_back(fileNameDDS);
+					mMeshTextureSRV.push_back(tempSRV);
 				}
 				// TEXTURE SUPPORT NOT IPMLEMENTED YET
 
@@ -881,7 +859,7 @@ bool ObjectHandler::LoadObjectModel(
 			}
 		}
 		break;
-		case 'n': //newmtl - declare new material
+		case L'n': //newmtl - declare new material
 		{
 			std::wstring word_n = L"ewmtl ";
 			bool test_n = true;
@@ -899,7 +877,7 @@ bool ObjectHandler::LoadObjectModel(
 			{
 				materialStruct tempMat;
 				mMaterialVector.push_back(tempMat);
-				//fileIn >> mMaterialVector[matCount].matName;
+				fileIn >> mMaterialVector[matCount].matName;
 				mMaterialVector[matCount].Data.TexArrIndex = 0;
 				matCount++;
 			}

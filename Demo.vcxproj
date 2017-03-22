@@ -337,6 +337,7 @@
     <Image Include="grass-free-texture.jpg" />
     <Image Include="grass.dds" />
     <Image Include="heightmap.bmp" />
+    <Image Include="marble.dds" />
     <Image Include="peninsula.bmp" />
     <Image Include="seamlessstone.dds" />
     <Image Include="stone.dds" />
@@ -349,10 +350,14 @@
   <ItemGroup>
     <None Include="capsule.mtl" />
     <None Include="donut_red_lambert_20000_tris_TRIANGLULATED.mtl" />
+    <None Include="materials.mtl" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <Object Include="capsule.obj">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </Object>
+    <Object Include="cube.obj">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </Object>
     <Object Include="donut_red_lambert_20000_tris_TRIANGLULATED.obj">

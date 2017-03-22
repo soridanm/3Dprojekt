@@ -61,7 +61,7 @@ struct Object
 										   // TEXTURES ARE NOT YET IMPLEMENTED
 	std::vector<int> meshSubsetTexture;
 	//std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
-	std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
+	//std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
 
 												// World Buffer. For static objects this will at some point be set to an identity matrix
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
@@ -128,6 +128,7 @@ private:
 
 	std::vector<materialStruct> mMaterialVector; // Stores ALL objects' materials
 	std::vector<ID3D11ShaderResourceView*> mMeshTextureSRV; //not yet implemented
+	std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
 
 
 	cPerObjectBuffer mHeightMapWorldBufferData = cPerObjectBuffer();
