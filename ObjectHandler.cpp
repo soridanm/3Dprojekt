@@ -276,42 +276,40 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	if (passID == SHADOW_PASS)   { DevCon->VSSetConstantBuffers(1, 1, &(*objectArray)[objectIndex].perObjectWorldBuffer); }
 
 
-
-	/***************************************************************************************************************************************
-															Texture
-	***************************************************************************************************************************************/
-
-	// REMOVE AFTER TEXTURES HAVE BEEN IMPLEMENTED ----------------------------------------------------
-	//mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.HasTexture = 1;
-	// END REMOVE -------------------------------------------------------------------------------------
-	
 	if (passID == GEOMETRY_PASS)
 	{
-		//(*objectArray)[objectIndex].materialBufferData.HasTexture = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.HasTexture;
-
-		if (mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.HasTexture == 1)
-		{
-			int texIndex = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.TexArrIndex;
-			DevCon->PSSetShaderResources(1, 1, &mMeshTextureSRV[texIndex]);
-
-		}
 
 		/***************************************************************************************************************************************
 																Material
 		***************************************************************************************************************************************/
 
-		//set material
-		(*objectArray)[objectIndex].materialBufferData.SpecularColor = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.SpecularColor;
-		(*objectArray)[objectIndex].materialBufferData.SpecularPower = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.SpecularPower;
-		(*objectArray)[objectIndex].materialBufferData.DiffuseColor  = mMaterialVector[(*objectArray)[objectIndex].meshSubsetTextureIndex[materialIndex]].Data.DiffuseColor;
-		
+		//TODO: This should be removed from here
+		//(*objectArray)[objectIndex].materialBufferData = mMaterialArray[(*objectArray)[objectIndex].meshSubsetMaterialIndex[materialIndex]].Data;
+
+		/***************************************************************************************************************************************
+																Texture
+		***************************************************************************************************************************************/
+		int matInd = (*objectArray)[objectIndex].meshSubsetMaterialIndex[materialIndex];
+		if (mMaterialArray[matInd].Data.HasTexture == 1)
+		{
+			int texIndex = mMaterialArray[matInd].Data.TexArrIndex;
+			DevCon->PSSetShaderResources(1, 1, &mMeshTextureSRV[texIndex]);
+		}
+
 		// Map material properties buffer
-		D3D11_MAPPED_SUBRESOURCE materialPtr;
+		/*D3D11_MAPPED_SUBRESOURCE materialPtr;
 		DevCon->Map((*objectArray)[objectIndex].materialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 		memcpy(materialPtr.pData, &(*objectArray)[objectIndex].materialBufferData, sizeof(cMaterialBuffer));
-		DevCon->Unmap((*objectArray)[objectIndex].materialBuffer, 0);
+		DevCon->Unmap((*objectArray)[objectIndex].materialBuffer, 0);*/
 
-		DevCon->PSSetConstantBuffers(0, 1, &(*objectArray)[objectIndex].materialBuffer);
+		//DevCon->PSSetConstantBuffers(0, 1, &(*objectArray)[objectIndex].materialBuffer);
+
+		D3D11_MAPPED_SUBRESOURCE materialPtr;
+		DevCon->Map(mMaterialBufferArray[matInd], 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
+		memcpy(materialPtr.pData, &mMaterialArray[matInd].Data, sizeof(cMaterialBuffer));
+		DevCon->Unmap(mMaterialBufferArray[matInd], 0);
+
+		DevCon->PSSetConstantBuffers(0, 1, &mMaterialBufferArray[matInd]);
 	}
 
 	return true;
@@ -724,179 +722,191 @@ bool ObjectHandler::LoadObjectModel(
 	//----------------------------------------- Material -------------------------------------------------------------------
 	// Does not take ambient and diffuse color into account since all objects will be textured.
 
-	//close the obj file and open the mtl file (if it exists)
-	fileIn.close();
-	fileIn.open(meshMatLib.c_str());
-
-	std::wstring lastStringRead; // ????? This is never used
-	int matCount = mMaterialVector.size(); //total materials
-
-	//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
-
-	if (!fileIn) //early exit if the material file doesn't open
-		exit(-1);
-	while (fileIn)
+	bool mtlFileAlreadyLoaded = false;
+	for (size_t i = 0; i < mMaterialFileNameArray.size(); i++)
 	{
-		checkChar = fileIn.get();
-		switch (checkChar)
+		if (meshMatLib.compare(mMaterialFileNameArray[i]) == 0)
 		{
-		case L'#': //comment
-		{
-			while (checkChar != L'\n')
-				checkChar = fileIn.get();
+			mtlFileAlreadyLoaded = true;
 		}
-		break;
-		case L'K': //Ks - specular color
+	}
+
+	if (!mtlFileAlreadyLoaded)
+	{
+		mMaterialFileNameArray.push_back(meshMatLib);
+		//close the obj file and open the mtl file (if it exists)
+		fileIn.close();
+		fileIn.open(meshMatLib.c_str());
+
+		std::wstring lastStringRead; // ????? This is never used
+		int matCount = mMaterialArray.size(); //total materials
+
+		//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
+
+		if (!fileIn) //early exit if the material file doesn't open
+			exit(-1);
+		while (fileIn)
 		{
 			checkChar = fileIn.get();
-			if (checkChar == L's') // Ks - specular color
+			switch (checkChar)
 			{
-				checkChar = fileIn.get(); //read over space
-
-				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.x;
-				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.y;
-				fileIn >> mMaterialVector[matCount - 1].Data.SpecularColor.z;
-			}
-			else if (checkChar == L'd')
+			case L'#': //comment
 			{
-				checkChar = fileIn.get(); //read over space
-
-				fileIn >> mMaterialVector[matCount - 1].Data.DiffuseColor.x;
-				fileIn >> mMaterialVector[matCount - 1].Data.DiffuseColor.y;
-				fileIn >> mMaterialVector[matCount - 1].Data.DiffuseColor.z;
+				while (checkChar != L'\n')
+					checkChar = fileIn.get();
 			}
-		}
-		break;
-		case L'N': //Ns - specular power
-		{
-			checkChar = fileIn.get();
-			if (checkChar == L's')
-			{
-				checkChar = fileIn.get(); //read over space
-
-				fileIn >> mMaterialVector[matCount - 1].Data.SpecularPower;
-			}
-		}
-		break;
-		case L'm': //map_Kd - texture file
-		{
-			std::wstring word_m = L"ap_Kd ";
-			bool test_m = true;
-			//loop over "ap_Kd "
-			for (int i = 0; i < 6; i++)
-			{
-				checkChar = fileIn.get();
-				if (checkChar != word_m[i])
-				{
-					test_m = false;
-					break;
-				}
-			}
-			if (!test_m) //early exit if the letter following 'm' aren't "ap_Kd "
-				break;
-
-			mMaterialVector[matCount - 1].Data.HasTexture = 1;
-			object.materialBufferData.HasTexture = 1;
-
-			std::wstring fileNamePath;
-			std::wstring fileNameDDS;
-			bool texFilePathEnd = false;
-			//read the filename
-			while (!texFilePathEnd)
-			{
-				checkChar = fileIn.get();
-				fileNamePath += checkChar;
-				//stops reading after the filename extension (.png for example)
-				if (checkChar == L'.')
-				{
-					fileNameDDS = fileNamePath + L"dds";
-					for (int i = 0; i < 3; ++i)
-						fileNamePath += fileIn.get();
-
-					texFilePathEnd = true;
-				}
-			}
-			//check if this texture has already been loaded
-			bool alreadyLoaded = false;
-			for (unsigned int i = 0; i < textureNameArray.size(); ++i)
-			{
-				if (fileNamePath == textureNameArray[i])
-				{
-					alreadyLoaded = true;
-					mMaterialVector[matCount - 1].Data.TexArrIndex = i;
-				}
-			}
-			//load the texture
-			if (!alreadyLoaded)
-			{
-				ID3D11Resource* tempTexture;
-				ID3D11ShaderResourceView* tempSRV;
-				HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, const_cast<wchar_t*>(fileNameDDS.c_str()), &tempTexture, &tempSRV);
-
-				if (FAILED(hr))
-				{
-					OutputDebugString(L"\nObjectHandler::LoadObjectModel() Failed to create DDS texture \n\n");
-					exit(-1);
-				}
-				else
-				{
-					mMaterialVector[matCount - 1].Data.TexArrIndex = mMeshTextureSRV.size();
-					textureNameArray.push_back(fileNameDDS);
-					mMeshTextureSRV.push_back(tempSRV);
-				}
-			}
-		}
-		break;
-		case L'n': //newmtl - declare new material
-		{
-			std::wstring word_n = L"ewmtl ";
-			bool test_n = true;
-			//loop over "ewmtl "
-			for (int i = 0; i < 6; i++)
-			{
-				checkChar = fileIn.get();
-				if (checkChar != word_n[i])
-				{
-					test_n = false;
-					break;
-				}
-			}
-			if (test_n)
-			{
-				materialStruct tempMat;
-				mMaterialVector.push_back(tempMat);
-				fileIn >> mMaterialVector[matCount].matName;
-				mMaterialVector[matCount].Data.TexArrIndex = 0;
-				matCount++;
-			}
-		}
-		break;
-		default:
 			break;
-		} //end switch .mtl file
-	} //end while .mtl file
+			case L'K': //Ks - specular color
+			{
+				checkChar = fileIn.get();
+				if (checkChar == L's') // Ks - specular color
+				{
+					checkChar = fileIn.get(); //read over space
 
+					fileIn >> mMaterialArray[matCount - 1].Data.SpecularColor.x;
+					fileIn >> mMaterialArray[matCount - 1].Data.SpecularColor.y;
+					fileIn >> mMaterialArray[matCount - 1].Data.SpecularColor.z;
+				}
+				else if (checkChar == L'd')
+				{
+					checkChar = fileIn.get(); //read over space
+
+					fileIn >> mMaterialArray[matCount - 1].Data.DiffuseColor.x;
+					fileIn >> mMaterialArray[matCount - 1].Data.DiffuseColor.y;
+					fileIn >> mMaterialArray[matCount - 1].Data.DiffuseColor.z;
+				}
+			}
+			break;
+			case L'N': //Ns - specular power
+			{
+				checkChar = fileIn.get();
+				if (checkChar == L's')
+				{
+					checkChar = fileIn.get(); //read over space
+
+					fileIn >> mMaterialArray[matCount - 1].Data.SpecularPower;
+				}
+			}
+			break;
+			case L'm': //map_Kd - texture file
+			{
+				std::wstring word_m = L"ap_Kd ";
+				bool test_m = true;
+				//loop over "ap_Kd "
+				for (int i = 0; i < 6; i++)
+				{
+					checkChar = fileIn.get();
+					if (checkChar != word_m[i])
+					{
+						test_m = false;
+						break;
+					}
+				}
+				if (!test_m) //early exit if the letter following 'm' aren't "ap_Kd "
+					break;
+
+				mMaterialArray[matCount - 1].Data.HasTexture = 1;
+
+				std::wstring fileNamePath;
+				std::wstring fileNameDDS;
+				bool texFilePathEnd = false;
+				//read the filename
+				while (!texFilePathEnd)
+				{
+					checkChar = fileIn.get();
+					fileNamePath += checkChar;
+					//stops reading after the filename extension (.png for example)
+					if (checkChar == L'.')
+					{
+						fileNameDDS = fileNamePath + L"dds";
+						for (int i = 0; i < 3; ++i)
+							fileNamePath += fileIn.get();
+
+						texFilePathEnd = true;
+					}
+				}
+				//check if this texture has already been loaded
+				bool alreadyLoaded = false;
+				for (unsigned int i = 0; i < mTextureNameArray.size(); ++i)
+				{
+					if (fileNamePath == mTextureNameArray[i])
+					{
+						alreadyLoaded = true;
+						mMaterialArray[matCount - 1].Data.TexArrIndex = i;
+					}
+				}
+				//load the texture
+				if (!alreadyLoaded)
+				{
+					ID3D11Resource* tempTexture;
+					ID3D11ShaderResourceView* tempSRV;
+					HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, const_cast<wchar_t*>(fileNameDDS.c_str()), &tempTexture, &tempSRV);
+
+					if (FAILED(hr))
+					{
+						OutputDebugString(L"\nObjectHandler::LoadObjectModel() Failed to create DDS texture \n\n");
+						exit(-1);
+					}
+					else
+					{
+						mMaterialArray[matCount - 1].Data.TexArrIndex = mMeshTextureSRV.size();
+						mTextureNameArray.push_back(fileNameDDS);
+						mMeshTextureSRV.push_back(tempSRV);
+					}
+				}
+			}
+			break;
+			case L'n': //newmtl - declare new material
+			{
+				std::wstring word_n = L"ewmtl ";
+				bool test_n = true;
+				//loop over "ewmtl "
+				for (int i = 0; i < 6; i++)
+				{
+					checkChar = fileIn.get();
+					if (checkChar != word_n[i])
+					{
+						test_n = false;
+						break;
+					}
+				}
+				if (test_n)
+				{
+					materialStruct tempMat;
+					mMaterialArray.push_back(tempMat);
+					fileIn >> mMaterialArray[matCount].matName;
+					mMaterialArray[matCount].Data.TexArrIndex = 0;
+					matCount++;
+				}
+			}
+			break;
+			default:
+				break;
+			} //end switch .mtl file
+		} //end while .mtl file
+	} //end if material file not already loaded
 
 
 	//set the subset material to the index value of its material in the material array
 	for (int i = 0; i < object.nrOfMeshSubsets; i++)
 	{
 		bool hasMat = false;
-		for (int j = 0; j < mMaterialVector.size(); j++)
+		for (int j = 0; j < mMaterialArray.size(); j++)
 		{
 			int int1 = i;
 			int int2 = j;
 			std::wstring temp1 = meshMaterials[i];
-			std::wstring temp2 = mMaterialVector[j].matName;
-			if (meshMaterials[i].compare(mMaterialVector[j].matName) == 0)
+			std::wstring temp2 = mMaterialArray[j].matName;
+			if (meshMaterials[i].compare(mMaterialArray[j].matName) == 0)
 			{
-				object.meshSubsetTextureIndex.push_back(mMaterialVector[j].Data.TexArrIndex);
+				object.meshSubsetMaterialIndex.push_back(j);
+
 				hasMat = true;
 				break;
 			}
 		}
 		if (!hasMat)
-			object.meshSubsetTextureIndex.push_back(0); //use first material in the array if the subset doesn't have a specified material
+			object.meshSubsetMaterialIndex.push_back(0); //use first material in the array if the subset doesn't have a specified material
 	}
 
 	//create vertices
@@ -1014,6 +1024,7 @@ bool ObjectHandler::LoadObjectModel(
 
 	vertexBufferData.pSysMem = &object.meshVertexData[0];
 	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &object.meshVertexBuffer);
+
 
 	if (objectType == STATIC_OBJECT)
 	{
@@ -1307,27 +1318,39 @@ void ObjectHandler::CreateMaterialConstantBuffers(ID3D11Device* Dev)
 		exit(-1);
 	}
 
-	// Static Objects
-	for (size_t i = 0; i < mStaticObjects.size(); i++)
+	for (size_t i = 0; i < mMaterialArray.size(); i++)
 	{
-		hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mStaticObjects[i].materialBuffer);
+		mMaterialBufferArray.push_back(nullptr);
+		hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mMaterialBufferArray[i]);
 		if (FAILED(hr))
 		{
-			OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for static object\n\n");
+			OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create material buffers \n\n");
 			exit(-1);
 		}
 	}
 
-	// Dynamic Objects
-	for (size_t i = 0; i < mDynamicObjects.size(); i++)
-	{
-		hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mDynamicObjects[i].materialBuffer);
-		if (FAILED(hr))
-		{
-			OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for dynamic object\n\n");
-			exit(-1);
-		}
-	}
+
+	//// Static Objects
+	//for (size_t i = 0; i < mStaticObjects.size(); i++)
+	//{
+	//	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mStaticObjects[i].materialBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for static object\n\n");
+	//		exit(-1);
+	//	}
+	//}
+
+	//// Dynamic Objects
+	//for (size_t i = 0; i < mDynamicObjects.size(); i++)
+	//{
+	//	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mDynamicObjects[i].materialBuffer);
+	//	if (FAILED(hr))
+	//	{
+	//		OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for dynamic object\n\n");
+	//		exit(-1);
+	//	}
+	//}
 
 }
 

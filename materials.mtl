@@ -4,15 +4,16 @@
 # Ks - specular color
 # Ns - specular power
 
+# TODO: Only read material file once
 
 newmtl marble
-Kd 1.0 1.0 1.0
+Kd 0.0 1.0 0.0
 Ks 0.8 0.8 0.8
 Ns 120.08
 map_Kd marble.dds
 
 newmtl graymarble
-Kd 1.0 1.0 1.0
+Kd 1.0 0.0 0.0
 Ks 0.2 0.2 0.2
 Ns 120.08
 map_Kd gray-marble.dds

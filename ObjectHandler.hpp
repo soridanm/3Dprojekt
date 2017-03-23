@@ -53,14 +53,14 @@ struct Object
 	ID3D11Buffer* meshVertexBuffer = nullptr;
 	ID3D11Buffer* meshIndexBuffer = nullptr;
 	ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
-	cMaterialBuffer materialBufferData = cMaterialBuffer();
-	ID3D11Buffer* materialBuffer = nullptr;
+	//cMaterialBuffer materialBufferData = cMaterialBuffer();
+	//ID3D11Buffer* materialBuffer = nullptr;
 	
 	int nrOfMeshSubsets = 0;
 	std::vector<int> meshSubsetIndexStart; // needed?
-	std::vector<int> meshSubsetTextureIndex;
+	std::vector<int> meshSubsetMaterialIndex;
 	//std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
-	//std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
+	//std::vector<std::wstring> mTextureNameArray; // might be implemented like this or with vector<materialStruct>
 
 	// World Buffer. For static objects this will at some point be set to an identity matrix
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
@@ -124,9 +124,14 @@ private:
 	std::vector<Object> mStaticObjects;  // objects that will be included in quad-tree
 	std::vector<Object> mDynamicObjects; // Objects that will NOT be included int quad-tree
 
-	std::vector<materialStruct> mMaterialVector; // Stores ALL objects' materials
+	// Material
+	std::vector<materialStruct> mMaterialArray; // Stores ALL objects' materials
+	std::vector<std::wstring> mMaterialFileNameArray;
+	std::vector<ID3D11Buffer*> mMaterialBufferArray;
+
+	// Texture
 	std::vector<ID3D11ShaderResourceView*> mMeshTextureSRV; //not yet implemented
-	std::vector<std::wstring> textureNameArray; // might be implemented like this or with vector<materialStruct>
+	std::vector<std::wstring> mTextureNameArray; // might be implemented like this or with vector<materialStruct>
 
 
 	cPerObjectBuffer mHeightMapWorldBufferData = cPerObjectBuffer();
@@ -149,9 +154,9 @@ private:
 	//ID3D11Buffer* meshIndexBuff;
 	DirectX::XMMATRIX meshWorld; //not used????
 	//int meshSubsets = 0;					//number of subsets
-	//std::vector<int> meshSubsetTextureIndex;
+	//std::vector<int> meshSubsetMaterialIndex;
 	//std::vector<ID3D11ShaderResourceView*> meshSRV;
-	//std::vector<std::wstring> textureNameArray;
+	//std::vector<std::wstring> mTextureNameArray;
 
 
 };
