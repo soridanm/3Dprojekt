@@ -140,7 +140,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 		final_color = saturate(final_color + ambient_component);
 	}
 
-	//float3 finalColor = normal;
+	float3 finalColor = normal;
 	//float3 finalColor = positionWS/255.0;
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
@@ -153,7 +153,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = float3(shadow_tex_coord, 0.0);
 	//float3 finalColor = float3(shadow_coefficient, 0.0, 0.0);
 
-	float3 finalColor = final_color;
+	//float3 finalColor = final_color;
 
 	return float4(finalColor, 1.0);
 }

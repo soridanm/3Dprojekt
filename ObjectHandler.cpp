@@ -12,7 +12,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 {
 	
 	CreateWorld(Dev);
-	if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
+	if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, false))
 	{
 		exit(-1);
 	}
@@ -1045,13 +1045,16 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05f);
 	}
 
+	//NOTE: THIS DOES NOT WORK CORRECTLY! Faces seem to get two normals correct but have the last one come from another triangle
 	//calculates the normal for each face
 	std::vector<DirectX::XMFLOAT3> tempNormal;
 	DirectX::XMFLOAT3 nonNormalized = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 	float vecX, vecY, vecZ;
 	DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++) {
+	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++)
+	//for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) 
+	{
 		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
 		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
 		vecZ = mapVertex[drawOrder[(i * 3)]].pos.z - mapVertex[drawOrder[(i * 3) + 2]].pos.z;
@@ -1062,37 +1065,50 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		vecZ = mapVertex[drawOrder[(i * 3) + 2]].pos.z - mapVertex[drawOrder[(i * 3) + 1]].pos.z;
 		edge2 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f);
 
+
 		XMStoreFloat3(&nonNormalized, DirectX::XMVector3Cross(edge2, edge1));
 		tempNormal.push_back(nonNormalized);
+
+
+		if (HEIGHT_MAP_NORMALS == USING_FACE_NORMALS)
+		{
+			DirectX::XMVECTOR flatNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&nonNormalized));
+			DirectX::XMStoreFloat3(&mapVertex[drawOrder[(i * 3)]].normal, flatNormal);
+			DirectX::XMStoreFloat3(&mapVertex[drawOrder[(i * 3) + 1]].normal, flatNormal);
+			DirectX::XMStoreFloat3(&mapVertex[drawOrder[(i * 3) + 2]].normal, flatNormal);
+		}
 	}
 
-	//this part is still really slow. NOTE: Obly in Debug configurations
-	//calculates the average normal in order to make the world smooth
-	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	unsigned int facesUsing = 0;
+	if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
+	{
+		//this part is still really slow.
+		//calculates the average normal in order to make the world smooth
+		DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+		unsigned int facesUsing = 0;
 
-	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) {
-		for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) {
-			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
-				avgNorm.x += tempNormal[j].x;
-				avgNorm.y += tempNormal[j].y;
-				avgNorm.z += tempNormal[j].z;
+		for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) {
+			for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) {
+				if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+					avgNorm.x += tempNormal[j].x;
+					avgNorm.y += tempNormal[j].y;
+					avgNorm.z += tempNormal[j].z;
 
-				facesUsing++;
+					facesUsing++;
+				}
 			}
+			avgNorm.x /= facesUsing;
+			avgNorm.y /= facesUsing;
+			avgNorm.z /= facesUsing;
+
+			averageNormal = DirectX::XMLoadFloat3(&avgNorm);
+			averageNormal = DirectX::XMVector3Normalize(averageNormal);
+
+			DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
+
+			averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+			facesUsing = 0;
 		}
-		avgNorm.x /= facesUsing;
-		avgNorm.y /= facesUsing;
-		avgNorm.z /= facesUsing;
-
-		averageNormal = DirectX::XMLoadFloat3(&avgNorm);
-		averageNormal = DirectX::XMVector3Normalize(averageNormal);
-
-		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
-
-		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		facesUsing = 0;
 	}
 
 	D3D11_BUFFER_DESC indexBufferDesc;

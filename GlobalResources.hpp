@@ -85,6 +85,18 @@ static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::HIGH;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::EXTREME;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::ULTRA;
 
+enum HeighMapNormalSetting
+{
+	USING_FACE_NORMALS,			// AKA flat shading. 
+	USING_VERTEX_NORMALS		// AKA smooth shading. Significantly longer load time
+};
+
+static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
+//static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
+
+
+
+
 enum RenderPassID
 {
 	GEOMETRY_PASS,

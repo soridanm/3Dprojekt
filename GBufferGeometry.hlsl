@@ -67,7 +67,8 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 		output.PositionCS = mul(float4(output.PositionWS, 1.0), viewProjection);
 
 		output.NormalWS = normalize(mul(float4(input[i].Normal, 0.0), worldMatrix)).xyz;
-		
+		//output.NormalWS = face_normalWS;
+
 		// Pass along the texture coordinates
 		output.TexCoord = input[i].TexCoord;
 
