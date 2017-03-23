@@ -53,14 +53,10 @@ struct Object
 	ID3D11Buffer* meshVertexBuffer = nullptr;
 	ID3D11Buffer* meshIndexBuffer = nullptr;
 	ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
-	//cMaterialBuffer materialBufferData = cMaterialBuffer();
-	//ID3D11Buffer* materialBuffer = nullptr;
-	
+
 	int nrOfMeshSubsets = 0;
 	std::vector<int> meshSubsetIndexStart; // needed?
 	std::vector<int> meshSubsetMaterialIndex;
-	//std::vector<ID3D11ShaderResourceView*> meshTextureSRV; //not yet implemented
-	//std::vector<std::wstring> mTextureNameArray; // might be implemented like this or with vector<materialStruct>
 
 	// World Buffer. For static objects this will at some point be set to an identity matrix
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
@@ -96,13 +92,9 @@ public:
 	float** getWorldHeight();
 	int getWorldDepth();
 	int getWorldWidth();
-	//int GetNrOfMeshSubsets();
 	void moveObjects();
 	void insertToQuadtree();
-	//std::vector<int> meshSubsetIndexStart;	//TODO: Turn into get function
 
-	bool SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
-	cPerObjectBuffer quadtreeWorldBufferData = cPerObjectBuffer();
 
 	Quadtree mQuadtree; //Should probably be a member of GraphicsHandler.hpp instead
 private:

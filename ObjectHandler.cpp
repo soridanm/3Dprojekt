@@ -2,25 +2,17 @@
 
 
 ObjectHandler::ObjectHandler()
-{
-	/*gPerObjectBuffer	= nullptr;
-	ObjectBufferData	= cPerObjectBuffer();
-	gMaterialBuffer		= nullptr;
-	gMaterialBufferData = cMaterialBuffer();
-	mTextureView		= nullptr;*/
-}
+{}
 
 ObjectHandler::~ObjectHandler()
-{
-
-}
+{}
 
 //used in GraphicsHandler.InitializeGraphics
 void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
 	
 	CreateWorld(Dev);
-	if (!LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false))
+	if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true))
 	{
 		exit(-1);
 	}
@@ -28,12 +20,12 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 	{
 		exit(-1);
 	}
-	/*for (int i = 0; i < 4; i++) {
-		if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", STATIC_OBJECT, false, true))
+	for (int i = 0; i < 400; i++) {
+		if (!LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false))
 		{
 			exit(-1);
 		}
-	}*/
+	}
 	moveObjects();
 	mQuadtree = Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f,WORLD_DEPTH, 0), 1);
 	CreatePerObjectConstantBuffers(Dev);
@@ -88,7 +80,6 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	{
 		DevCon->PSSetShaderResources(0, 1, &mTextureView);
 	}
-	//DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
 
 	 //HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
 
@@ -120,7 +111,6 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	}
 
 	// Map material properties buffer
-
 	mHeightMapMaterialBufferData = Materials::Grass;
 	mHeightMapMaterialBufferData.HasTexture = 1;
 
@@ -132,71 +122,6 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	{
 		DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
 	}
-	//new code ----------------------------------------------------------------------------------------------
-	
-	return true;
-}
-
-// TODO: REMOVE!!
-bool ObjectHandler::SetQuadtreeBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
-{
-	UINT32 squareVertexSize = sizeof(float) * 8;
-	UINT32 offset = 0;
-
-	//set textures and constant buffers
-	if (passID == GEOMETRY_PASS)
-	{
-		DevCon->PSSetShaderResources(0, 1, &mTextureView);
-	}
-	//DevCon->PSSetConstantBuffers(0, 1, &gMaterialBuffer);
-
-	//HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
-
-	DevCon->IASetIndexBuffer(mQuadtree.quadIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
-	DevCon->IASetVertexBuffers(0, 1, &mQuadtree.quadVertBuffer, &squareVertexSize, &offset);
-
-	//HEIGHT-MAP END ---------------------------------------------------------------------------
-
-	//// update per-object buffer to spin cube
-	static float rotation = 0.0f;
-	//rotation += CUBE_ROTATION_SPEED;
-
-	DirectX::XMStoreFloat4x4(&quadtreeWorldBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
-
-	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	HRESULT hr = DevCon->Map(mQuadtree.quadtreeWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
-	if (FAILED(hr))
-	{
-		exit(-2);
-	}
-	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &quadtreeWorldBufferData, sizeof(cPerObjectBuffer));
-	// Unmap constant buffer so that we can use it again in the GPU
-	DevCon->Unmap(mQuadtree.quadtreeWorldBuffer, 0);
-	// set resource to Geometry Shader
-	if (passID == GEOMETRY_PASS)
-	{
-		DevCon->GSSetConstantBuffers(1, 1, &mQuadtree.quadtreeWorldBuffer);
-	}
-	if (passID == SHADOW_PASS)
-	{
-		DevCon->VSSetConstantBuffers(1, 1, &mQuadtree.quadtreeWorldBuffer);
-	}
-
-	// Map material properties buffer
-
-	//mHeightMapMaterialBufferData = Materials::Grass;
-	//mHeightMapMaterialBufferData.HasTexture = 1;
-
-	//D3D11_MAPPED_SUBRESOURCE materialPtr;
-	//DevCon->Map(mHeightMapMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	//memcpy(materialPtr.pData, &mHeightMapMaterialBufferData, sizeof(cMaterialBuffer));
-	//DevCon->Unmap(mHeightMapMaterialBuffer, 0);
-	//if (passID == GEOMETRY_PASS)
-	//{
-	//	DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
-	//}
-	//new code ----------------------------------------------------------------------------------------------
 
 	return true;
 }
@@ -214,13 +139,6 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	if (objectType == STATIC_OBJECT)  { objectArray = &mStaticObjects; }
 	if (objectType == DYNAMIC_OBJECT) { objectArray = &mDynamicObjects; }
 
-	/*if (objectArray = nullptr)
-	{
-		OutputDebugString(L"\nObjectHandler::SetObjectBufferWithIndex() Invalid ObjectType\n\n");
-		exit(-1);
-	}*/
-
-	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
 
 
 	// Set index and vertex buffers
@@ -255,15 +173,10 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		//TODO: This will be done at initialization so this part will be removed
 		// A static object has already had its geometry multiplied by a world-matrix so their shader-side matrix is set to an identity-matrix
 
-
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World,(*objectArray)[objectIndex].worldMatrixPerObject);
-		//XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
-
-		//XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity()));
 	}
 
-//	HRESULT hr;
-
+	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
 	DevCon->Map((*objectArray)[objectIndex].perObjectWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
 	// copy memory from CPU to GPU of the entire struct
 	memcpy(worldMatrixPtr.pData, &(*objectArray)[objectIndex].objectBufferData, sizeof(cPerObjectBuffer));
@@ -280,29 +193,15 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	{
 
 		/***************************************************************************************************************************************
-																Material
+													Material and texture
 		***************************************************************************************************************************************/
 
-		//TODO: This should be removed from here
-		//(*objectArray)[objectIndex].materialBufferData = mMaterialArray[(*objectArray)[objectIndex].meshSubsetMaterialIndex[materialIndex]].Data;
-
-		/***************************************************************************************************************************************
-																Texture
-		***************************************************************************************************************************************/
 		int matInd = (*objectArray)[objectIndex].meshSubsetMaterialIndex[materialIndex];
 		if (mMaterialArray[matInd].Data.HasTexture == 1)
 		{
 			int texIndex = mMaterialArray[matInd].Data.TexArrIndex;
 			DevCon->PSSetShaderResources(1, 1, &mMeshTextureSRV[texIndex]);
 		}
-
-		// Map material properties buffer
-		/*D3D11_MAPPED_SUBRESOURCE materialPtr;
-		DevCon->Map((*objectArray)[objectIndex].materialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-		memcpy(materialPtr.pData, &(*objectArray)[objectIndex].materialBufferData, sizeof(cMaterialBuffer));
-		DevCon->Unmap((*objectArray)[objectIndex].materialBuffer, 0);*/
-
-		//DevCon->PSSetConstantBuffers(0, 1, &(*objectArray)[objectIndex].materialBuffer);
 
 		D3D11_MAPPED_SUBRESOURCE materialPtr;
 		DevCon->Map(mMaterialBufferArray[matInd], 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
@@ -332,10 +231,6 @@ std::vector<Object>* ObjectHandler::GetObjectArrayPtr(ObjectType objectType)
 	return &((objectType == STATIC_OBJECT) ? mStaticObjects : mDynamicObjects);
 }
 
-//int ObjectHandler::GetNrOfMeshSubsets()
-//{
-//	return meshSubsets;
-//}
 
 float** ObjectHandler::getWorldHeight() {
 	return WORLD_HEIGHT;
@@ -741,7 +636,6 @@ bool ObjectHandler::LoadObjectModel(
 		std::wstring lastStringRead; // ????? This is never used
 		int matCount = mMaterialArray.size(); //total materials
 
-		//bool kdset = false; //if diffuse was not set, use ambient. if diffuse WAS set, no need to set diffuse to amb.
 
 		if (!fileIn) //early exit if the material file doesn't open
 			exit(-1);
@@ -808,17 +702,15 @@ bool ObjectHandler::LoadObjectModel(
 				mMaterialArray[matCount - 1].Data.HasTexture = 1;
 
 				std::wstring fileNamePath;
-				std::wstring fileNameDDS;
 				bool texFilePathEnd = false;
 				//read the filename
 				while (!texFilePathEnd)
 				{
 					checkChar = fileIn.get();
 					fileNamePath += checkChar;
-					//stops reading after the filename extension (.png for example)
+					//stops reading after the filename extension
 					if (checkChar == L'.')
 					{
-						fileNameDDS = fileNamePath + L"dds";
 						for (int i = 0; i < 3; ++i)
 							fileNamePath += fileIn.get();
 
@@ -840,7 +732,7 @@ bool ObjectHandler::LoadObjectModel(
 				{
 					ID3D11Resource* tempTexture;
 					ID3D11ShaderResourceView* tempSRV;
-					HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, const_cast<wchar_t*>(fileNameDDS.c_str()), &tempTexture, &tempSRV);
+					HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, const_cast<wchar_t*>(fileNamePath.c_str()), &tempTexture, &tempSRV);
 
 					if (FAILED(hr))
 					{
@@ -850,7 +742,7 @@ bool ObjectHandler::LoadObjectModel(
 					else
 					{
 						mMaterialArray[matCount - 1].Data.TexArrIndex = mMeshTextureSRV.size();
-						mTextureNameArray.push_back(fileNameDDS);
+						mTextureNameArray.push_back(fileNamePath);
 						mMeshTextureSRV.push_back(tempSRV);
 					}
 				}
@@ -922,7 +814,8 @@ bool ObjectHandler::LoadObjectModel(
 		object.meshVertexData.push_back(tempVert);
 	}
 	
-	//Compute face normals
+	//Compute normals
+	// NOTE: Currently only does flat shading
 	if (computeNormals)
 	{
 		std::vector<DirectX::XMFLOAT3> tempNormal;
@@ -980,7 +873,7 @@ bool ObjectHandler::LoadObjectModel(
 			} //end for j-loop through each triangle
 
 			using DirectX::operator/;
-			  //divide the unnormalized normal by the number of faces sharing the vertex and the normalize it to get the actual normal
+			//divide the unnormalized normal by the number of faces sharing the vertex and the normalize it to get the actual normal
 			normalSum = DirectX::XMVector3Normalize(normalSum / static_cast<float>(facesUsing));
 
 			//store it in the current vertex
@@ -992,10 +885,10 @@ bool ObjectHandler::LoadObjectModel(
 		} //end for i-loop through each vertex
 	} //end computeNormals
 
-	  //create vertex and index buffers -------------------------------------------------------------------------
+	//create vertex and index buffers -------------------------------------------------------------------------
 
 
-	  //index buffer
+	//index buffer
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
 
@@ -1258,18 +1151,6 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 		exit(-1);
 	}
 
-
-	//// Quadtree
-	DirectX::XMStoreFloat4x4(&quadtreeWorldBufferData.World, world);
-	InitData.pSysMem = &quadtreeWorldBufferData;
-	hr = Dev->CreateBuffer(&WBufferDesc, &InitData, &mQuadtree.quadtreeWorldBuffer);
-	if (FAILED(hr))
-	{
-		OutputDebugString(L"\nObjectHandler::CreatePerObjectConstantBuffers() Failed to create buffer for mQuadtree\n\n");
-		exit(-1);
-	}
-
-
 	// Static Objects
 	for (size_t i = 0; i < mStaticObjects.size(); i++)
 	{
@@ -1329,31 +1210,4 @@ void ObjectHandler::CreateMaterialConstantBuffers(ID3D11Device* Dev)
 		}
 	}
 
-
-	//// Static Objects
-	//for (size_t i = 0; i < mStaticObjects.size(); i++)
-	//{
-	//	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mStaticObjects[i].materialBuffer);
-	//	if (FAILED(hr))
-	//	{
-	//		OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for static object\n\n");
-	//		exit(-1);
-	//	}
-	//}
-
-	//// Dynamic Objects
-	//for (size_t i = 0; i < mDynamicObjects.size(); i++)
-	//{
-	//	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mDynamicObjects[i].materialBuffer);
-	//	if (FAILED(hr))
-	//	{
-	//		OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for dynamic object\n\n");
-	//		exit(-1);
-	//	}
-	//}
-
 }
-
-
-
-

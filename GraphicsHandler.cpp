@@ -227,22 +227,7 @@ bool GraphicsHandler::InitializeGraphics(ID3D11Device* Dev, ID3D11DeviceContext*
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-
-	//ID3D11Resource* textureStone;
-	//HRESULT hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"stone.jpg", &textureStone, &sTextureView);
-	//if (FAILED(hr))
-	//{
-	//	OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create WIC stone texture from file\n\n");
-	//	exit(-1);
-	//}
-	//ID3D11Resource* textureGrass;
-	// hr = DirectX::CreateWICTextureFromFile(Dev, DevCon, L"grass-free-texture.jpg", &textureGrass, &gTextureView);
-	//if (FAILED(hr)) 
-	//{
-	//	OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create WIC grass texture from file\n\n");
-	//	exit(-1);
-	//}
-
+	//TODO: move to function
 	ID3D11Resource* textureGrass;
 	HRESULT hr = DirectX::CreateDDSTextureFromFile(Dev, DevCon, L"grass.dds", &textureGrass, &gTextureView);
 	if (FAILED(hr)) 
@@ -572,10 +557,6 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 	mObjectHandler.SetHeightMapBuffer(DevCon, GEOMETRY_PASS);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
-	//-----------quadtree----------
-	//mObjectHandler.SetQuadtreeBuffer(DevCon, GEOMETRY_PASS);
-	//DevCon->DrawIndexed(mObjectHandler.mQuadtree.nrOfvertexes, 0, 0);
-
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff goes here
 	SetGeometryPassShaders(DevCon, false);
@@ -627,8 +608,6 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
 			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
-			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
 
 			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 		}
@@ -681,6 +660,8 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 	mObjectHandler.SetHeightMapBuffer(DevCon, SHADOW_PASS);
 	DevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
+
+	// TODO: Change the static object loop to a quadtree one
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff does NOT go here
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
@@ -692,8 +673,6 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 
 			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
 			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
-			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
 
 			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 		}
@@ -710,8 +689,6 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 
 			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
 			int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
-			//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-			//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
 
 			DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 		}
@@ -723,22 +700,8 @@ void GraphicsHandler::RenderShadowPass(ID3D11DeviceContext* DevCon)
 //TODO: check if pBackBuffer should be declared here or earlier
 bool GraphicsHandler::SetLightPassRenderTargets(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, IDXGISwapChain* SwapChain)
 {
-	// get the address of the back buffer
-	//ID3D11Texture2D* pBackBuffer = nullptr;
-	//SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-
-	// use the back buffer address to create the render target
-	//Dev->CreateRenderTargetView(pBackBuffer, NULL, &mBackbufferRTV);
-	//pBackBuffer->Release();
-
-	// set the render target as the back buffer
-	//DevCon->OMSetRenderTargets(1, &mBackbufferRTV, nullptr);
-
 	// set the render target as the texture that'll be used as input to the compute shader
 	DevCon->OMSetRenderTargets(1, &mComputeShader.mRenderTextureRTV, nullptr);
-
-	//Clear screen
-	//DevCon->ClearRenderTargetView(mBackbufferRTV, Colors::fWhite);
 
 	//Clear the render texture 
 	DevCon->ClearRenderTargetView(mComputeShader.mRenderTextureRTV, Colors::fBlack);
@@ -799,7 +762,6 @@ void GraphicsHandler::RenderLightPass(ID3D11Device* Dev, ID3D11DeviceContext* De
 	DevCon->PSSetShaderResources(4U, 1U, &mLightHandler.mShadowMapSRView);
 
 	mLightHandler.BindLightBuffer(DevCon, mCameraHandler.GetCameraPosition());
-
 
 	// Draw full screen triangle
 	DevCon->Draw(3U, 0U);
