@@ -55,8 +55,8 @@ namespace ScreenResolution
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
 

@@ -33,7 +33,8 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 	insertToQuadtree();
 	mQuadtree.createQuadLines(Dev);
 }
-void ObjectHandler::insertToQuadtree() {
+void ObjectHandler::insertToQuadtree() 
+{
 	for (UINT i = 0; i < mStaticObjects.size(); i++) {
 		DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(mStaticObjects[i].worldMatrixPerObject);
 		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) {
@@ -43,19 +44,20 @@ void ObjectHandler::insertToQuadtree() {
 		}
 	}
 }
-void ObjectHandler::moveObjects() {
 
+void ObjectHandler::moveObjects() 
+{
+	float scalingFactor = 2.0f;
 	for (int i = 0; i < mStaticObjects.size(); i++) {
-			DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
-			DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0, 0, 0);
-			DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(10.f * (i/20 + 1.0f), WORLD_HEIGHT[10 * (i% 20 + 1)][10 * (i/ 20 + 1)], 10.0f * (i% 20 + 1.0f));
+		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
+		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(10.f * (i / 20 + 1.0f), WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f, 10.0f * (i % 20 + 1.0f));
 
-			using DirectX::operator*;
-			DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+		using DirectX::operator*;
+		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
-
-			mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
-		}
+		mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
+	}
 
 	//for (int i = 0;i < mStaticObjects.size();i++) {
 	//	
@@ -232,25 +234,22 @@ std::vector<Object>* ObjectHandler::GetObjectArrayPtr(ObjectType objectType)
 }
 
 
-float** ObjectHandler::getWorldHeight() {
+float** ObjectHandler::getWorldHeight() 
+{
 	return WORLD_HEIGHT;
 }
-int ObjectHandler::getWorldDepth() {
+int ObjectHandler::getWorldDepth() 
+{
 	return WORLD_DEPTH;
 }
-int ObjectHandler::getWorldWidth() {
+int ObjectHandler::getWorldWidth() 
+{
 	return WORLD_WIDTH;
 }
 // private ---------------------------------------------------------------------------------------
 
-//TODO: Split into multiple functions
-bool ObjectHandler::LoadObjectModel(
-	ID3D11Device* Dev,
-	ID3D11DeviceContext* DevCon,
-	std::wstring filename,
-	ObjectType objectType,
-	bool isRHCoordSys,
-	bool computeNormals)
+//TODO? Split into multiple functions
+bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, std::wstring filename, ObjectType objectType, bool isRHCoordSys, bool computeNormals)
 {
 	std::wifstream fileIn(filename.c_str());    //Open file
 	std::wstring meshMatLib;                    //String to hold our obj material library filename
@@ -285,7 +284,6 @@ bool ObjectHandler::LoadObjectModel(
 	int meshTriangles = 0;
 
 	Object object;
-
 
 	//TODO: improve with an error message or something
 	if (!fileIn)	//Early exit if the file doesn't open
@@ -1081,7 +1079,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 
 	if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
 	{
-		//this part is still really slow.
+		//this part is still really really slow.
 		//calculates the average normal in order to make the world smooth
 		DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);

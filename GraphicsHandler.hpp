@@ -14,6 +14,7 @@
 #include "CameraHandler.hpp"
 #include "ObjectHandler.hpp"
 #include "ComputeShader.hpp"
+#include <algorithm>
 
 const UINT GBUFFER_COUNT = 4;
 

@@ -1,8 +1,8 @@
+//TODO: There should only be one of these full screen triangle shaders
 
 struct VS_OUT
 {
 	float4 PositionCS	: SV_Position;
-	float2 TexCoord		: TEXCOORD1;
 };
 
 // Generates a full screen triangle using vertexID which goes from 0 to 2
@@ -15,10 +15,6 @@ VS_OUT VS_main( in uint vertexID : SV_VertexID )
 	float y = (float)(vertexID % 2) * 4.0 - 1.0;
 
 	output.PositionCS = float4(x, y, 0.0, 1.0);
-
-	// texture coordinates: (0,0), (0,2), (2,0)
-	output.TexCoord.x = (float)(vertexID / 2) * 2.0;
-	output.TexCoord.y = 1.0 - (float)(vertexID % 2) * 2.0;
 
 	return output;
 }

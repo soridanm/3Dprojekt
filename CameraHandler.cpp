@@ -95,7 +95,9 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 {
 
 	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
-	DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
+
+	//DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
+	DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&mCameraProjection), view));
 
 	DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, CAM_POS);
 
@@ -268,8 +270,14 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	DirectX::XMMATRIX projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(
 		DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
 
-	DirectX::XMStoreFloat4x4(&VPBufferData.Projection, projection);
-	DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
+
+	DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(projection, view);
+
+	DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, vp);
+	DirectX::XMStoreFloat4x4(&mCameraProjection, projection);
+
+	//DirectX::XMStoreFloat4x4(&VPBufferData.Projection, projection);
+	//DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
 
 	D3D11_BUFFER_DESC VPBufferDesc;
 	VPBufferDesc.Usage			= D3D11_USAGE_DYNAMIC;
@@ -303,8 +311,11 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 
 	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(LIGHT_POS, LIGHT_TARGET, LIGHT_UP));
 	
-	DirectX::XMStoreFloat4x4(&SMBufferData.View, view);
-	DirectX::XMStoreFloat4x4(&SMBufferData.Projection, projection);
+	DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(projection, view);
+
+	DirectX::XMStoreFloat4x4(&SMBufferData.ViewProjection, vp);
+	//DirectX::XMStoreFloat4x4(&SMBufferData.View, view);
+	//DirectX::XMStoreFloat4x4(&SMBufferData.Projection, projection);
 
 	D3D11_BUFFER_DESC SMBufferDesc;
 	SMBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -323,7 +334,8 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 }
 
 DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
-	return VPBufferData.Projection;
+	return mCameraProjection;
+	//return VPBufferData.Projection;
 }
 DirectX::XMFLOAT4X4 CameraHandler::getView() {
 	DirectX::XMFLOAT4X4 temp;

@@ -45,9 +45,9 @@ private:
 	
 	struct cPerFrameBuffer
 	{
-		//XMFLOAT4X4 ViewProjection;
-		DirectX::XMFLOAT4X4 View;
-		DirectX::XMFLOAT4X4 Projection;
+		DirectX::XMFLOAT4X4 ViewProjection;
+		//DirectX::XMFLOAT4X4 View;
+		//DirectX::XMFLOAT4X4 Projection;
 		DirectX::XMFLOAT4 CameraPosition;
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
@@ -84,6 +84,7 @@ private:
 
 	DIMOUSESTATE MOUSE_LAST_STATE;
 
+	DirectX::XMFLOAT4X4 mCameraProjection;
 
 	//TODO: Move these two somewhere else. They're way too deep
 	//const LONG SCREEN_WIDTH = 1280;

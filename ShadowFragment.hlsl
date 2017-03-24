@@ -8,4 +8,7 @@ struct PS_IN
 	float4 PositionCS : SV_POSITION;
 };
 
-void PS_main(in PS_IN input) {}
+void PS_main(in PS_IN input) 
+{
+
+}

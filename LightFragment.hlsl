@@ -6,12 +6,11 @@
 #define NR_OF_LIGHTS 2
 
 #ifdef SHADOW_MAP_SIZE
-static const float inverseShadowMapSize = (1.0 / SHADOW_MAP_SIZE);
+static const float inverseShadowMapSize = rcp(SHADOW_MAP_SIZE);
 #else 
 static const float inverseShadowMapSize = 1.0;
 #endif
 
-//TODO? Texture2D<float4>
 
 // Textures from G-Buffers
 Texture2D<float4> NormalTexture			: register(t0); // x-y-z-unused
@@ -25,8 +24,10 @@ SamplerState textureSampler; // TODO: look up sampler settings
 
 cbuffer shadowMapMatrix			: register(b0)
 {
-	float4x4 lightView;
-	float4x4 lightProjection;
+	float4x4 lightViewProjection;
+	//float4x4 lightView;
+	//float4x4 lightProjection;
+	float4 cameraPositionUnused;
 }
 
 struct Light
@@ -50,7 +51,6 @@ cbuffer pointLightProperties	: register (b1)
 struct PS_IN
 {
 	float4 PositionCS	: SV_Position; //pixel location
-	float2 TexCoord		: TEXCOORD1;
 };
 
 float2 texOffset(int u, int v)
@@ -78,34 +78,42 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float distance_to_light;	// distance between the light and the surface point
 
 	// Used for the shadow map calculations
-	float4x4 lightViewProjection = mul(lightView, lightProjection); //TODO: change the cbuffer to a single matrix
+	//float4x4 lightViewProjection = mul(lightView, lightProjection); //TODO: change the cbuffer to a single matrix
 	float4 light_view_pos = mul(float4(positionWS, 1.0), lightViewProjection); // The clip space position of the point from the light's point of view
 	float bias = 0.00002;
 	
 	float2 shadow_tex_coord;
-	shadow_tex_coord.x =  light_view_pos.x / light_view_pos.w / 2.0 + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
-	shadow_tex_coord.y = -light_view_pos.y / light_view_pos.w / 2.0 + 0.5;  // Dividing by 2.0 and adding 0.5 gives position as uv coordinates [0, 1]
+	//shadow_tex_coord.x = (( light_view_pos.x / light_view_pos.w) / 2.0) + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
+	//shadow_tex_coord.y = ((-light_view_pos.y / light_view_pos.w) / 2.0) + 0.5;  // Dividing by 2.0 and adding 0.5 gives position as uv coordinates [0, 1]
+	shadow_tex_coord.x = (light_view_pos.x * rcp(light_view_pos.w) * 0.5) + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
+	shadow_tex_coord.y = (-light_view_pos.y * rcp(light_view_pos.w) * 0.5) + 0.5;  // Dividing by 2.0 and adding 0.5 gives position as uv coordinates [0, 1]
 
 	// calculate the distance from the light to the texel (the z value in NDC)
-	float light_depth_value = light_view_pos.z / light_view_pos.w;
+	//float light_depth_value = light_view_pos.z / light_view_pos.w;
+	float light_depth_value = light_view_pos.z * rcp(light_view_pos.w);
+
 
 	//subtract the bias to avoid self-shadowing
 	light_depth_value -= bias;
 
 	// Test if the point is outside the light's view frustum
-	bool outside_shadow_map = (saturate(shadow_tex_coord.x) != shadow_tex_coord.x && saturate(shadow_tex_coord.y) != shadow_tex_coord.y) ? true : false;
+	bool outside_shadow_map = (saturate(shadow_tex_coord.y) != shadow_tex_coord.y && saturate(shadow_tex_coord.x) != shadow_tex_coord.x) ? true : false;
 	// 16-tap (4x4 texel area) Percentage-Closer Filtering using a comparison sampler
 	float shadow_sum = 0.0;
 	float x, y;
-	for (y = -1.5; y <= 1.5; y += 1.0)
+	if (!outside_shadow_map)
 	{
-		for (x = -1.5; x <= 1.5; x += 1.0)
+		for (y = -1.5; y <= 1.5; y += 1.0)
 		{
-			shadow_sum += ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord + texOffset(x, y), light_depth_value);
+			for (x = -1.5; x <= 1.5; x += 1.0)
+			{
+				shadow_sum += ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord + texOffset(x, y), light_depth_value);
+			}
 		}
+		shadow_sum *= 0.0625; // Division by 16
 	}
-	//float shadow_factor = shadow_sum * 0.0625; // Division by 16
-	float shadow_coefficient = (!outside_shadow_map) ? shadow_sum * 0.0625 : 1.0;
+
+	float shadow_coefficient = (!outside_shadow_map) ? shadow_sum : 1.0;
 
 	// FOR DEBUGGING: Overwrites the Percentage-Closer Filtering
 	//shadow_coefficient = (!outside_shadow_map) ? ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord - texOffset(0.5, 0.5), light_depth_value) : 1.0;
@@ -115,7 +123,8 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
 		// The light contributes with its ambient part even if the pixel is in shadow
-		ambient_component = Lights[i].ambient_coefficient * Lights[i].color * diffuseColor; // light intesities
+		//ambient_component = Lights[i].ambient_coefficient * (Lights[i].color * diffuseColor); // light intesities
+		final_color += Lights[i].ambient_coefficient * (Lights[i].color * diffuseColor); // light intesities
 
 		// If the pixel is in full shadow then the diffuse and specular parts won't contribute to the final color so we won't calculate them
 		if (!(Lights[i].hasShadow == 1 && shadow_coefficient == 0.0))
@@ -130,17 +139,19 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 			// Specular part
 			/* specular_coefficient equals 0.0 if the light is behind the surface */
-			specular_coefficient = (diffuse_coefficient > 0.0) ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
-			specular_component = specular_coefficient * specularValues.rgb * Lights[i].color;
+			//specular_coefficient = (diffuse_coefficient > 0.0) ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
+			specular_coefficient = (diffuse_coefficient > 0.0) ? pow(saturate(dot(reflection, to_camera)), specularValues.a) : 0.0;
+			specular_component = specular_coefficient * (specularValues.rgb * Lights[i].color);
 
-			attenuation = 1.0 / (Lights[i].constant_attenuation + distance_to_light * (Lights[i].linear_attenuation + distance_to_light * Lights[i].quadratic_attenuation));
+			// rcp(x) = (1.0 / x)
+			attenuation = rcp(Lights[i].constant_attenuation + distance_to_light * (Lights[i].linear_attenuation + distance_to_light * Lights[i].quadratic_attenuation));
 
-			final_color = saturate(final_color + attenuation * (diffuse_component + specular_component) * ((Lights[i].hasShadow == 1) ? shadow_coefficient : 1.0));
+			final_color += attenuation * (diffuse_component + specular_component) * ((Lights[i].hasShadow == 1) ? shadow_coefficient : 1.0);
 		}
-		final_color = saturate(final_color + ambient_component);
+		//final_color += ambient_component;
 	}
 
-	float3 finalColor = normal;
+	//float3 finalColor = normal;
 	//float3 finalColor = positionWS/255.0;
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
@@ -153,7 +164,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = float3(shadow_tex_coord, 0.0);
 	//float3 finalColor = float3(shadow_coefficient, 0.0, 0.0);
 
-	//float3 finalColor = final_color;
+	float3 finalColor = saturate(final_color);
 
 	return float4(finalColor, 1.0);
 }

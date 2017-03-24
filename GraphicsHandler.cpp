@@ -583,6 +583,13 @@ void GraphicsHandler::RenderGeometryPass(ID3D11DeviceContext* DevCon)
 
 	int objInd;
 	std::vector<UINT> toDrawIndexes = mObjectHandler.mQuadtree.getObjects(mObjectHandler.mQuadtree.root);
+	
+	// TODO! Do this in the getObjects function
+	// TEMPORARY SOLUTION TO DUPLICATE DRAWS
+	std::sort(toDrawIndexes.begin(), toDrawIndexes.end());
+	toDrawIndexes.erase(std::unique(toDrawIndexes.begin(), toDrawIndexes.end()), toDrawIndexes.end());
+	// END TEMPORARY SOLUTION TO DUPLICATE DRAWS
+
 	for (size_t i = 0; i < toDrawIndexes.size(); i++)
 	{
 		objInd = toDrawIndexes[i];
