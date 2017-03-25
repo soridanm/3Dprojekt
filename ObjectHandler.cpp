@@ -1064,7 +1064,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		edge2 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f);
 
 
-		XMStoreFloat3(&nonNormalized, DirectX::XMVector3Cross(edge2, edge1));
+		DirectX::XMStoreFloat3(&nonNormalized, DirectX::XMVector3Cross(edge2, edge1));
 		tempNormal.push_back(nonNormalized);
 
 
@@ -1077,24 +1077,50 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		}
 	}
 
+	// NEW VERSION =================================================================================================
 	if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
 	{
+		int detectedUnderLimit = 0, detectedOverLimit = 0, nrfaces = NUMBER_OF_FACES, nrVerticies = NUMBER_OF_VERTICES; //Used for deciding the 
+
+		//verticies =  90000
+		//faces     =  178802
+		//under		= -177906 89104
+		//over		=  268800 177906
+
 		//this part is still really really slow.
 		//calculates the average normal in order to make the world smooth
 		DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		unsigned int facesUsing = 0;
 
+
+		const unsigned int dOs = drawOrder.size();
+		const unsigned int tNs = tempNormal.size();
+
 		for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) {
-			for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) {
-				if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+			//for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) { //22.704s
+			for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) { //22.6s
+			//for (unsigned int j = std::max<int>(0, i - 89104); j < std::min<int>(NUMBER_OF_FACES, i + 177906); j++) { //22.428s
+				if (drawOrder[(j * 3)] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+				//if (drawOrder[((j + i) * 3) % dOs] == i || drawOrder[((j + i) + 1) % dOs] == i || drawOrder[((j + i) + 2) % dOs] == i) { //forever seconds
+				//if (drawOrder[(NUMBER_OF_FACES - 1 - j) * 3] == i || drawOrder[((NUMBER_OF_FACES - 1 - j) * 3) + 1] == i || drawOrder[(NUMBER_OF_FACES - 1 - j) * 3 + 2] == i) {
 					avgNorm.x += tempNormal[j].x;
 					avgNorm.y += tempNormal[j].y;
 					avgNorm.z += tempNormal[j].z;
 
-					facesUsing++;
-				}
-			}
+					// Due to the pattern used a vertex can not be used by more than 6 faces
+					if (facesUsing++ > 4) //11.7s
+					{
+						break;
+					}
+					//facesUsing++;
+
+					//detectedOverLimit = std::max<int>(detectedOverLimit, (static_cast<int>(j) - static_cast<int>(i)));
+					//detectedUnderLimit = std::max<int>(detectedUnderLimit, (static_cast<int>(i) - static_cast<int>(j)));
+
+
+				} //end if
+			} //end for NUMBER_OF_FACES
 			avgNorm.x /= facesUsing;
 			avgNorm.y /= facesUsing;
 			avgNorm.z /= facesUsing;
@@ -1106,8 +1132,48 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 
 			averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 			facesUsing = 0;
-		}
+		} //end for NUMBER_OF_VERTICIES
+		std::cout << "over: " << detectedOverLimit << std::endl; 
+		std::cout << "under: " << detectedUnderLimit << std::endl;
 	}
+	// END NEW VERSION =============================================================================================
+
+
+	// OLD VERSION ~22s 16'092'180'000 loops! --------------------------------------------------------------------------------------------
+	//if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
+	//{
+	//	//this part is still really really slow.
+	//	//calculates the average normal in order to make the world smooth
+	//	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	//	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	//	unsigned int facesUsing = 0;
+
+	//	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) {
+	//		for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) {
+	//			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
+	//				avgNorm.x += tempNormal[j].x;
+	//				avgNorm.y += tempNormal[j].y;
+	//				avgNorm.z += tempNormal[j].z;
+
+	//				facesUsing++;
+	//			}
+	//		}
+	//		avgNorm.x /= facesUsing;
+	//		avgNorm.y /= facesUsing;
+	//		avgNorm.z /= facesUsing;
+
+	//		averageNormal = DirectX::XMLoadFloat3(&avgNorm);
+	//		averageNormal = DirectX::XMVector3Normalize(averageNormal);
+
+	//		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
+
+	//		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	//		facesUsing = 0;
+	//	}
+	//}
+	// END OLD VERSION ~22s --------------------------------------------------------------------------------------------
+
+
 
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));

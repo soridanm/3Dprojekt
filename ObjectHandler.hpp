@@ -9,6 +9,11 @@
 
 #include "GlobalResources.hpp"
 #include "QuadtreeHandler.hpp"	
+#include <algorithm>
+
+//todo: remove
+#include <iostream>
+
 enum ObjectType : int
 {
 	DYNAMIC_OBJECT,

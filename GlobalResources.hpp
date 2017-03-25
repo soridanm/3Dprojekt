@@ -91,8 +91,8 @@ enum HeighMapNormalSetting
 	USING_VERTEX_NORMALS		// AKA smooth shading. Significantly longer load time
 };
 
-static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
-//static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
+//static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
+static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
 
 
 
