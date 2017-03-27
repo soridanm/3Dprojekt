@@ -963,14 +963,19 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	float smoothingValue = 10.0f;
 
 	//stores the height values and their respective position
-	for (int j = 0; j < hminfo.worldHeight; j++) {
-		for (int i = 0; i < hminfo.worldWidth; i++) {
-			height = bitmapImage[offset];
-			index = (hminfo.worldHeight*j) + i;
+	//for (int j = 0; j < hminfo.worldHeight; j++) {
+	//	for (int i = 0; i < hminfo.worldWidth; i++) {
+	//		height = bitmapImage[offset];
+	//		index = (hminfo.worldHeight*j) + i;
 
-			hminfo.heightMap[index] = DirectX::XMFLOAT3(static_cast<float>(i), static_cast<float>(height) / smoothingValue, static_cast<float>(j));
+	//		hminfo.heightMap[index] = DirectX::XMFLOAT3(static_cast<float>(i), static_cast<float>(height) / smoothingValue, static_cast<float>(j));
+	//		offset += 3;
+	//	}
+	//}
+	for (int j = 0; j < hminfo.worldHeight*hminfo.worldWidth; j++) {
+			height = bitmapImage[offset];
+			hminfo.heightMap[j] = DirectX::XMFLOAT3(static_cast<float>(j%hminfo.worldHeight), static_cast<float>(height) / smoothingValue, static_cast<float>(j/hminfo.worldHeight));
 			offset += 3;
-		}
 	}
 	delete[] bitmapImage;
 	bitmapImage = 0;
@@ -998,18 +1003,27 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
 	std::vector<std::vector<DWORD>> vertexFaces(NUMBER_OF_VERTICES);
 
+	//for (DWORD i = 0; i < rows; i++) {
+	//	WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
+	//	for (DWORD j = 0; j < columns; j++) {
+	//		mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
+	//		mapVertex[i*columns + j].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
+	//		WORLD_HEIGHT[i][j] = hminfo.heightMap[i*columns + j].y;
+	//	}
+	//}
 	for (DWORD i = 0; i < rows; i++) {
 		WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
-		for (DWORD j = 0; j < columns; j++) {
-			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
-			mapVertex[i*columns + j].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
-			WORLD_HEIGHT[i][j] = hminfo.heightMap[i*columns + j].y;
-		}
+	}
+	for (DWORD i = 0; i < rows*columns; i++) {
+			mapVertex[i].pos = hminfo.heightMap[i]; //storing height and position in the struct
+			mapVertex[i].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
+			WORLD_HEIGHT[i/columns][i%columns] = hminfo.heightMap[i].y;
 	}
 
 	//assigns uv-coordinates as well as setting the order they will be drawn in 
 	std::vector<DWORD> drawOrder(NUMBER_OF_FACES * 3);
 	int k = 0, texUIndex = 0, texVIndex = 0;
+
 	for (DWORD j = 0; j < rows - 1; j++) {
 		for (DWORD i = 0; i < columns - 1; i++) {
 			drawOrder[k] = i*columns + j;//bottom left
@@ -1018,21 +1032,19 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
 			drawOrder[k + 2] = i*columns + j + 1;//bottom right
 			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
-
-
 			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
 			mapVertex[(1 + i)*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 0.0f));
 			drawOrder[k + 4] = i*columns + j + 1;//bottom right
 			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
 			drawOrder[k + 5] = (1 + i)*columns + j;//top left
 			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
-
 			k += 6;
-			texUIndex++;
+			texVIndex++;
 		}
-		texUIndex = 0;
-		texVIndex++;
+		texVIndex = 0;
+		texUIndex++;
 	}
+
 
 	// Change the scale of the texture.
 	// Definitely not the best (nor the most elegant) way to do it but at least it works

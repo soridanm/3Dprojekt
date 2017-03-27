@@ -69,6 +69,9 @@ std::vector<UINT> Quadtree::getObjects(Node* parent) {
 			objectsToReturn.insert(objectsToReturn.end(), parent->objects.begin(), parent->objects.end());
 		}
 	}
+	std::sort(objectsToReturn.begin(), objectsToReturn.end());
+	objectsToReturn.erase(std::unique(objectsToReturn.begin(), objectsToReturn.end()), objectsToReturn.end());
+
 	return objectsToReturn;
 }
 

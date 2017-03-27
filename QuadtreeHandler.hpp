@@ -3,6 +3,8 @@
 #include "GlobalResources.hpp"
 #include "FrustumHandler.hpp"
 #include <vector>
+#include <algorithm>
+
 
 class Quadtree {
 public:

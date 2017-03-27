@@ -23,7 +23,9 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	MOVE_UD		= 0.0f;
 	CAM_YAW		= 0.0f;
 	CAM_PITCH	= 0.0f;
-	SPEED		= 15.0f;
+	SPEED_DEFAULT = 15.0f;
+	SPEED		= SPEED_DEFAULT;
+	SPEED_INCREASE = 75.0f;
 }
 
 CameraHandler::~CameraHandler()
@@ -165,12 +167,11 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	}
 	//all the different movements
 	if (keyboardState[DIK_LSHIFT] & 0x80) {
-		SPEED = 45.0f;
+		SPEED = SPEED_INCREASE;
 	}
-	if (keyboardState[DIK_LCONTROL] & 0x80) {
-		SPEED = 15.0f;
+	else if (!(keyboardState[DIK_LSHIFT] & 0x80)) {
+		SPEED=SPEED_DEFAULT;
 	}
-
 	if (keyboardState[DIK_A] & 0x80) {
 
 		MOVE_LR -= SPEED*time;

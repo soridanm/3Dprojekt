@@ -79,7 +79,9 @@ private:
 	float MOVE_UD;
 	float CAM_YAW;
 	float CAM_PITCH;
+	float SPEED_DEFAULT;
 	float SPEED;
+	float SPEED_INCREASE;
 
 
 	DIMOUSESTATE MOUSE_LAST_STATE;
