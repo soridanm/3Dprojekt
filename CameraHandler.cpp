@@ -25,7 +25,7 @@ CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f,
 	CAM_PITCH	= 0.0f;
 	SPEED_DEFAULT = 15.0f;
 	SPEED		= SPEED_DEFAULT;
-	SPEED_INCREASE = 75.0f;
+	SPEED_INCREASE = 150.0f;
 }
 
 CameraHandler::~CameraHandler()

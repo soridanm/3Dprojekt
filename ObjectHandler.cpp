@@ -1019,7 +1019,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 			mapVertex[i].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
 			WORLD_HEIGHT[i/columns][i%columns] = hminfo.heightMap[i].y;
 	}
-
 	//assigns uv-coordinates as well as setting the order they will be drawn in 
 	std::vector<DWORD> drawOrder(NUMBER_OF_FACES * 3);
 	int k = 0, texUIndex = 0, texVIndex = 0;
