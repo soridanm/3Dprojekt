@@ -128,6 +128,7 @@
     <ClCompile Include="ObjectHandler.cpp" />
     <ClCompile Include="old_main.cpp" />
     <ClCompile Include="QuadtreeHandler.cpp" />
+    <ClCompile Include="ShaderHandler.cpp" />
     <ClCompile Include="TimeHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -324,6 +325,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="GraphicsHandler.hpp" />
+    <ClInclude Include="ShaderHandler.hpp" />
     <ClInclude Include="TimeHandler.hpp" />
   </ItemGroup>
   <ItemGroup>

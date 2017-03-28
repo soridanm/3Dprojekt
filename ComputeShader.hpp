@@ -3,6 +3,8 @@
 
 #include "GlobalResources.hpp"
 
+// MOVE TO SHADERHANDLER!
+
 class ComputeShader
 {
 public:

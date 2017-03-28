@@ -41,6 +41,7 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 {
 	GS_OUT output = (GS_OUT)0;
 
+
 	//float4x4 viewProjection = mul(view, projection);
 
 	//calculate and transpose face normals
@@ -50,15 +51,15 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 	float3 face_normalWS = mul(face_normal, (float3x3)worldMatrix);*/
 	
 
-	float3 face_normal = mul(cross(input[0].Position.xyz - input[1].Position.xyz, input[0].Position.xyz - input[2].Position.xyz), (float3x3)worldMatrix);
+	float3 face_normal = normalize(mul(cross(input[0].Position.xyz - input[1].Position.xyz, input[0].Position.xyz - input[2].Position.xyz), (float3x3)worldMatrix));
 
-
+	//int test = 0;
 	//new
 
 	// Convert position to world space
 	output.PositionWS = mul(input[0].Position, worldMatrix).xyz;
 
-	if (dot(cameraPosition.xyz - output.PositionWS, face_normal) < 0)
+	if (dot(normalize(cameraPosition.xyz - output.PositionWS), face_normal) < 0)
 	{
 		return;
 	}
@@ -72,6 +73,11 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 	
 	// Calculate clip-space position
 	output.PositionCS = mul(float4(output.PositionWS, 1.0), viewProjection);
+
+	/*if (output.PositionCS.z < 0.0)
+	{
+		test++;
+	}*/
 
 	//output.NormalWS = normalize(mul(float4(input[0].Normal, 0.0), worldMatrix)).xyz;
 	output.NormalWS = normalize((input[0].Normal.x*worldMatrix[0] + (input[0].Normal.y*worldMatrix[1] + input[0].Normal.z*worldMatrix[2])).xyz);
@@ -91,6 +97,15 @@ void GS_main (triangle GS_IN input[3], inout TriangleStream <GS_OUT> outStream)
 		// Calculate clip-space position
 		//output.PositionCS = mul(float4(output.PositionWS, 1.0), viewProjection);
 		output.PositionCS = output.PositionWS.x*viewProjection[0] + (output.PositionWS.y*viewProjection[1] + (output.PositionWS.z*viewProjection[2] + viewProjection[3]));
+		/*if (output.PositionCS.z < 0.0)
+		{
+			test++;
+			if (test == 3) {
+				return;
+			}
+		}*/
+
+
 
 		//output.NormalWS = normalize(mul(float4(input[i].Normal, 0.0), worldMatrix)).xyz;
 		output.NormalWS = normalize((input[i].Normal.x*worldMatrix[0] + (input[i].Normal.y*worldMatrix[1] + input[i].Normal.z*worldMatrix[2])).xyz);

@@ -45,6 +45,7 @@ struct ScreenSize
 	const LPCSTR HEIGHT_STRING;
 };
 
+//NOTE: Height must be divisible by 20, and width must be divisible by 40
 namespace ScreenResolution
 {
 	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U, "640\n", "480\n");
@@ -52,13 +53,17 @@ namespace ScreenResolution
 	static const ScreenSize FHD_1080p	= ScreenSize(1920U, 1080U, "1920\n", "1080\n");
 	static const ScreenSize QHD_1440p	= ScreenSize(2560U, 1440U, "2560\n", "1440\n");
 	static const ScreenSize UHD_1		= ScreenSize(3840U, 2160U, "3840", "2160");
+	static const ScreenSize FHD_1920x1000= ScreenSize(1920U, 1000U, "1920\n", "1000\n");
+
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1920x1000;
+
 
 
 struct ShadowQuality
@@ -85,14 +90,14 @@ static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::HIGH;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::EXTREME;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::ULTRA;
 
-enum HeighMapNormalSetting
+enum HeightMapNormalSetting
 {
 	USING_FACE_NORMALS,			// AKA flat shading. 
 	USING_VERTEX_NORMALS		// AKA smooth shading. Significantly longer load time
 };
 
-//static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
-static const HeighMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
+//static const HeightMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
+static const HeightMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
 
 
 
