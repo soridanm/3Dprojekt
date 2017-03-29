@@ -120,6 +120,7 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 	return true;
 }
 
+//MOVED TO SHADERHANDLER
 //TODO: look up what format is best to use. Do this for the GBuffer as well
 bool LightHandler::CreateShadowMap(ID3D11Device* Dev)
 {

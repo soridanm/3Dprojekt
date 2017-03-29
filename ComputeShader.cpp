@@ -106,6 +106,7 @@ void ComputeShader::CreateComputePassShaders(ID3D11Device* Dev)
 	pPS->Release();
 }
 
+// MOVED TO SHADERHANDLER
 // Done for now
 // Used in GraphicsHandler::InitializeGraphics()
 void ComputeShader::CreateRenderTextures(ID3D11Device* Dev)
@@ -152,8 +153,6 @@ void ComputeShader::CreateRenderTextures(ID3D11Device* Dev)
 
 	texture->Release();
 }
-
-
 
 void ComputeShader::RenderComputeShader(
 	ID3D11DeviceContext* DevCon, ID3D11RenderTargetView* BackBuffer, 

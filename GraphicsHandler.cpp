@@ -11,7 +11,7 @@
 #include "GraphicsHandler.hpp"
 
 // private ------------------------------------------------------------------------------
-
+// MOVED TO SHADERHANDLER
 //done for now, will add comments to this function later
 bool GraphicsHandler::CompileShader(
 	ID3DBlob** pShader,
@@ -69,6 +69,7 @@ bool GraphicsHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pVS)
 	return true;
 }
 
+// MOVED TO SHADERHANDLER
 // TODO: Should probably add hr checks. also Relese()
 bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 {
@@ -137,6 +138,7 @@ bool GraphicsHandler::InitializeGraphicsBuffer(ID3D11Device* Dev)
 	return true;
 }
 
+//MOVED TO SHADERHANDLER
 //TODO: Look through settings again before handing in
 bool GraphicsHandler::CreateRasterizerStates(ID3D11Device* Dev)
 {
