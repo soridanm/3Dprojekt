@@ -3,34 +3,6 @@
 
 #include "GlobalResources.hpp"
 
-/*
-For easy copy and paste
-
-switch (passID)
-{
-case GEOMETRY_PASS:
-
-break;
-case SHADOW_PASS:
-
-break;
-
-case LIGHT_PASS:
-
-break;
-
-case COMPUTE_PASS:
-
-break;
-
-default:
-break;
-} //end passID switch
-
-
-*/
-
-
 
 const UINT GBUFFER_COUNT = 4;
 
@@ -90,9 +62,6 @@ private:
 	//create input layout. Used in CreateShaders
 	void CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPassID passID);
 
-	//create textures/srv
-	//void CreateComputePassRenderTextures(ID3D11Device* Dev);
-
 	//create/init GBuffer
 	void CreateRenderTextures(ID3D11Device* Dev);
 
@@ -109,6 +78,8 @@ private:
 		ID3D11ShaderResourceView* shaderResourceView = nullptr;
 	};
 	GraphicsBuffer mGraphicsBuffer[GBUFFER_COUNT];
+
+	//TODO: Organize the member pointers
 
 	ID3D11DepthStencilView* mDepthStecilView = nullptr;
 	ID3D11Texture2D* mDepthStencilTexture = nullptr;
@@ -130,24 +101,17 @@ private:
 	ID3D11ShaderResourceView* mShadowMapSRView;
 
 	//Light Pass
-	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
 	ID3D11SamplerState* mShadowSampler = nullptr;
-	ID3D11VertexShader* mLightPassVertexShader = nullptr;
+	ID3D11VertexShader* mFullScreenVertexShader = nullptr;
 	ID3D11PixelShader* mLightPassPixelShader = nullptr;
 	//Compute Pass //TODO: Screen Pass
-	ID3D11VertexShader* mComputePassVertexShader = nullptr;
 	ID3D11PixelShader* mComputePassPixelShader = nullptr;
-
 	ID3D11ComputeShader* mComputeShader = nullptr;
-
 	ID3D11ShaderResourceView* mRenderTextureSRV = nullptr;
-
 	ID3D11UnorderedAccessView* mTempTextureUAV = nullptr;
 	ID3D11ShaderResourceView* mTempTextureSRV = nullptr;
 	ID3D11RenderTargetView*	mRenderTextureRTV = nullptr; //TODO: RENAME
-
 	ID3D11RasterizerState* mRasterizerState[2];
-
 	ID3D11RenderTargetView* mBackbufferRTV; //TODO: Remove this from other classes
 };
 

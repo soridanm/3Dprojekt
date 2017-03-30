@@ -1,9 +1,5 @@
 /*
-* TODO: Triangle Shader
-		Input layout
-		Remove GraphicsHandler and move its functionality to Engine
-*
-*
+* TODO: Input layout
 *
 */
 
@@ -77,7 +73,7 @@ void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID p
 			//DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		}
 	}
-		break;
+	break;
 	case SHADOW_PASS:
 	{
 		DevCon->OMSetRenderTargets(0, 0, mShadowMapDepthView);
@@ -86,23 +82,23 @@ void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID p
 			DevCon->ClearDepthStencilView(mShadowMapDepthView, D3D11_CLEAR_DEPTH, 1.0f, 0);
 		}
 	}
-		break;
+	break;
 	case LIGHT_PASS:
 	{
 		// set the render target as the texture that'll be used as input to the compute shader
-		DevCon->OMSetRenderTargets(1, &mRenderTextureRTV, nullptr); 
+		DevCon->OMSetRenderTargets(1, &mRenderTextureRTV, nullptr);
 		if (clearRenderTargets)
 		{
 			DevCon->ClearRenderTargetView(mRenderTextureRTV, Colors::fBlack);
 		}
 	}
-		break;
+	break;
 	case COMPUTE_PASS:
 	{
 		ID3D11UnorderedAccessView* uav[] = { mTempTextureUAV };
 		DevCon->CSSetUnorderedAccessViews(0, 1, uav, nullptr);
 	}
-		break;
+	break;
 	case SCREEN_PASS:
 	{
 		DevCon->OMSetRenderTargets(1, &mBackbufferRTV, nullptr);
@@ -111,7 +107,7 @@ void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID p
 			DevCon->ClearRenderTargetView(mBackbufferRTV, Colors::fBlack);
 		}
 	}
-		break;
+	break;
 	default:
 		break;
 	} //end passID switch
@@ -197,17 +193,17 @@ void ShaderHandler::SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID,
 		DevCon->GSSetShader(nullptr, nullptr, 0);
 		DevCon->PSSetShader(mShadowPassPixelShader, nullptr, 0);
 	}
-		break;
+	break;
 
 	case LIGHT_PASS:
 	{
-		DevCon->VSSetShader(mLightPassVertexShader, nullptr, 0);
+		DevCon->VSSetShader(mFullScreenVertexShader, nullptr, 0);
 		DevCon->HSSetShader(nullptr, nullptr, 0);
 		DevCon->DSSetShader(nullptr, nullptr, 0);
 		DevCon->GSSetShader(nullptr, nullptr, 0);
 		DevCon->PSSetShader(mLightPassPixelShader, nullptr, 0);
 	}
-		break;
+	break;
 
 	case COMPUTE_PASS:
 	{
@@ -218,16 +214,16 @@ void ShaderHandler::SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID,
 		DevCon->PSSetShader(nullptr, nullptr, 0);
 		DevCon->CSSetShader(mComputeShader, nullptr, 0U);
 	}
-		break;
+	break;
 	case SCREEN_PASS:
 	{
-		DevCon->VSSetShader(mComputePassVertexShader, nullptr, 0);
+		DevCon->VSSetShader(mFullScreenVertexShader, nullptr, 0);
 		DevCon->HSSetShader(nullptr, nullptr, 0);
 		DevCon->DSSetShader(nullptr, nullptr, 0);
 		DevCon->GSSetShader(nullptr, nullptr, 0);
 		DevCon->PSSetShader(mComputePassPixelShader, nullptr, 0);
 	}
-		break;
+	break;
 	default:
 		break;
 	} //end passID switch
@@ -241,21 +237,12 @@ void ShaderHandler::SetSamplers(ID3D11DeviceContext* DevCon, RenderPassID passID
 	{
 		DevCon->PSSetSamplers(0, 1, &mSampleState);
 	}
-		break;
-	case SHADOW_PASS:
-
-		break;
-
+	break;
 	case LIGHT_PASS:
 	{
 		DevCon->PSSetSamplers(0, 1, &mShadowSampler);
 	}
-		break;
-
-	case COMPUTE_PASS:
-
-		break;
-
+	break;
 	default:
 		break;
 	} //end passID switch
@@ -270,10 +257,6 @@ void ShaderHandler::SetShaderResources(ID3D11DeviceContext* DevCon, RenderPassID
 
 	}
 	break;
-	case SHADOW_PASS:
-
-		break;
-
 	case LIGHT_PASS:
 	{
 		ID3D11ShaderResourceView* GBufferTextureViews[] =
@@ -287,18 +270,17 @@ void ShaderHandler::SetShaderResources(ID3D11DeviceContext* DevCon, RenderPassID
 		DevCon->PSSetShaderResources(0, GBUFFER_COUNT, GBufferTextureViews);
 		DevCon->PSSetShaderResources(4, 1, &mShadowMapSRView);
 	}
-		break;
-
+	break;
 	case COMPUTE_PASS:
 	{
 		DevCon->CSSetShaderResources(0, 1, &mRenderTextureSRV);
 	}
-		break;
+	break;
 	case SCREEN_PASS:
 	{
 		DevCon->PSSetShaderResources(0, 1, &mTempTextureSRV);
 	}
-		break;
+	break;
 	default:
 		break;
 	} //end passID switch
@@ -358,27 +340,27 @@ void ShaderHandler::CreateShader(ID3D11Device* Dev, ID3DBlob* pS, ShaderType sha
 	switch (passID)
 	{
 	case GEOMETRY_PASS:
-		vertexShader	= &mGeometryPassVertexShader;
-		geometryShader	= &mGeometryPassGeometryShader;
-		pixelShader		= (shaderType == PIXEL_SHADER_HEIGHTMAP_VERSION) ? 
+		vertexShader = &mGeometryPassVertexShader;
+		geometryShader = &mGeometryPassGeometryShader;
+		pixelShader = (shaderType == PIXEL_SHADER_HEIGHTMAP_VERSION) ?
 			&mGeometryPassPixelHeightMapShader : &mGeometryPassPixelShader;
 		break;
 	case SHADOW_PASS:
-		vertexShader	= &mShadowPassVertexShader;
-		pixelShader		= &mShadowPassPixelShader;
+		vertexShader = &mShadowPassVertexShader;
+		pixelShader = &mShadowPassPixelShader;
 		break;
 
 	case LIGHT_PASS:
-		vertexShader	= &mLightPassVertexShader;
-		pixelShader		= &mLightPassPixelShader;
+		vertexShader = &mFullScreenVertexShader;
+		pixelShader = &mLightPassPixelShader;
 		break;
 
 	case COMPUTE_PASS:
-		vertexShader	= &mComputePassVertexShader;
-		pixelShader		= &mComputePassPixelShader;
-		computeShader	= &mComputeShader;
+		vertexShader = &mFullScreenVertexShader;
+		pixelShader = &mComputePassPixelShader;
+		computeShader = &mComputeShader;
 		break;
-	
+
 	default:
 		break;
 	} //end passID switch
@@ -435,8 +417,7 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mVertexLayout);
 		failed = (FAILED(hr)) ? true : false;
 	}
-		break;
-
+	break;
 	case SHADOW_PASS: // TODO: Change input layout to only include POSITION
 	{
 		D3D11_INPUT_ELEMENT_DESC inputDesc[] =
@@ -448,12 +429,7 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mVertexLayout);
 		failed = (FAILED(hr)) ? true : false;
 	}
-		break;
-
-	case LIGHT_PASS:
-		break;
-	case COMPUTE_PASS:
-		break;
+	break;
 	default:
 		break;
 	}
@@ -514,9 +490,8 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 	}
 	// Light Pass -----------------------------------------------
 	{
-		//input layout
 		pS->Release();
-		CompileShader(&pS, L"LightVertex.hlsl", "VS_main", "vs_5_0");
+		CompileShader(&pS, L"FullScreenTriangleVertex.hlsl", "VS_main", "vs_5_0");
 		CreateShader(Dev, pS, VERTEX_SHADER, LIGHT_PASS);
 
 		//no input layout since geometry is generated in the vertex shader
@@ -544,9 +519,7 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 		CompileShader(&pS, L"FXAACompute.hlsl", "FXAA_main", "cs_5_0", ComputeShaderMacros);
 		CreateShader(Dev, pS, COMPUTE_SHADER, COMPUTE_PASS);
 
-		pS->Release();
-		CompileShader(&pS, L"ComputePassVertex.hlsl", "VS_main", "vs_5_0");
-		CreateShader(Dev, pS, VERTEX_SHADER, COMPUTE_PASS);
+		// Full Screen vertex shader already compiled
 
 		//no input layout since geometry is generated in the vertex shader
 

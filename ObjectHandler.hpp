@@ -57,7 +57,6 @@ struct Object
 	std::vector<Vertex> meshVertexData;
 	ID3D11Buffer* meshVertexBuffer = nullptr;
 	ID3D11Buffer* meshIndexBuffer = nullptr;
-	ID3D11BlendState* transparency = nullptr; // transparency is not implemented so this will likely be removed
 
 	int nrOfMeshSubsets = 0;
 	std::vector<int> meshSubsetIndexStart; // needed?
@@ -73,24 +72,24 @@ struct Object
 
 namespace Materials
 {
-	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(/*L"Black plastic",*/	0.5f, 0.5f, 0.5f, 32.0f);
-	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(/*L"Black rubber",*/	0.4f, 0.4f, 0.4f, 10.0f);
-	static const cMaterialBuffer Grass = cMaterialBuffer(/*L"Grass",*/	0.024f, 0.05f, 0.01f, 1.5f);
+	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(0.5f, 0.5f, 0.5f, 32.0f);
+	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(0.4f, 0.4f, 0.4f, 10.0f);
+	static const cMaterialBuffer Grass			= cMaterialBuffer(0.024f, 0.05f, 0.01f, 1.5f);
 }
 
 class ObjectHandler
 {
 public:
-	
 	ObjectHandler();
 	~ObjectHandler();
+	
 	void InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
 	const int GetHeightMapNrOfFaces();
 	int GetHeightMapNrOfVerticies();
 
-	void CreateWorld(ID3D11Device* Dev);
+	void CreateWorld(ID3D11Device* Dev); //TODO: Rename
 
 	std::vector<Object>* GetObjectArrayPtr(ObjectType objectType);
 
@@ -101,7 +100,7 @@ public:
 	void insertToQuadtree();
 
 
-	Quadtree mQuadtree; //Should probably be a member of GraphicsHandler.hpp instead
+	Quadtree mQuadtree; //Should probably be a member of Engine.hpp instead
 private:
 	//TODO: Turn some of these into member variables
 	bool LoadObjectModel(
@@ -144,17 +143,6 @@ private:
 	int NUMBER_OF_VERTICES = 0;
 	float** WORLD_HEIGHT;
 	int WORLD_WIDTH = 0, WORLD_DEPTH = 0;
-
-	//Loading .obj files
-	//ID3D11BlendState* Transparency;
-	//ID3D11Buffer* meshVertBuff;
-	//ID3D11Buffer* meshIndexBuff;
-	DirectX::XMMATRIX meshWorld; //not used????
-	//int meshSubsets = 0;					//number of subsets
-	//std::vector<int> meshSubsetMaterialIndex;
-	//std::vector<ID3D11ShaderResourceView*> meshSRV;
-	//std::vector<std::wstring> mTextureNameArray;
-
 
 };
 

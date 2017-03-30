@@ -276,8 +276,6 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, vp);
 	DirectX::XMStoreFloat4x4(&mCameraProjection, projection);
 
-	//DirectX::XMStoreFloat4x4(&VPBufferData.Projection, projection);
-	//DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
 
 	D3D11_BUFFER_DESC VPBufferDesc;
 	VPBufferDesc.Usage			= D3D11_USAGE_DYNAMIC;
@@ -314,8 +312,6 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(projection, view);
 
 	DirectX::XMStoreFloat4x4(&SMBufferData.ViewProjection, vp);
-	//DirectX::XMStoreFloat4x4(&SMBufferData.View, view);
-	//DirectX::XMStoreFloat4x4(&SMBufferData.Projection, projection);
 
 	D3D11_BUFFER_DESC SMBufferDesc;
 	SMBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
@@ -335,11 +331,9 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 
 DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
 	return mCameraProjection;
-	//return VPBufferData.Projection;
 }
 DirectX::XMFLOAT4X4 CameraHandler::getView() {
 	DirectX::XMFLOAT4X4 temp;
 	DirectX::XMStoreFloat4x4(&temp, DirectX::XMMatrixLookAtLH(DirectX::XMVectorScale(CAM_POS, -1), DirectX::XMVectorScale(CAM_TARGET, -1), { 0,1,0 }));
 	 return temp;
-	//return VPBufferData.View;
 }

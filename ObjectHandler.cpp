@@ -230,7 +230,7 @@ int ObjectHandler::GetHeightMapNrOfVerticies()
 
 std::vector<Object>* ObjectHandler::GetObjectArrayPtr(ObjectType objectType)
 {
-	return &((objectType == STATIC_OBJECT) ? mStaticObjects : mDynamicObjects);
+	return (objectType == STATIC_OBJECT) ? &mStaticObjects : &mDynamicObjects;
 }
 
 
@@ -1081,8 +1081,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		}
 	}
 
-	// NEW VERSION. Only 6ms(!) with 536'406 iterations =================================================================================================
-
 	if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
 	{
 		//calculates the average normal in order to make the world smooth
@@ -1112,45 +1110,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 			averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		} //end for NUMBER_OF_VERTICIES
 	} //end if USING_VERTEX_NORMALS
-
-	// END NEW VERSION =============================================================================================
-
-	// OLD VERSION ~22s. 16'092'180'000 iterations! --------------------------------------------------------------------------------------------
-	//if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
-	//{
-	//	//this part is still really really slow.
-	//	//calculates the average normal in order to make the world smooth
-	//	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	//	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	//	unsigned int facesUsing = 0;
-
-	//	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) {
-	//		for (unsigned int j = 0; j < NUMBER_OF_FACES; j++) {
-	//			if (drawOrder[j * 3] == i || drawOrder[(j * 3) + 1] == i || drawOrder[(j * 3) + 2] == i) {
-	//				avgNorm.x += tempNormal[j].x;
-	//				avgNorm.y += tempNormal[j].y;
-	//				avgNorm.z += tempNormal[j].z;
-
-	//				facesUsing++;
-	//			}
-	//		}
-	//		avgNorm.x /= facesUsing;
-	//		avgNorm.y /= facesUsing;
-	//		avgNorm.z /= facesUsing;
-
-	//		averageNormal = DirectX::XMLoadFloat3(&avgNorm);
-	//		averageNormal = DirectX::XMVector3Normalize(averageNormal);
-
-	//		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
-
-	//		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	//		facesUsing = 0;
-	//	}
-	//}
-	// END OLD VERSION --------------------------------------------------------------------------------------------
-
-
-
 
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));

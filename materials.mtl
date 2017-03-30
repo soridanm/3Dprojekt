@@ -1,10 +1,6 @@
-# Create as many materials as desired
-# Each is referenced by name before the faces it applies to in the obj file
 # Kd - diffuse color (overread if texture is used)
 # Ks - specular color
 # Ns - specular power
-
-# TODO: Only read material file once
 
 newmtl marble
 Kd 0.0 1.0 0.0
@@ -18,3 +14,7 @@ Ks 0.2 0.2 0.2
 Ns 120.08
 map_Kd gray-marble.dds
 
+newmtl teapot
+Kd 0.0 0.50980392 0.50980392
+Ks 0.50196078 0.50196078 0.50196078
+Ns 22

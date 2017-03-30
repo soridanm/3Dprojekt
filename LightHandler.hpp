@@ -1,7 +1,3 @@
-/*
-* TODO: Should probably move MAX_LIGHTS to this file and rename it
-* The cLightBuffer might have to be public
-*/
 
 
 #ifndef LIGHTHANDLER_HPP
@@ -20,12 +16,6 @@ public:
 	bool InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS);
 	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 CAM_POS);
 	bool CreateLightBuffer(ID3D11Device* Dev);
-	//bool CreateShadowMap(ID3D11Device* Dev); MOVED TO SHADERHANDLER
-
-	//shadow mapping //MOVED TO SHADERHANDLER
-	//ID3D11Texture2D* mShadowMap;
-	//ID3D11DepthStencilView* mShadowMapDepthView;
-	//ID3D11ShaderResourceView* mShadowMapSRView;
 private:
 	struct Light
 	{

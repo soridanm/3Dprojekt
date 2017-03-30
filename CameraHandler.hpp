@@ -23,8 +23,6 @@ public:
 	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight);
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
-	//const LONG GetScreenWidth();
-	//const LONG GetScreenHeight();
 
 	//input ------------------------------------------------------
 	IDirectInputDevice8* DIKeyboard = nullptr;
@@ -46,9 +44,7 @@ private:
 	struct cPerFrameBuffer
 	{
 		DirectX::XMFLOAT4X4 ViewProjection;
-		//DirectX::XMFLOAT4X4 View;
-		//DirectX::XMFLOAT4X4 Projection;
-		DirectX::XMFLOAT4 CameraPosition;
+		DirectX::XMFLOAT4 CameraPosition; //TODO: See if this one or the light one should stay
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
 
@@ -58,6 +54,7 @@ private:
 		float** worldHeight;
 	};
 	terrainValues terrain;
+
 	cPerFrameBuffer VPBufferData;
 	cPerFrameBuffer SMBufferData; //TODO: Move this to somewhere else
 
@@ -81,14 +78,9 @@ private:
 	float CAM_PITCH;
 	float SPEED;
 
-
 	DIMOUSESTATE MOUSE_LAST_STATE;
 
 	DirectX::XMFLOAT4X4 mCameraProjection;
-
-	//TODO: Move these two somewhere else. They're way too deep
-	//const LONG SCREEN_WIDTH = 1280;
-	//const LONG SCREEN_HEIGHT = 720;
 };
 
 

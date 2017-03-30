@@ -1,6 +1,6 @@
 # Blender v2.65 (sub 0) OBJ File
 # www.blender.org
-mtllib donut_red_lambert_20000_tris_TRIANGLULATED.mtl
+mtllib materials.mtl
 o teapot.005
 v -0.498530 0.712498 -0.039883
 v -0.501666 0.699221 -0.063813
@@ -2584,7 +2584,7 @@ vn 0.055757 -0.017579 0.998260
 vn 0.294198 -0.855403 0.426252
 vn 0.201300 -0.540880 0.816614
 s 1
-usemtl lambert2SG
+usemtl teapot
 f 34//1 1243//2 593//3
 f 52//4 27//5 40//6
 f 52//4 40//6 65//7

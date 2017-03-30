@@ -1,3 +1,9 @@
+/*
+* TODO: Split into two files. GlobalResources and GlobalSettings
+*		Move some of the includes
+*/
+
+
 #ifndef GLOBALRESOURCES_HPP
 #define GLOBALRESOURCES_HPP
 
@@ -7,7 +13,6 @@
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <DirectXMath.h>
-//#include "bth_image.h"
 #include <Windows.h>
 #include <vector>
 #include <dinput.h>
@@ -28,11 +33,6 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Ole32.lib")
 
-//namespace ScreenSize
-//{
-//	const UINT SCREEN_WIDTH  = 1024U;
-//	const UINT SCREEN_HEIGHT = 720U;
-//};
 
 struct ScreenSize
 {
@@ -59,12 +59,10 @@ namespace ScreenResolution
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1920x1000;
-
-
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1920x1000;
 
 struct ShadowQuality
 {
@@ -99,8 +97,7 @@ enum HeightMapNormalSetting
 //static const HeightMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
 static const HeightMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
 
-
-
+static const BOOL WINDOWED_MODE_SETTING = TRUE;
 
 enum RenderPassID
 {
@@ -111,12 +108,6 @@ enum RenderPassID
 	SCREEN_PASS
 };
 
-//TODO: Remove
-//enum ObjectType : UINT
-//{
-//	HeightMapObject = 0U,
-//	NormalObject = 1U
-//};
 
 //TODO? Move to some class
 struct HeightMapInfo {

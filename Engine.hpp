@@ -1,16 +1,21 @@
 #ifndef ENGINE_HPP
 #define ENGINE_HPP
 
-#include <vector>
+#include "GlobalResources.hpp"
 
-#include "GraphicsHandler.hpp"
 #include "TimeHandler.hpp"
+#include "lighthandler.hpp"
+#include "shaderhandler.hpp"
+#include "camerahandler.hpp"
+#include "objecthandler.hpp"
+
+#include <vector>
+#include <algorithm>
 
 class Engine
 {
 public:
 	Engine();
-	//Engine(const Engine& other);
 	~Engine();
 
 	bool Initialize();
@@ -20,21 +25,27 @@ public:
 
 	void TimeFunction(HWND &wndHandle);
 
-	ID3D11Device**	GetDevice();
-	IDXGISwapChain**	GetSwapChain();
-	ID3D11DeviceContext** GetDeviceContext();
-	ID3D11RenderTargetView** GetBackBufferRTV();
-	ID3D11ShaderResourceView** Engine::GetTextureView();
-
-	ID3D11Device*	gDevice		= nullptr;
+	// Public since it's used in main.cpp
+	CameraHandler gCameraHandler; //dev/devcon set //move to engine? 
 	IDXGISwapChain* gSwapChain	= nullptr;
-	ID3D11DeviceContext* gDeviceContext = nullptr;
-
-
-	GraphicsHandler mGraphicsHandler;
-	TimeHandler		mTimeHandler;
 private:
+	void RenderGeometryPass();
+	void RenderShadowPass();
+	void RenderLightPass();
+	void RenderComputePass();
+	void RenderScreenPass();
+	void SetHeightMapShaderResources(bool isHeightMap = false);
 
+	ID3D11Device*	mDev		= nullptr;
+	ID3D11DeviceContext* mDevCon = nullptr;
+
+	ID3D11ShaderResourceView* gTextureView;// = nullptr; //SHOULD BE MOVED TO MODEL
+	ID3D11ShaderResourceView* sTextureView;
+
+	TimeHandler	mTimeHandler;
+	LightHandler mLightHandler;
+	ObjectHandler mObjectHandler;
+	ShaderHandler mShaderHandler;
 };
 
 

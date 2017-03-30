@@ -1,9 +1,5 @@
 //--------------------------------------------------------------------------------------
-// TODO: 
-// Move resolution options to main.cpp
-// 
-// TODO?
-// Put all the pointers in a singleton class
+// TODO: Move some of this stuff to Engine?
 //--------------------------------------------------------------------------------------
 
 #define DIRECTINPUT_VERSION 0x0800
@@ -23,7 +19,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
 	//InitDirectInput(hInstance, wndHandle);//creates input
 		
-	DemoEngine.mGraphicsHandler.mCameraHandler.InitializeDirectInput(hInstance, wndHandle);
+	DemoEngine.gCameraHandler.InitializeDirectInput(hInstance, wndHandle);
 	if (wndHandle)
 	{
 		HRESULT hr = DemoEngine.eCreateDirect3DContext(wndHandle);
@@ -61,9 +57,9 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		}
 		//this REALLY should be turned into a function
 		DemoEngine.gSwapChain->SetFullscreenState(true, NULL);
-		DemoEngine.mGraphicsHandler.mCameraHandler.DIKeyboard->Unacquire();
-		DemoEngine.mGraphicsHandler.mCameraHandler.DIMouse->Unacquire();
-		DemoEngine.mGraphicsHandler.mCameraHandler.DirectInput->Release();
+		DemoEngine.gCameraHandler.DIKeyboard->Unacquire();
+		DemoEngine.gCameraHandler.DIMouse->Unacquire();
+		DemoEngine.gCameraHandler.DirectInput->Release();
 		/*gVertexBuffer->Release();
 		gVertexLayout->Release();
 		gVertexShader->Release();
@@ -73,8 +69,8 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 		gDepthStencilTexture->Release();
 		gBackbufferRTV->Release();*/
 		DemoEngine.gSwapChain->Release();
-		/*gDevice->Release();
-		gDeviceContext->Release();*/
+		/*mDev->Release();
+		mDevCon->Release();*/
 		DestroyWindow(wndHandle);
 	}
 

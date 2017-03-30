@@ -1,5 +1,5 @@
 #include"QuadtreeHandler.hpp"
-using namespace DirectX;
+using namespace DirectX; //NO
 
 Quadtree::Quadtree(XMVECTOR newMin, XMVECTOR newMax, int level) {
 	root = new Node();
