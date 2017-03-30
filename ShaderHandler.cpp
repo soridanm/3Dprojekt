@@ -1,5 +1,7 @@
 /*
-* TODO: Sampler states
+* TODO: Triangle Shader
+		Input layout
+		Remove GraphicsHandler and move its functionality to Engine
 *
 *
 *
