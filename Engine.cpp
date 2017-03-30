@@ -20,6 +20,7 @@ bool Engine::Render()
 	mGraphicsHandler.RenderShadowPass(gDeviceContext);
 	mGraphicsHandler.RenderLightPass(gDevice, gDeviceContext, gSwapChain);
 	mGraphicsHandler.RenderComputePass(gDeviceContext);
+	mGraphicsHandler.RenderScreenPass(gDeviceContext);
 	return true;
 }
 
@@ -125,7 +126,7 @@ ID3D11DeviceContext** Engine::GetDeviceContext()
 
 ID3D11RenderTargetView** Engine::GetBackBufferRTV()
 {
-	return &mGraphicsHandler.mBackbufferRTV;
+	return mGraphicsHandler.GetBackBufferRTV();
 }
 
 ID3D11ShaderResourceView** Engine::GetTextureView()

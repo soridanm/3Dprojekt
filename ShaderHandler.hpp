@@ -3,6 +3,35 @@
 
 #include "GlobalResources.hpp"
 
+/*
+For easy copy and paste
+
+switch (passID)
+{
+case GEOMETRY_PASS:
+
+break;
+case SHADOW_PASS:
+
+break;
+
+case LIGHT_PASS:
+
+break;
+
+case COMPUTE_PASS:
+
+break;
+
+default:
+break;
+} //end passID switch
+
+
+*/
+
+
+
 const UINT GBUFFER_COUNT = 4;
 
 enum ShaderType
@@ -20,10 +49,27 @@ public:
 	ShaderHandler();
 	~ShaderHandler();
 
-	void CreateShaders(ID3D11Device* Dev);
-	void SetShaders(RenderPassID passID);
+	void InitializeShaders(ID3D11Device* Dev);
+	void PrepareRender(ID3D11DeviceContext* DevCon, RenderPassID passID, bool clearRenderTargets = true, bool isHeightMap = false);
+
+	ID3D11RenderTargetView** GetBackBufferRTV();
 
 private:
+	void CreateShaders(ID3D11Device* Dev);
+
+	void SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID passID, bool clearRenderTargets = true);
+	
+	void SetInputLayoutAndTopology(ID3D11DeviceContext* DevCon, RenderPassID passID);
+
+	void SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID, bool isHeightMap = false);
+
+	void SetSamplers(ID3D11DeviceContext* DevCon, RenderPassID passID);
+
+	void SetShaderResources(ID3D11DeviceContext* DevCon, RenderPassID passID);
+
+	void SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPassID passID);
+
+
 	//compile shader
 	void CompileShader(
 		ID3DBlob** pShader,
@@ -41,7 +87,7 @@ private:
 	//create shader
 	void CreateShader(ID3D11Device* Dev, ID3DBlob* pS, ShaderType shaderType, RenderPassID passID);
 	
-	//create input layout
+	//create input layout. Used in CreateShaders
 	void CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPassID passID);
 
 	//create textures/srv
@@ -49,6 +95,9 @@ private:
 
 	//create/init GBuffer
 	void CreateRenderTextures(ID3D11Device* Dev);
+
+	//sampler states
+	void CreateSamplerStates(ID3D11Device* Dev);
 
 	//rasterizerStates
 	void CreateRasterizerStates(ID3D11Device* Dev);
@@ -65,6 +114,7 @@ private:
 	ID3D11Texture2D* mDepthStencilTexture = nullptr;
 
 	//Geometry Pass
+	ID3D11SamplerState* mSampleState = nullptr; //TODO: Rename
 	ID3D11InputLayout* mVertexLayout = nullptr;
 	ID3D11VertexShader* mGeometryPassVertexShader = nullptr;
 	ID3D11GeometryShader* mGeometryPassGeometryShader = nullptr;
@@ -80,12 +130,11 @@ private:
 	ID3D11ShaderResourceView* mShadowMapSRView;
 
 	//Light Pass
-	ID3D11SamplerState* mSampleState = nullptr;
 	//ID3D11ShaderResourceView* mTextureView; //moved to ObjectHandler.hpp
+	ID3D11SamplerState* mShadowSampler = nullptr;
 	ID3D11VertexShader* mLightPassVertexShader = nullptr;
 	ID3D11PixelShader* mLightPassPixelShader = nullptr;
-	ID3D11SamplerState* mShadowSampler = nullptr;
-	//Compute Pass
+	//Compute Pass //TODO: Screen Pass
 	ID3D11VertexShader* mComputePassVertexShader = nullptr;
 	ID3D11PixelShader* mComputePassPixelShader = nullptr;
 
@@ -95,10 +144,11 @@ private:
 
 	ID3D11UnorderedAccessView* mTempTextureUAV = nullptr;
 	ID3D11ShaderResourceView* mTempTextureSRV = nullptr;
-	ID3D11RenderTargetView*	mRenderTextureRTV = nullptr; //TODO:public?
+	ID3D11RenderTargetView*	mRenderTextureRTV = nullptr; //TODO: RENAME
 
 	ID3D11RasterizerState* mRasterizerState[2];
 
+	ID3D11RenderTargetView* mBackbufferRTV; //TODO: Remove this from other classes
 };
 
 
