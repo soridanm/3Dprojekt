@@ -80,7 +80,7 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	//set textures and constant buffers
 	if (passID == GEOMETRY_PASS)
 	{
-		DevCon->PSSetShaderResources(0, 1, &mTextureView);
+		//DevCon->PSSetShaderResources(0, 1, &mTextureView);
 	}
 
 	 //HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
@@ -93,11 +93,11 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	// update per-object buffer to spin cube
 	static float rotation = 0.0f;
 	//rotation += CUBE_ROTATION_SPEED;
-
+	//rotation += 0.01f;
 	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	DevCon->Map(mHeightMapWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr);
+	DevCon->Map(mHeightMapWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr); //change write disc
 	// copy memory from CPU to GPU of the entire struct
 	memcpy(worldMatrixPtr.pData, &mHeightMapWorldBufferData, sizeof(cPerObjectBuffer));
 	// Unmap constant buffer so that we can use it again in the GPU

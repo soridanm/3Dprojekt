@@ -194,12 +194,8 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	if (keyboardState[DIK_2] & 0x80) {
 		freemoovingCamera = false;
 	}
-	if (keyboardState[DIK_5] & 0x80) {
-		GOD_CAMERA_ENABLED = true;
-	}
-	if (keyboardState[DIK_6] & 0x80) {
-		GOD_CAMERA_ENABLED = false;
-	}
+	GOD_CAMERA_ENABLED = (keyboardState[DIK_5] & 0x80) ? true : false;
+
 
 
 	//mouse movement do change camera directions

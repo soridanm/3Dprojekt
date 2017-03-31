@@ -1,4 +1,5 @@
 #include"QuadtreeHandler.hpp"
+
 using namespace DirectX; //NO
 
 Quadtree::Quadtree(XMVECTOR newMin, XMVECTOR newMax, int level) {
@@ -71,7 +72,7 @@ std::vector<UINT> Quadtree::getObjects(Node* parent) {
 	}
 	return objectsToReturn;
 }
-
+//TODO: remove
 std::vector<Vertex> Quadtree::getVertexes(Node* parent) {
 	std::vector<Vertex> toReturn;
 		if (parent->levels < maxLevel) {
@@ -110,6 +111,7 @@ std::vector<Vertex> Quadtree::getVertexes(Node* parent) {
 			return toReturn;
 }
 
+//TODO: remove
 void Quadtree::createQuadLines(ID3D11Device* Dev) {
 	std::vector<Vertex> vertexes;
 	vertexes = getVertexes(root);

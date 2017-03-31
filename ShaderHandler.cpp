@@ -638,9 +638,9 @@ void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev)
 		texDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
 		texDesc.Width = SCREEN_RESOLUTION.SCREEN_WIDTH;
 		texDesc.Height = SCREEN_RESOLUTION.SCREEN_HEIGHT;
-		texDesc.MipLevels = 1U;
-		texDesc.ArraySize = 1U;
-		texDesc.SampleDesc.Count = 1U;
+		texDesc.MipLevels = 1;
+		texDesc.ArraySize = 1;
+		texDesc.SampleDesc.Count = 1;
 		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //TODO: look into which file format would be most appropriate to use
 
 		hr = Dev->CreateTexture2D(&texDesc, nullptr, &texture);

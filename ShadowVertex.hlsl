@@ -9,8 +9,6 @@
 cbuffer PER_FRAME	:register(b0)
 {
 	float4x4 viewProjection;
-	//float4x4 view;
-	//float4x4 projection;
 	float4 cameraPosition; //NOT USED IN THIS SHADER
 }
 

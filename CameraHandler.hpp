@@ -8,6 +8,7 @@
 #define CAMERAHANDLER_HPP
 
 #include "GlobalResources.hpp"
+#include "GlobalSettings.hpp"
 #include "FrustumHandler.hpp"
 
 class CameraHandler

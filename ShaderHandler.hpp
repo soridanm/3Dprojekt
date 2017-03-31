@@ -2,7 +2,7 @@
 #define SHADERHANDLER_HPP
 
 #include "GlobalResources.hpp"
-
+#include "GlobalSettings.hpp"
 
 const UINT GBUFFER_COUNT = 4;
 

@@ -17,14 +17,14 @@ bool Engine::Initialize()
 
 	//TODO: move to function
 	ID3D11Resource* textureGrass;
-	HRESULT hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"grass.dds", &textureGrass, &gTextureView);
+	HRESULT hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"grass.dds", &textureGrass, &grassTextureView);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS grass texture from file\n\n");
 		exit(-1);
 	}
 	ID3D11Resource* textureStone;
-	hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"seamlessstone.dds", &textureStone, &sTextureView);
+	hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"seamlessstone.dds", &textureStone, &stoneTextureView);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS stone texture from file\n\n");
@@ -123,8 +123,6 @@ void Engine::RenderGeometryPass()
 
 	mDevCon->RSSetViewports(1, &gCameraHandler.playerVP);
 
-	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.getProjection(), gCameraHandler.getView());
-
 	gCameraHandler.BindPerFrameConstantBuffer(mDevCon);
 
 	// ------------------------------ Height Map ------------------------------------------------------
@@ -214,7 +212,6 @@ void Engine::RenderShadowPass()
 	mDevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
 
-	// TODO: Change the static object loop to a quadtree one
 	// ------------------------------ Static Objects ------------------------------------------------------
 	// NOTE: Quad-tree stuff does NOT go here
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
@@ -302,8 +299,8 @@ void Engine::SetHeightMapShaderResources(bool isHeightMap)
 {
 	if (isHeightMap)
 	{
-		mDevCon->PSSetShaderResources(1, 1, &gTextureView);
-		mDevCon->PSSetShaderResources(2, 1, &sTextureView);
+		mDevCon->PSSetShaderResources(1, 1, &grassTextureView);
+		mDevCon->PSSetShaderResources(2, 1, &stoneTextureView);
 	}
 }
 

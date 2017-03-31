@@ -50,7 +50,7 @@ void FXAA_main(
 
 	GroupMemoryBarrierWithGroupSync(); //Needed?
 
-	float3 colorCenter = inputTex.SampleLevel(samp, orig_uv, 0.0).rgb;//inputTex[screen_pos].rgb;
+	float3 colorCenter = inputTex.SampleLevel(samp, orig_uv, 0.0).rgb;
 	float3 testCenter = inputTex[screen_pos].rgb;
 
 	// Luma at the current fragment
@@ -71,12 +71,6 @@ void FXAA_main(
 
 	float4 result = float4(1.0, 1.0, 1.0, 1.0);
 
-//#ifDRf TEXTURE_WIDTH
-//	if (TEXTURE_WIDTH == 1280)
-//	{
-//		result = float4(1.0, 0.0, 0.0, 1.0);
-//	}
-//#endif
 
 	// Early exit if no edge is DRtected in the area or if the area is really dark, 
 	// or if the TEXTURE_WIDHT/HEIGHT macros have not gotten to the shader
@@ -276,7 +270,7 @@ void FXAA_main(
 	//float4 result = image_square[groupThreadID.x][groupThreadID.y];
 
 	//GroupID
-	//float4 result = float4((groupID % 5) /4.0, 1.0);
+	//result = float4((groupID % 5) /4.0, 1.0);
 
 	//Thread ID
 	//float4 result = float4((screen_pos.x / 1920.0f), (screen_pos.y / 1080.0f), 0.0f, 1.0f);

@@ -16,6 +16,7 @@ TimeHandler::~TimeHandler()
 
 }
 
+//fps counter
 void TimeHandler::TimeHandlerTimeFunction()
 {
 	FRAME_COUNT++;

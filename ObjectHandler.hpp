@@ -1,18 +1,13 @@
-/* TODO: Might merge the perObject- and materialBuffers
-*
-*
-*/
 
 
 #ifndef OBJECTHANDLER_HPP
 #define OBJECTHANDLER_HPP
 
 #include "GlobalResources.hpp"
+#include "GlobalSettings.hpp"
 #include "QuadtreeHandler.hpp"	
 #include <algorithm>
 
-//todo: remove
-#include <iostream>
 
 enum ObjectType : int
 {

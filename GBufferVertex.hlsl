@@ -7,7 +7,7 @@
 struct VS_IN
 {
 	float3 Position : POSITION;
-	float2 TexCoord : TEXCOORD; // <- look up number
+	float2 TexCoord : TEXCOORD;
 	float3 Normal   : NORMAL;
 };
 

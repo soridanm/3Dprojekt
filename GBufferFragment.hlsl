@@ -42,7 +42,7 @@ PS_OUT PS_main(in PS_IN input) //: SV_Target
 	PS_OUT output = (PS_OUT)0;
 	// Sample the diffuse map
 #if HEIGHT_MAP
-	float height = input.PositionWS.y * 0.05; // input.PositionWS.y / 20.0
+	float height = saturate(input.PositionWS.y * 0.05); // input.PositionWS.y / 20.0
 	float3 diffuse_part = (hasTexture == 1) ? (((1.0 - height) * DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb) + (height * DiffuseMap2.Sample(AnisoSampler, input.TexCoord).rgb)) : DiffuseColor.rgb;
 #else
 	float3 diffuse_part = (hasTexture == 1) ? Texture.Sample(AnisoSampler, input.TexCoord).rgb : DiffuseColor.rgb;

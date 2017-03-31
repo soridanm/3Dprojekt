@@ -1,4 +1,4 @@
-
+// TODO: make the seperate components work
 // TODO: Rename buffers and variables
 // TODO: look up if doubles are more suitable for the shadow calculations
 // TODO? Gamma correction
@@ -25,8 +25,6 @@ SamplerState textureSampler; // TODO: look up sampler settings
 cbuffer shadowMapMatrix			: register(b0)
 {
 	float4x4 lightViewProjection;
-	//float4x4 lightView;
-	//float4x4 lightProjection;
 	float4 cameraPositionUnused;
 }
 
@@ -112,8 +110,8 @@ float4 PS_main ( PS_IN input ) : SV_Target
 		}
 		shadow_sum *= 0.0625; // Division by 16
 	}
-
-	float shadow_coefficient = (!outside_shadow_map) ? shadow_sum : 1.0;
+	
+	float shadow_coefficient = (outside_shadow_map) ? 1.0 : shadow_sum;
 
 	// FOR DEBUGGING: Overwrites the Percentage-Closer Filtering
 	//shadow_coefficient = (!outside_shadow_map) ? ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord - texOffset(0.5, 0.5), light_depth_value) : 1.0;
@@ -148,7 +146,6 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 			final_color += attenuation * (diffuse_component + specular_component) * ((Lights[i].hasShadow == 1) ? shadow_coefficient : 1.0);
 		}
-		//final_color += ambient_component;
 	}
 
 	//float3 finalColor = normal;

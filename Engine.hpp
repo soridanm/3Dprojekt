@@ -2,6 +2,7 @@
 #define ENGINE_HPP
 
 #include "GlobalResources.hpp"
+#include "GlobalSettings.hpp"
 
 #include "TimeHandler.hpp"
 #include "lighthandler.hpp"
@@ -39,8 +40,8 @@ private:
 	ID3D11Device*	mDev		= nullptr;
 	ID3D11DeviceContext* mDevCon = nullptr;
 
-	ID3D11ShaderResourceView* gTextureView;// = nullptr; //SHOULD BE MOVED TO MODEL
-	ID3D11ShaderResourceView* sTextureView;
+	ID3D11ShaderResourceView* grassTextureView;// = nullptr; //SHOULD BE MOVED TO MODEL
+	ID3D11ShaderResourceView* stoneTextureView;
 
 	TimeHandler	mTimeHandler;
 	LightHandler mLightHandler;
