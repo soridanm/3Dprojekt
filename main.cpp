@@ -84,17 +84,17 @@ HWND InitWindow(HINSTANCE hInstance)
 	wcex.style			= CS_HREDRAW | CS_VREDRAW;
 	wcex.lpfnWndProc	= WndProc;
 	wcex.hInstance		= hInstance;
-	wcex.lpszClassName	= L"BTH_D3D_DEMO";
+	wcex.lpszClassName	= L"DV1542_3D_PROJECT";
 	if (!RegisterClassEx(&wcex))
 		return false;
 
 	
-	RECT rc = { 0L, 0L,  static_cast<LONG>(SCREEN_RESOLUTION.SCREEN_WIDTH), static_cast<LONG>(SCREEN_RESOLUTION.SCREEN_HEIGHT) };
+	RECT rc = { 0, 0,  static_cast<LONG>(SCREEN_RESOLUTION.SCREEN_WIDTH), static_cast<LONG>(SCREEN_RESOLUTION.SCREEN_HEIGHT) };
 	AdjustWindowRect(&rc, WS_OVERLAPPEDWINDOW, FALSE);
 
 	HWND handle = CreateWindow(
-		L"BTH_D3D_DEMO",
-		L"BTH Direct3D Demo",
+		L"DV1542_3D_PROJECT",
+		L"DV1542 - 3D Project",
 		WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT,
 		CW_USEDEFAULT,

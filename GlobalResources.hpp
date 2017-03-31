@@ -26,6 +26,7 @@
 #include <fstream>
 #include <istream>
 #include <sstream>
+#include <algorithm>
 
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")
@@ -33,6 +34,8 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Ole32.lib")
 
+
+static bool GOD_CAMERA_ENABLED = false;
 
 struct ScreenSize
 {
@@ -58,8 +61,8 @@ namespace ScreenResolution
 };
 
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
 //static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1920x1000;

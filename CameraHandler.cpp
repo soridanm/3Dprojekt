@@ -43,14 +43,8 @@ DirectX::XMFLOAT4 CameraHandler::GetCameraPosition()
 void CameraHandler::UpdateCamera()
 {
 	//limits cam pitch in order to not spin around
-	if (CAM_PITCH < -3.1414926535897932383279502884197/2.0f)
-	{
-		CAM_PITCH = -3.1414926535897932383279502884197 / 2.0f;
-	}
-	if (CAM_PITCH > 3.1414926535897932383279502884197 / 2.0f)
-	{
-		CAM_PITCH = 3.1414926535897932383279502884197 / 2.0f;
-	}
+	CAM_PITCH = std::min<float>(std::max<float>(CAM_PITCH, -1.57), 1.57);
+
 	DirectX::XMMATRIX CAM_ROT_MAT;
 	//transforms the cameras target
 	CAM_ROT_MAT = DirectX::XMMatrixRotationRollPitchYaw(CAM_PITCH, CAM_YAW, 0.0f);
@@ -93,13 +87,17 @@ void CameraHandler::UpdateCamera()
 
 bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 {
-
-	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
-
-	//DirectX::XMStoreFloat4x4(&VPBufferData.View, view);
-	DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&mCameraProjection), view));
-
-	DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, CAM_POS);
+	if (GOD_CAMERA_ENABLED)
+	{
+		VPBufferData.ViewProjection = mGodCameraViewProjection;
+		DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, mGOD_CAM_POS);
+	}
+	else
+	{
+		DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
+		DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&mCameraProjection), view));
+		DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, CAM_POS);
+	}
 
 	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
@@ -196,16 +194,25 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	if (keyboardState[DIK_2] & 0x80) {
 		freemoovingCamera = false;
 	}
+	if (keyboardState[DIK_5] & 0x80) {
+		GOD_CAMERA_ENABLED = true;
+	}
+	if (keyboardState[DIK_6] & 0x80) {
+		GOD_CAMERA_ENABLED = false;
+	}
+
 
 	//mouse movement do change camera directions
-	if ((mouse_current_state.lX != MOUSE_LAST_STATE.lX) || (mouse_current_state.lY != MOUSE_LAST_STATE.lY)) {
+	if ((mouse_current_state.lX != MOUSE_LAST_STATE.lX) || (mouse_current_state.lY != MOUSE_LAST_STATE.lY)) 
+	{
 		CAM_YAW += mouse_current_state.lX*0.001f;
 		CAM_PITCH += mouse_current_state.lY*0.001f;
 		MOUSE_LAST_STATE = mouse_current_state;
 	}
 
 	//reset camera directions and position
-	if (keyboardState[DIK_Q] & 0x80) {
+	if (keyboardState[DIK_Q] & 0x80) 
+	{
 		CAM_POS = CAMERA_STARTING_POS;
 		CAM_TARGET = DirectX::XMVectorSet(5.0f, 5.0f, 5.0f, 0.0f);
 		CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
@@ -255,26 +262,26 @@ void CameraHandler::CreateViewPorts()
 
 bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 {
-	float aspect_ratio = (float)SCREEN_RESOLUTION.SCREEN_WIDTH / (float)SCREEN_RESOLUTION.SCREEN_HEIGHT;
+	float aspect_ratio = static_cast<float>(SCREEN_RESOLUTION.SCREEN_WIDTH) / static_cast<float>(SCREEN_RESOLUTION.SCREEN_HEIGHT);
 	float degrees_field_of_view = 90.0f;
 	float near_plane			= 0.1f;
 	float far_plane				= 500.f;
 
-	//camera, look at, up
-	DirectX::XMVECTOR camera	= CAM_POS;
-	DirectX::XMVECTOR look_at	= CAM_TARGET;
-	DirectX::XMVECTOR up		= CAM_UP;
-
-	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(camera, look_at, up));
-
+	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
 	DirectX::XMMATRIX projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(
 		DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
-
-
 	DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(projection, view);
 
 	DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, vp);
 	DirectX::XMStoreFloat4x4(&mCameraProjection, projection);
+
+	// God camera for seeing the effects of teh frustum culling against quadtree
+	const DirectX::XMVECTOR GOD_CAM_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 99.0f, 0.0f);
+	const DirectX::XMVECTOR GOD_CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	const DirectX::XMMATRIX GOD_CAM_VIEW = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(mGOD_CAM_POS, GOD_CAM_TARGET, GOD_CAM_UP));
+
+	DirectX::XMMATRIX godVp = DirectX::XMMatrixMultiply(projection, GOD_CAM_VIEW);
+	DirectX::XMStoreFloat4x4(&mGodCameraViewProjection, godVp);
 
 
 	D3D11_BUFFER_DESC VPBufferDesc;
@@ -285,11 +292,12 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	VPBufferDesc.MiscFlags				= 0;
 	VPBufferDesc.StructureByteStride	= 0;
 
-	HRESULT gHR = Dev->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
-	if (FAILED(gHR)) {
+	HRESULT hr = Dev->CreateBuffer(&VPBufferDesc, nullptr, &mPerFrameBuffer);
+	if (FAILED(hr)) 
+	{
+		OutputDebugString(L"\nCameraHandler::CreatePerFrameConstantBuffers() Failed to create mPerFrameBuffer\n\n");
 		exit(-1);
 	}
-
 	return true;
 }
 
@@ -300,7 +308,7 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	float near_plane = 0.1f;
 	float far_plane = 150.f;
 
-	DirectX::XMVECTOR LIGHT_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
+	DirectX::XMVECTOR LIGHT_POS = DirectX::XMVectorSet(100.0f, 120.0f, 100.0f, 0.0f);
 	DirectX::XMVECTOR LIGHT_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 99.0f, 0.0f);
 	DirectX::XMVECTOR LIGHT_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 
@@ -321,8 +329,10 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	SMBufferDesc.MiscFlags = 0;
 	SMBufferDesc.StructureByteStride = 0;
 
-	HRESULT gHR = Dev->CreateBuffer(&SMBufferDesc, nullptr, &mShadowMapBuffer);
-	if (FAILED(gHR)) {
+	HRESULT hr = Dev->CreateBuffer(&SMBufferDesc, nullptr, &mShadowMapBuffer);
+	if (FAILED(hr)) 
+	{
+		OutputDebugString(L"\nCameraHandler::CreateShadowMapConstantBuffer() Failed to create mShadowMapBuffer\n\n");
 		exit(-1);
 	}
 
@@ -334,6 +344,6 @@ DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
 }
 DirectX::XMFLOAT4X4 CameraHandler::getView() {
 	DirectX::XMFLOAT4X4 temp;
-	DirectX::XMStoreFloat4x4(&temp, DirectX::XMMatrixLookAtLH(DirectX::XMVectorScale(CAM_POS, -1), DirectX::XMVectorScale(CAM_TARGET, -1), { 0,1,0 }));
+	DirectX::XMStoreFloat4x4(&temp, DirectX::XMMatrixLookAtLH(DirectX::XMVectorScale(CAM_POS, -1.0f), DirectX::XMVectorScale(CAM_TARGET, -1.0f), { 0.0f, 1.0f, 0.0f }));
 	 return temp;
 }

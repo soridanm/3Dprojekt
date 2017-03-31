@@ -9,6 +9,7 @@
 
 #include "GlobalResources.hpp"
 #include "FrustumHandler.hpp"
+
 class CameraHandler
 {
 public:
@@ -61,7 +62,6 @@ private:
 	ID3D11Buffer* mPerFrameBuffer;
 	ID3D11Buffer* mShadowMapBuffer;
 
-
 	const DirectX::XMVECTOR CAMERA_STARTING_POS;
 	DirectX::XMVECTOR CAM_TARGET;
 	DirectX::XMVECTOR CAM_FORWARD;
@@ -81,6 +81,9 @@ private:
 	DIMOUSESTATE MOUSE_LAST_STATE;
 
 	DirectX::XMFLOAT4X4 mCameraProjection;
+
+	const DirectX::XMVECTOR mGOD_CAM_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
+	DirectX::XMFLOAT4X4 mGodCameraViewProjection;
 };
 
 
