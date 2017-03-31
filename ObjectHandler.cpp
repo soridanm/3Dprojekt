@@ -31,7 +31,6 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
 	insertToQuadtree();
-	mQuadtree.createQuadLines(Dev);
 }
 void ObjectHandler::insertToQuadtree() 
 {

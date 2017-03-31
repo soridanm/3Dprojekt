@@ -161,13 +161,8 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	if (keyboardState[DIK_ESCAPE] & 0x80) {
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 	}
-	//all the different movements
-	if (keyboardState[DIK_LSHIFT] & 0x80) {
-		SPEED = 45.0f;
-	}
-	if (keyboardState[DIK_LCONTROL] & 0x80) {
-		SPEED = 15.0f;
-	}
+
+	SPEED = (keyboardState[DIK_LSHIFT] & 0x80) ? 75.0f : 15.0f;
 
 	if (keyboardState[DIK_A] & 0x80) {
 
@@ -194,7 +189,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	if (keyboardState[DIK_2] & 0x80) {
 		freemoovingCamera = false;
 	}
-	GOD_CAMERA_ENABLED = (keyboardState[DIK_5] & 0x80) ? true : false;
+	GOD_CAMERA_ENABLED = (keyboardState[DIK_E] & 0x80) ? true : false;
 
 
 
