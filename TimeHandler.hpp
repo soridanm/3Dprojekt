@@ -10,7 +10,7 @@ public:
 	TimeHandler();
 	~TimeHandler();
 
-	void TimeHandlerTimeFunction(); //RENAME
+	void FrameRateCounter(); //RENAME
 	void StartTimer();
 	double GetTime();
 	double GetFrameTime();

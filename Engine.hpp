@@ -35,7 +35,7 @@ private:
 	void RenderLightPass();
 	void RenderComputePass();
 	void RenderScreenPass();
-	void SetHeightMapShaderResources(bool isHeightMap = false);
+	void SetHeightMapShaderResources();
 
 	ID3D11Device*	mDev		= nullptr;
 	ID3D11DeviceContext* mDevCon = nullptr;

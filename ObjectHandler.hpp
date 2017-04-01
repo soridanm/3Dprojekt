@@ -81,18 +81,17 @@ public:
 	void InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
-	const int GetHeightMapNrOfFaces();
-	int GetHeightMapNrOfVerticies();
+	int GetHeightMapNrOfFaces() const;
 
-	void CreateWorld(ID3D11Device* Dev); //TODO: Rename
+	void CreateHeightMap(ID3D11Device* Dev); //TODO: Rename
 
 	std::vector<Object>* GetObjectArrayPtr(ObjectType objectType);
 
-	float** getWorldHeight();
-	int getWorldDepth();
-	int getWorldWidth();
-	void moveObjects();
-	void insertToQuadtree();
+	float** getWorldHeight() const;
+	int getWorldDepth() const;
+	int getWorldWidth() const;
+	void MoveStaticObjects();
+	void InsertToQuadtree();
 
 
 	Quadtree mQuadtree; //Should probably be a member of Engine.hpp instead

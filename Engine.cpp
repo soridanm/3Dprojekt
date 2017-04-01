@@ -61,7 +61,8 @@ HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
 	scd.Windowed = WINDOWED_MODE_SETTING;				// windowed/full-screen mode
 
 	D3D_FEATURE_LEVEL MaxSupportedFeatureLevel = D3D_FEATURE_LEVEL_9_1;
-	D3D_FEATURE_LEVEL FeatureLevels[] = {
+	D3D_FEATURE_LEVEL FeatureLevels[] = 
+	{
 		D3D_FEATURE_LEVEL_11_1,
 		D3D_FEATURE_LEVEL_11_0,
 		D3D_FEATURE_LEVEL_10_1,
@@ -129,7 +130,7 @@ void Engine::RenderGeometryPass()
 
 	mShaderHandler.PrepareRender(mDevCon, GEOMETRY_PASS, true, true);
 
-	SetHeightMapShaderResources(true); //TODO: Move to shaderhandler
+	SetHeightMapShaderResources(); //TODO: Move to shaderhandler
 	mObjectHandler.SetHeightMapBuffer(mDevCon, GEOMETRY_PASS);
 	mDevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
@@ -273,9 +274,7 @@ void Engine::RenderComputePass()
 
 	mDevCon->Dispatch(squaresWide, squaresHigh, 1);
 
-	//TODO: See if this can be done without doing something as drastic as ClearState()
 	mDevCon->ClearState(); // Used to make sure that mTempTextureUAV is free to use
-						  //DevCon->CSSetShaderResources(0U, 0U, nullptr); //TODO: test if this one works
 }
 
 void Engine::RenderScreenPass()
@@ -291,16 +290,13 @@ void Engine::RenderScreenPass()
 //This will/should be renamed to something more descriptive
 void Engine::TimeFunction(HWND &wndHandle)
 {
-	mTimeHandler.TimeHandlerTimeFunction();
+	mTimeHandler.FrameRateCounter();
 	gCameraHandler.DetectInput(mTimeHandler.GetFrameTime(), wndHandle);
 }
 
-void Engine::SetHeightMapShaderResources(bool isHeightMap)
+void Engine::SetHeightMapShaderResources()
 {
-	if (isHeightMap)
-	{
-		mDevCon->PSSetShaderResources(1, 1, &grassTextureView);
-		mDevCon->PSSetShaderResources(2, 1, &stoneTextureView);
-	}
+	mDevCon->PSSetShaderResources(1, 1, &grassTextureView);
+	mDevCon->PSSetShaderResources(2, 1, &stoneTextureView);
 }
 

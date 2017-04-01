@@ -1,13 +1,14 @@
 #ifndef QUADTREEHANDLER_HPP
 #define QUADTREEHANDLER_HPP
 #include "GlobalResources.hpp"
+#include "GlobalSettings.hpp"
 #include "FrustumHandler.hpp"
 
 class Quadtree {
 public:
 	Node* root;
 	FrustumHandler frustum;
-	int maxLevel = 8;
+	int maxLevel = NR_OF_QUADREE_LEVELS;
 	Quadtree(DirectX::XMVECTOR newMin = DirectX::XMVectorZero(), DirectX::XMVECTOR newMax = DirectX::XMVectorZero(), int level = 5);
 	~Quadtree();
 	void constructNode(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level, Node* parent);

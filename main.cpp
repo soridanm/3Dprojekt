@@ -31,7 +31,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 
 		DemoEngine.Initialize(); /* SetViewPort(), CreatePerFrameConstantBuffer()
 								  * CreateShaders(), Create-/SetLightBuffer(), InitializeGBuffer()
-								  * CreateWorld(), 
+								  * CreateHeightMap(), 
 								  *
 								  */
 

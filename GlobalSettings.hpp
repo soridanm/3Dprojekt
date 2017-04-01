@@ -18,12 +18,8 @@ static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::HIGH;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::EXTREME;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::ULTRA;
 
-
-//TODO: REMOVE
-//static const HeightMapNormalSetting HEIGHT_MAP_NORMALS = USING_FACE_NORMALS;
-static const HeightMapNormalSetting HEIGHT_MAP_NORMALS = USING_VERTEX_NORMALS;
-
 static const BOOL WINDOWED_MODE_SETTING = TRUE;
 
+static const int NR_OF_QUADREE_LEVELS = 8;
 
 #endif // !GLOBALSETTINGS_HPP

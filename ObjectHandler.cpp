@@ -1,42 +1,36 @@
 #include "ObjectHandler.hpp"
 
-
 ObjectHandler::ObjectHandler()
 {}
 
 ObjectHandler::~ObjectHandler()
 {}
 
-//used in GraphicsHandler.InitializeGraphics
 void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
-	
-	CreateWorld(Dev);
-	if (!LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, false))
+	CreateHeightMap(Dev);
+	LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true);
+	LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, true);
+
+	for (int i = 0; i < 400; i++) 
 	{
-		exit(-1);
+		LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false);
 	}
-	if (!LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false))
-	{
-		exit(-1);
-	}
-	for (int i = 0; i < 400; i++) {
-		if (!LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false))
-		{
-			exit(-1);
-		}
-	}
-	moveObjects();
-	mQuadtree = Quadtree(DirectX::XMVectorSet(0, 0, 0, 0), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f,WORLD_DEPTH, 0), 1);
+
+	MoveStaticObjects();
+	mQuadtree = Quadtree(DirectX::XMVectorZero(), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f, WORLD_DEPTH, 0), 1);
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
-	insertToQuadtree();
+	InsertToQuadtree();
 }
-void ObjectHandler::insertToQuadtree() 
+
+void ObjectHandler::InsertToQuadtree() 
 {
-	for (UINT i = 0; i < mStaticObjects.size(); i++) {
+	for (UINT i = 0; i < mStaticObjects.size(); i++) 
+	{
 		DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(mStaticObjects[i].worldMatrixPerObject);
-		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) {
+		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) 
+		{
 			DirectX::XMVECTOR modelVertexPos = DirectX::XMLoadFloat3(&mStaticObjects[i].meshVertexData[j].pos);
 			DirectX::XMVECTOR worldVertexPos = DirectX::XMVector3Transform(modelVertexPos, world);
 			mQuadtree.storeObjects(i, worldVertexPos, mQuadtree.root);
@@ -44,7 +38,7 @@ void ObjectHandler::insertToQuadtree()
 	}
 }
 
-void ObjectHandler::moveObjects() 
+void ObjectHandler::MoveStaticObjects() 
 {
 	float scalingFactor = 2.0f;
 	for (int i = 0; i < mStaticObjects.size(); i++) {
@@ -57,30 +51,12 @@ void ObjectHandler::moveObjects()
 
 		mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
 	}
-
-	//for (int i = 0;i < mStaticObjects.size();i++) {
-	//	
-	//	DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(1, 1, 1);
-	//	DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0,0,0);
-	//	DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation( 5.f * (i + 1.0f),WORLD_HEIGHT[5 * (i + 1)][5 * (i + 1)], 5.0f * (i + 1.0f));
-	//	using DirectX::operator*;
-	//	DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
-	//	mStaticObjects[i].worldMatrixPerObject= DirectX::XMMatrixTranspose(finalMatrix);
-	//}
 }
 
-//TODO: Make the SetConstantBuffers functions a seperate function that works with both the geometry and the shadow pass
-//used in GraphicsHandler.RenderGeometryPass
 bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
 	UINT32 squareVertexSize = sizeof(float) * 8;
 	UINT32 offset = 0;
-
-	//set textures and constant buffers
-	if (passID == GEOMETRY_PASS)
-	{
-		//DevCon->PSSetShaderResources(0, 1, &mTextureView);
-	}
 
 	 //HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
 
@@ -89,11 +65,7 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 
 	 //HEIGHT-MAP END ---------------------------------------------------------------------------
 
-	// update per-object buffer to spin cube
-	static float rotation = 0.0f;
-	//rotation += CUBE_ROTATION_SPEED;
-	//rotation += 0.01f;
-	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
+	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, DirectX::XMMatrixIdentity());// DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
 
 	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
 	DevCon->Map(mHeightMapWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr); //change write disc
@@ -119,6 +91,7 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	DevCon->Map(mHeightMapMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
 	memcpy(materialPtr.pData, &mHeightMapMaterialBufferData, sizeof(cMaterialBuffer));
 	DevCon->Unmap(mHeightMapMaterialBuffer, 0);
+
 	if (passID == GEOMETRY_PASS)
 	{
 		DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
@@ -128,18 +101,16 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 }
 
 
-//TODO: Implement this better for multiple objects
 //TODO: Probably a memory leak here
 bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex)
 {
-	//TODO: make std::vector of world matrixes for each object
+	//TODO: make std::vector of worldIdentity matrixes for each object
 	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;
 
 	std::vector<Object>* objectArray; // pointer to one of the arrays of objects in ObjectHandler
 	if (objectType == STATIC_OBJECT)  { objectArray = &mStaticObjects; }
 	if (objectType == DYNAMIC_OBJECT) { objectArray = &mDynamicObjects; }
-
 
 
 	// Set index and vertex buffers
@@ -150,19 +121,18 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 													World matrix
 	***************************************************************************************************************************************/
 
+	// Dynamic Objects will rotate at the same speed around the same axis but in different locations
 	if (objectType == DYNAMIC_OBJECT)
 	{
 		static float rotation = 0.0f;
 		rotation += 0.001f;
 		float scale = 10.0f;
-		//XMMATRIX rotMatrix = XMMatrixMultiply(XMMatrixRotationX(2), XMMatrixRotationY(rotation));
 
 		using DirectX::operator*;
 
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale, scale, scale);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
 		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f + 20.f * (objectIndex + 1.0f), 20.0f * (objectIndex + 1.0f), 100.0f);
-
 
 		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
@@ -171,8 +141,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 
 	if (objectType == STATIC_OBJECT)
 	{
-		//TODO: This will be done at initialization so this part will be removed
-		// A static object has already had its geometry multiplied by a world-matrix so their shader-side matrix is set to an identity-matrix
+		// A static object has already had its geometry multiplied by a worldIdentity matrix so their shader-side matrix is set to an identity matrix
 
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World,(*objectArray)[objectIndex].worldMatrixPerObject);
 	}
@@ -184,17 +153,14 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	// Unmap constant buffer so that we can use it again in the GPU
 	DevCon->Unmap((*objectArray)[objectIndex].perObjectWorldBuffer, 0);
 	
-
 	// The geometry pass computes the transformations in the Geometry shader and the shadow pass computes the transformations in the Vertex shader
 	if (passID == GEOMETRY_PASS) { DevCon->GSSetConstantBuffers(1, 1, &(*objectArray)[objectIndex].perObjectWorldBuffer); }
 	if (passID == SHADOW_PASS)   { DevCon->VSSetConstantBuffers(1, 1, &(*objectArray)[objectIndex].perObjectWorldBuffer); }
 
-
 	if (passID == GEOMETRY_PASS)
 	{
-
 		/***************************************************************************************************************************************
-													Material and texture
+													Texture and material
 		***************************************************************************************************************************************/
 
 		int matInd = (*objectArray)[objectIndex].meshSubsetMaterialIndex[materialIndex];
@@ -216,32 +182,27 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 }
 
 //used in GraphicsHandler.RenderGeometryPass
-const int ObjectHandler::GetHeightMapNrOfFaces()
+int ObjectHandler::GetHeightMapNrOfFaces() const
 {
 	return NUMBER_OF_FACES;
 }
 
-//used in ????
-int ObjectHandler::GetHeightMapNrOfVerticies()
-{
-	return NUMBER_OF_VERTICES;
-}
-
+//Returns a pointer to either the std::vector of static objects or the std::vector of dynamic objects
 std::vector<Object>* ObjectHandler::GetObjectArrayPtr(ObjectType objectType)
 {
 	return (objectType == STATIC_OBJECT) ? &mStaticObjects : &mDynamicObjects;
 }
 
-
-float** ObjectHandler::getWorldHeight() 
+float** ObjectHandler::getWorldHeight() const
 {
 	return WORLD_HEIGHT;
 }
-int ObjectHandler::getWorldDepth() 
+
+int ObjectHandler::getWorldDepth() const 
 {
 	return WORLD_DEPTH;
 }
-int ObjectHandler::getWorldWidth() 
+int ObjectHandler::getWorldWidth() const
 {
 	return WORLD_WIDTH;
 }
@@ -251,7 +212,7 @@ int ObjectHandler::getWorldWidth()
 bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, std::wstring filename, ObjectType objectType, bool isRHCoordSys, bool computeNormals)
 {
 	std::wifstream fileIn(filename.c_str());    //Open file
-	std::wstring meshMatLib;                    //String to hold our obj material library filename
+	std::wstring meshMatLib;                    //String to hold the obj material library filename
 
 	//Arrays to store the model's information
 	std::vector<DWORD> indices;
@@ -265,7 +226,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 	std::vector<int> vertNormIndex;
 	std::vector<int> vertTCIndex;
 
-	//Make sure we have a default if no tex coords or normals are defined
+	// bools to check if the .obj file has texture coordinates and normals defined
 	bool hasTexCoord = false;
 	bool hasNorm = false;
 
@@ -275,22 +236,23 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 	int vertNormIndexTemp;
 	int vertTCIndexTemp;
 
-	wchar_t checkChar;        //The variable we will use to store one char from file at a time
-	std::wstring face;        //Holds the string containing our face vertices
-	int vIndex = 0;           //Keep track of our vertex index count
-	int triangleCount = 0;    //Total Triangles
-	int totalVerts = 0;
-	int meshTriangles = 0;
+	wchar_t checkChar;				//Used to read through the file charater by character
+	std::wstring face;				//Used to hold the string containing the verticies
+	int vIndex = 0;					//Keep track of the vertex index count
+	int perFaceTriangleCount = 0;	//Number of triangles each face consists of
+	int totalVerts = 0;				//Total number of verticies in the entire model
+	int totalTriangles = 0;			//Total number of triangles in the entire model
 
-	Object object;
+	Object object; //Object which will eventually store all the information
 
-	//TODO: improve with an error message or something
-	if (!fileIn)	//Early exit if the file doesn't open
+
+	if (!fileIn) //Early exit if the file doesn't open
+	{
+		OutputDebugString(L"\nObjectHandler::LoadObjectModel() Failed to open .obj file\n\n");
 		exit(-1);
+	}
 
-	bool debugBool = false; //TODO: REMOVE!
-
-	// .obj file
+	// .obj file loop
 	while (fileIn)
 	{
 		checkChar = fileIn.get();			//get the next char
@@ -340,31 +302,34 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 		}
 		break;
 		case L'f': //f - faces. Vertex definition [vPos1/vTexCoord1/vNorm1 ... ]
-		{									//Breaks faces with more than three sides into multiple triangles
+		{
 			checkChar = fileIn.get();
-			if (checkChar != L' ')	//early exit if the next character isn't a space
+			if (checkChar != L' ') //early exit if the next character isn't a space
+			{
 				break;
+			}
 
 			face = L"";				//clear the temporary wide string which will be used to store the line
 			std::wstring VertDef;	//holds one vertex definition at a time
-			triangleCount = 0;
+			perFaceTriangleCount = 0;
 
 			checkChar = fileIn.get();
-			while (checkChar != L'\n')	//read through the whole line
+			//read through the whole line (faces are at the bottom of .obj files so we need to check for end of file as well as new line)
+			while (checkChar != L'\n' && !fileIn.eof())
 			{
 				face += checkChar;		//add every char to the face string
 				checkChar = fileIn.get();
 				if (checkChar == L' ')
-					triangleCount++;	//increase triangle count if it's a space
+					perFaceTriangleCount++;	//increase triangle count if it's a space
 			}
 
-			//check for space at the end of our face string
+			//check for space at the end of the face string
 			if (face[face.length() - 1] == L' ')
-				triangleCount--;
-			triangleCount -= 1; //every vertex in the face after the first two are new faces
+				perFaceTriangleCount--;
+			perFaceTriangleCount -= 1; //every vertex in the face after the first two are new faces
 
 			std::wstringstream ss(face);
-			if (face.length() <= 0) // early exit if the line isn't just simply 'f '
+			if (face.length() <= 0) // early exit if the entire line is 'f '
 				break;
 
 			int firstVIndex, lastVIndex; // first and last vertice's index
@@ -448,10 +413,10 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 				}
 				vIndex++; //increment index count
 			} //end for i-loop
-			meshTriangles++; //one triangle down
+			totalTriangles++; //one triangle down
 
-								//convert the face to more than one triangle in case the face has more than three vertexes
-			for (int l = 0; l < triangleCount - 1; ++l)
+			//Break the face into more than one triangle in case the face has more than three vertexes
+			for (int l = 0; l < perFaceTriangleCount - 1; ++l)
 			{
 				//first vertex of this triangle (the very first vertex of the face too)
 				indices.push_back(firstVIndex); //set index for this vertex
@@ -467,7 +432,6 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 				std::wstring vertPart;
 				int whichPart = 0;
 
-				//TODO: see if this duplicate code can be eliminated
 				//parse this string (same procedure as in the for i-loop)
 				for (unsigned int j = 0; j < VertDef.length(); j++)
 				{
@@ -483,7 +447,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 							wstringToInt >> vertPosIndexTemp;
 							vertPosIndexTemp -= 1; //subtract one since c++ starts arrays at 0 and .obj starts indexing at 1
 
-													//check if the vert pos was the only thing specified
+							//check if the vert pos was the only thing specified
 							if (j == VertDef.length() - 1)
 							{
 								vertNormIndexTemp = 0;
@@ -549,7 +513,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 				//set the second vertex for the next triangle to the last vertex
 				lastVIndex = indices[vIndex]; //the last vertex index of this triangle
 
-				meshTriangles++; //new triangle defined
+				totalTriangles++; //new triangle defined
 				vIndex++;
 			} //end for l-loop
 		}
@@ -612,7 +576,6 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 
 
 	//----------------------------------------- Material -------------------------------------------------------------------
-	// Does not take ambient and diffuse color into account since all objects will be textured.
 
 	bool mtlFileAlreadyLoaded = false;
 	for (size_t i = 0; i < mMaterialFileNameArray.size(); i++)
@@ -623,6 +586,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 		}
 	}
 
+	// Only parses the file if it hasn't already been loaded
 	if (!mtlFileAlreadyLoaded)
 	{
 		mMaterialFileNameArray.push_back(meshMatLib);
@@ -630,18 +594,20 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 		fileIn.close();
 		fileIn.open(meshMatLib.c_str());
 
-		std::wstring lastStringRead; // ????? This is never used
-		int matCount = mMaterialArray.size(); //total materials
+		int matCount = mMaterialArray.size(); //total number of materials
 
 
 		if (!fileIn) //early exit if the material file doesn't open
+		{
+			OutputDebugString(L"\nObjectHandler::LoadObjectModel() Failed to open .mtl file\n\n");
 			exit(-1);
+		}
 		while (fileIn)
 		{
 			checkChar = fileIn.get();
 			switch (checkChar)
 			{
-			case L'#': //comment
+			case L'#': //comment line
 			{
 				while (checkChar != L'\n')
 					checkChar = fileIn.get();
@@ -650,7 +616,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 			case L'K': //Ks - specular color
 			{
 				checkChar = fileIn.get();
-				if (checkChar == L's') // Ks - specular color
+				if (checkChar == L's')		// Ks - Specular color
 				{
 					checkChar = fileIn.get(); //read over space
 
@@ -658,7 +624,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 					fileIn >> mMaterialArray[matCount - 1].Data.SpecularColor.y;
 					fileIn >> mMaterialArray[matCount - 1].Data.SpecularColor.z;
 				}
-				else if (checkChar == L'd')
+				else if (checkChar == L'd') // Kd - Diffuse color
 				{
 					checkChar = fileIn.get(); //read over space
 
@@ -679,7 +645,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 				}
 			}
 			break;
-			case L'm': //map_Kd - texture file
+			case L'm': //map_Kd - texture filename
 			{
 				std::wstring word_m = L"ap_Kd ";
 				bool test_m = true;
@@ -811,24 +777,20 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 		object.meshVertexData.push_back(tempVert);
 	}
 	
-	//Compute normals
-	// NOTE: Currently only does flat shading
+	//Compute normals (flat shading)
 	if (computeNormals)
 	{
-		std::vector<DirectX::XMFLOAT3> tempNormal;
-
-		//normalized and unnormalized normals
-		DirectX::XMFLOAT3 unnormalized = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+		DirectX::XMFLOAT3 tempNormal = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 
 		//used to get the vectors (sides) from the position of the verticies
 		float vecX, vecY, vecZ;
 
-		//two edges of a triangle
+		//two edges of each triangle
 		DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 
-		//compute face normals
-		for (int i = 0; i < meshTriangles; ++i)
+		//compute and set face normals
+		for (int i = 0; i < totalTriangles; ++i)
 		{
 			//get the vector describing one edge of the triangle (edge 0,2)
 			vecX = object.meshVertexData[indices[(i * 3)]].pos.x - object.meshVertexData[indices[(i * 3) + 2]].pos.x;
@@ -836,61 +798,30 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 			vecZ = object.meshVertexData[indices[(i * 3)]].pos.z - object.meshVertexData[indices[(i * 3) + 2]].pos.z;
 			edge1 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f); //first edge
 
-														 //get the vector describing one edge of the triangle (edge 2,1)
+			//get the vector describing one edge of the triangle (edge 2,1)
 			vecX = object.meshVertexData[indices[(i * 3) + 2]].pos.x - object.meshVertexData[indices[(i * 3) + 1]].pos.x;
 			vecY = object.meshVertexData[indices[(i * 3) + 2]].pos.y - object.meshVertexData[indices[(i * 3) + 1]].pos.y;
 			vecZ = object.meshVertexData[indices[(i * 3) + 2]].pos.z - object.meshVertexData[indices[(i * 3) + 1]].pos.z;
 			edge2 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f); //second edge
 
-														 //Cross multiply to get the un-normalized face normal
-			DirectX::XMStoreFloat3(&unnormalized, DirectX::XMVector3Cross(edge2, edge1));
-			tempNormal.push_back(unnormalized); //save unnormalized normal (for normal averaging)
+			//Cross multiply to get the un-normalized face normal
+			DirectX::XMStoreFloat3(&tempNormal, DirectX::XMVector3Normalize(DirectX::XMVector3Cross(edge2, edge1)));
+			//Set the normals of the verticies in the triangle to the face normal
+			object.meshVertexData[3 * i].normal = tempNormal;
+			object.meshVertexData[3 * i + 1].normal = tempNormal;
+			object.meshVertexData[3 * i + 2].normal = tempNormal;
+
 		} //end face normal loop
-
-		  //compute vertex normals (normal averaging)
-		DirectX::XMVECTOR normalSum = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		int facesUsing = 0;
-		float tX, tY, tZ;
-
-		//loop through each vertex
-		for (int i = 0; i < totalVerts; ++i)
-		{
-			//check which triangles are using this vertex
-			for (int j = 0; j < meshTriangles; ++j)
-			{
-				if (indices[j * 3] == i || indices[(j * 3) + 1] == i || indices[(j * 3) + 2] == i)
-				{
-					tX = DirectX::XMVectorGetX(normalSum) + tempNormal[j].x;
-					tY = DirectX::XMVectorGetY(normalSum) + tempNormal[j].y;
-					tZ = DirectX::XMVectorGetZ(normalSum) + tempNormal[j].z;
-
-					normalSum = DirectX::XMVectorSet(tX, tY, tZ, 0.0f); //add the unnormalized face normal to the normal sum
-					facesUsing++;
-				}
-			} //end for j-loop through each triangle
-
-			using DirectX::operator/;
-			//divide the unnormalized normal by the number of faces sharing the vertex and the normalize it to get the actual normal
-			normalSum = DirectX::XMVector3Normalize(normalSum / static_cast<float>(facesUsing));
-
-			//store it in the current vertex
-			DirectX::XMStoreFloat3(&object.meshVertexData[i].normal, normalSum);
-
-			//clear normalSum and facesUsing
-			normalSum = DirectX::XMVectorZero();
-			facesUsing = 0;
-		} //end for i-loop through each vertex
 	} //end computeNormals
 
 	//create vertex and index buffers -------------------------------------------------------------------------
-
 
 	//index buffer
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
 
 	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(DWORD) * meshTriangles * 3;
+	indexBufferDesc.ByteWidth = sizeof(DWORD) * totalTriangles * 3;
 	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
 	indexBufferDesc.CPUAccessFlags = 0;
 	indexBufferDesc.MiscFlags = 0;
@@ -915,7 +846,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 	vertexBufferData.pSysMem = &object.meshVertexData[0];
 	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &object.meshVertexBuffer);
 
-
+	//Add object to array of objects
 	if (objectType == STATIC_OBJECT)
 	{
 		mStaticObjects.push_back(object);
@@ -928,7 +859,6 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 	return true;
 }
 
-//used in CreateWorld
 bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 {
 	FILE *fileptr;
@@ -976,8 +906,7 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	return true;
 }
 
-//used in InitializeObjects
-void ObjectHandler::CreateWorld(ID3D11Device* Dev)
+void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
 {
 	using DirectX::operator/;
 
@@ -995,7 +924,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	WORLD_HEIGHT = new float*[WORLD_WIDTH];
 
 	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
-	std::vector<std::vector<DWORD>> vertexFaces(NUMBER_OF_VERTICES);
 
 	for (DWORD i = 0; i < rows; i++) {
 		WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
@@ -1033,8 +961,7 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		texVIndex++;
 	}
 
-	// Change the scale of the texture.
-	// Definitely not the best (nor the most elegant) way to do it but at least it works
+	// Change the scale of the textures.
 	DirectX::XMVECTOR temp;
 	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
 	{
@@ -1043,7 +970,8 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05f);
 	}
 
-	//NOTE: THIS DOES NOT WORK CORRECTLY! Faces seem to get two normals correct but have the last one come from another triangle
+	std::vector<std::vector<int>> vertexFaces(NUMBER_OF_VERTICES); //So that each vertex knows which faces it's connected to
+
 	//calculates the normal for each face
 	std::vector<DirectX::XMFLOAT3> tempNormal;
 	DirectX::XMFLOAT3 nonNormalized = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
@@ -1051,7 +979,6 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 	DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++)
-	//for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++) 
 	{
 		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
 		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
@@ -1070,45 +997,33 @@ void ObjectHandler::CreateWorld(ID3D11Device* Dev)
 		vertexFaces[drawOrder[i * 3]].push_back(i);
 		vertexFaces[drawOrder[(i * 3) + 1]].push_back(i);
 		vertexFaces[drawOrder[(i * 3) + 2]].push_back(i);
-
-		if (HEIGHT_MAP_NORMALS == USING_FACE_NORMALS)
-		{
-			DirectX::XMVECTOR flatNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&nonNormalized));
-			DirectX::XMStoreFloat3(&mapVertex[drawOrder[(i * 3)]].normal, flatNormal);
-			DirectX::XMStoreFloat3(&mapVertex[drawOrder[(i * 3) + 1]].normal, flatNormal);
-			DirectX::XMStoreFloat3(&mapVertex[drawOrder[(i * 3) + 2]].normal, flatNormal);
-		}
 	}
 
-	if (HEIGHT_MAP_NORMALS == USING_VERTEX_NORMALS)
+	//calculate the average normal in order to make the worldIdentity smooth
+	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
 	{
-		//calculates the average normal in order to make the world smooth
-		DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		size_t facesUsing = vertexFaces[i].size();
 
-		for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
+		for (size_t j = 0; j < facesUsing; j++)
 		{
-			size_t facesUsing = vertexFaces[i].size();
-			for (size_t j = 0; j < facesUsing; j++)
-			{
-				DWORD k = vertexFaces[i][j];
-				avgNorm.x += tempNormal[k].x;
-				avgNorm.y += tempNormal[k].y;
-				avgNorm.z += tempNormal[k].z;
-			} //end for vertexFaces[i]
+			int k = vertexFaces[i][j];
+			avgNorm.x += tempNormal[k].x;
+			avgNorm.y += tempNormal[k].y;
+			avgNorm.z += tempNormal[k].z;
+		} //end for vertexFaces[i]
 
-			avgNorm.x /= facesUsing;
-			avgNorm.y /= facesUsing;
-			avgNorm.z /= facesUsing;
+		avgNorm.x /= facesUsing;
+		avgNorm.y /= facesUsing;
+		avgNorm.z /= facesUsing;
 
-			averageNormal = DirectX::XMLoadFloat3(&avgNorm);
-			averageNormal = DirectX::XMVector3Normalize(averageNormal);
+		averageNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&avgNorm));
 
-			DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
-
-			averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		} //end for NUMBER_OF_VERTICIES
-	} //end if USING_VERTEX_NORMALS
+		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
+	} //end for NUMBER_OF_VERTICIES
 
 	D3D11_BUFFER_DESC indexBufferDesc;
 	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
@@ -1154,10 +1069,11 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 	InitData.pSysMem = 0;
 	InitData.SysMemPitch = 0;
 
-	DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity());
+	// All world matrices are set to identity on creation
+	DirectX::XMMATRIX worldIdentity = DirectX::XMMatrixTranspose(DirectX::XMMatrixIdentity());
 
 	// Height Map
-	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, world);
+	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, worldIdentity);
 	InitData.pSysMem = &mHeightMapWorldBufferData;
 	hr = Dev->CreateBuffer(&WBufferDesc, &InitData, &mHeightMapWorldBuffer);
 	if (FAILED(hr))
@@ -1169,7 +1085,7 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 	// Static Objects
 	for (size_t i = 0; i < mStaticObjects.size(); i++)
 	{
-		DirectX::XMStoreFloat4x4(&mStaticObjects[i].objectBufferData.World, world);
+		DirectX::XMStoreFloat4x4(&mStaticObjects[i].objectBufferData.World, worldIdentity);
 		InitData.pSysMem = &mStaticObjects[i].objectBufferData;
 		hr = Dev->CreateBuffer(&WBufferDesc, &InitData, &mStaticObjects[i].perObjectWorldBuffer);
 		if (FAILED(hr)) 
@@ -1182,7 +1098,7 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 	// Dynamic Objects
 	for (size_t i = 0; i < mDynamicObjects.size(); i++)
 	{
-		DirectX::XMStoreFloat4x4(&mDynamicObjects[i].objectBufferData.World, world);
+		DirectX::XMStoreFloat4x4(&mDynamicObjects[i].objectBufferData.World, worldIdentity);
 		InitData.pSysMem = &mDynamicObjects[i].objectBufferData;
 		hr = Dev->CreateBuffer(&WBufferDesc, nullptr, &mDynamicObjects[i].perObjectWorldBuffer);
 		if (FAILED(hr)) 

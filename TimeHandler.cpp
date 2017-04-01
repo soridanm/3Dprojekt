@@ -16,8 +16,7 @@ TimeHandler::~TimeHandler()
 
 }
 
-//fps counter
-void TimeHandler::TimeHandlerTimeFunction()
+void TimeHandler::FrameRateCounter()
 {
 	FRAME_COUNT++;
 	if (GetTime() > 1.0)
