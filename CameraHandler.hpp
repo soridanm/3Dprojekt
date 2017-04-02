@@ -16,6 +16,7 @@
 
 #include "GlobalResources.hpp"
 #include "GlobalSettings.hpp"
+
 #include "FrustumHandler.hpp"
 
 class CameraHandler
@@ -84,7 +85,7 @@ private:
 
 	DirectX::XMFLOAT4X4 mCameraProjection;
 
-	// God camera to show the effects of the frustum culling ---------------------
+	// God camera to show the effects of the mFrustum culling ---------------------
 	const DirectX::XMVECTOR mGOD_CAM_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
 	DirectX::XMFLOAT4X4 mGodCameraViewProjection;
 

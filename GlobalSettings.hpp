@@ -2,14 +2,11 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: GlobalSettings.hpp
 *
 * File summary:
-*
-*
-*
-*
-*
+*	A file to make it easy to switch between different screen resolutions, 
+*	shadow map resolutions, quadtree depths, and windowed/non-windowed mode. 
 */
 
 #ifndef GLOBALSETTINGS_HPP
@@ -17,14 +14,14 @@
 
 #include "GlobalResources.hpp"
 
-static bool GOD_CAMERA_ENABLED = false;
+static bool GOD_CAMERA_ENABLED = !false;
 
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::LOW_480p;
-static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::HD_720p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1080p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::QHD_1440p;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::UHD_1;
-//static const ScreenSize SCREEN_RESOLUTION = ScreenResolution::FHD_1920x1000;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolutionPresets::LOW_480p;
+static const ScreenSize SCREEN_RESOLUTION = ScreenResolutionPresets::HD_720p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolutionPresets::FHD_1080p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolutionPresets::QHD_1440p;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolutionPresets::UHD_1;
+//static const ScreenSize SCREEN_RESOLUTION = ScreenResolutionPresets::FHD_1920x1000;
 
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::LOW;
 //static const ShadowQuality SHADOW_QUALITY = ShadowMapPresets::MEDIUM;

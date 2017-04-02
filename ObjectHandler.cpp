@@ -1,25 +1,10 @@
-/**
-* Course: DV142 - 3D-Programming
-* Authors: Viktor Enfeldt, Peter Meunier
-*
-* File: Handler.hpp
-*
-* File summary:
-*
-*
-*
-*
-*
-*/
 
 #include "ObjectHandler.hpp"
-/*=============================================================================
-*						Private functions
-*===========================================================================*/
 
 /*============================================================================
 *						Public functions
 *===========================================================================*/
+
 ObjectHandler::ObjectHandler()
 {}
 
@@ -29,8 +14,8 @@ ObjectHandler::~ObjectHandler()
 void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon)
 {
 	CreateHeightMap(Dev);
-	LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, true);
-	LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, true);
+	LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, false);
+	LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false);
 
 	for (int i = 0; i < 400; i++) 
 	{
@@ -38,39 +23,14 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 	}
 
 	MoveStaticObjects();
-	mQuadtree = Quadtree(DirectX::XMVectorZero(), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f, WORLD_DEPTH, 0), 1);
+
 	CreatePerObjectConstantBuffers(Dev);
 	CreateMaterialConstantBuffers(Dev);
+
+
+	mQuadtree = Quadtree(DirectX::XMVectorZero(), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f, WORLD_DEPTH, 0), 1);
 	InsertToQuadtree();
-}
 
-void ObjectHandler::InsertToQuadtree() 
-{
-	for (UINT i = 0; i < mStaticObjects.size(); i++) 
-	{
-		DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(mStaticObjects[i].worldMatrixPerObject);
-		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) 
-		{
-			DirectX::XMVECTOR modelVertexPos = DirectX::XMLoadFloat3(&mStaticObjects[i].meshVertexData[j].pos);
-			DirectX::XMVECTOR worldVertexPos = DirectX::XMVector3Transform(modelVertexPos, world);
-			mQuadtree.storeObjects(i, worldVertexPos, mQuadtree.root);
-		}
-	}
-}
-
-void ObjectHandler::MoveStaticObjects() 
-{
-	float scalingFactor = 2.0f;
-	for (int i = 0; i < mStaticObjects.size(); i++) {
-		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
-		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
-		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(10.f * (i / 20 + 1.0f), WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f, 10.0f * (i % 20 + 1.0f));
-
-		using DirectX::operator*;
-		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
-
-		mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
-	}
 }
 
 bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
@@ -78,52 +38,28 @@ bool ObjectHandler::SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID
 	UINT32 squareVertexSize = sizeof(float) * 8;
 	UINT32 offset = 0;
 
-	 //HEIGHT-MAP BEGIN ---------------------------------------------------------------------------
-
 	DevCon->IASetIndexBuffer(gSquareIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	DevCon->IASetVertexBuffers(0, 1, &gSquareVertBuffer, &squareVertexSize, &offset);
-
-	 //HEIGHT-MAP END ---------------------------------------------------------------------------
-
-	DirectX::XMStoreFloat4x4(&mHeightMapWorldBufferData.World, DirectX::XMMatrixIdentity());// DirectX::XMMatrixTranspose(DirectX::XMMatrixRotationY(rotation)));
-
-	D3D11_MAPPED_SUBRESOURCE worldMatrixPtr;
-	DevCon->Map(mHeightMapWorldBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &worldMatrixPtr); //change write disc
-	// copy memory from CPU to GPU of the entire struct
-	memcpy(worldMatrixPtr.pData, &mHeightMapWorldBufferData, sizeof(cPerObjectBuffer));
-	// Unmap constant buffer so that we can use it again in the GPU
-	DevCon->Unmap(mHeightMapWorldBuffer, 0);
-	// set resource to Geometry Shader
+	
 	if (passID == GEOMETRY_PASS)
 	{
 		DevCon->GSSetConstantBuffers(1, 1, &mHeightMapWorldBuffer);
+		DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
 	}
+
 	if (passID == SHADOW_PASS)
 	{
 		DevCon->VSSetConstantBuffers(1, 1, &mHeightMapWorldBuffer);
 	}
 
-	// Map material properties buffer
-	mHeightMapMaterialBufferData = Materials::Grass;
-	mHeightMapMaterialBufferData.HasTexture = 1;
-
-	D3D11_MAPPED_SUBRESOURCE materialPtr;
-	DevCon->Map(mHeightMapMaterialBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &materialPtr);
-	memcpy(materialPtr.pData, &mHeightMapMaterialBufferData, sizeof(cMaterialBuffer));
-	DevCon->Unmap(mHeightMapMaterialBuffer, 0);
-
-	if (passID == GEOMETRY_PASS)
-	{
-		DevCon->PSSetConstantBuffers(0, 1, &mHeightMapMaterialBuffer);
-	}
-
 	return true;
 }
 
-
-//TODO: Probably a memory leak here
-bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex)
+bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, 
+	ObjectType objectType, int objectIndex, int materialIndex)
 {
+	using DirectX::operator*;
+
 	//TODO: make std::vector of worldIdentity matrixes for each object
 	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;
@@ -132,14 +68,9 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	if (objectType == STATIC_OBJECT)  { objectArray = &mStaticObjects; }
 	if (objectType == DYNAMIC_OBJECT) { objectArray = &mDynamicObjects; }
 
-
 	// Set index and vertex buffers
 	DevCon->IASetIndexBuffer((*objectArray)[objectIndex].meshIndexBuffer, DXGI_FORMAT_R32_UINT, 0);
 	DevCon->IASetVertexBuffers(0, 1, &(*objectArray)[objectIndex].meshVertexBuffer, &vertexSize, &offset);
-
-	/***************************************************************************************************************************************
-													World matrix
-	***************************************************************************************************************************************/
 
 	// Dynamic Objects will rotate at the same speed around the same axis but in different locations
 	if (objectType == DYNAMIC_OBJECT)
@@ -148,9 +79,8 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		rotation += 0.001f;
 		float scale = 10.0f;
 
-		using DirectX::operator*;
 
-		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scale, scale, scale);
+		DirectX::XMMATRIX scaleMatrix    = DirectX::XMMatrixScaling(scale, scale, scale);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
 		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f + 20.f * (objectIndex + 1.0f), 20.0f * (objectIndex + 1.0f), 100.0f);
 
@@ -161,8 +91,6 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 
 	if (objectType == STATIC_OBJECT)
 	{
-		// A static object has already had its geometry multiplied by a worldIdentity matrix so their shader-side matrix is set to an identity matrix
-
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World,(*objectArray)[objectIndex].worldMatrixPerObject);
 	}
 
@@ -179,10 +107,6 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 
 	if (passID == GEOMETRY_PASS)
 	{
-		/***************************************************************************************************************************************
-													Texture and material
-		***************************************************************************************************************************************/
-
 		int matInd = (*objectArray)[objectIndex].meshSubsetMaterialIndex[materialIndex];
 		if (mMaterialArray[matInd].Data.HasTexture == 1)
 		{
@@ -197,20 +121,160 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 
 		DevCon->PSSetConstantBuffers(0, 1, &mMaterialBufferArray[matInd]);
 	}
-
 	return true;
-}
-
-//used in GraphicsHandler.RenderGeometryPass
-int ObjectHandler::GetHeightMapNrOfFaces() const
-{
-	return NUMBER_OF_FACES;
 }
 
 //Returns a pointer to either the std::vector of static objects or the std::vector of dynamic objects
 std::vector<Object>* ObjectHandler::GetObjectArrayPtr(ObjectType objectType)
 {
 	return (objectType == STATIC_OBJECT) ? &mStaticObjects : &mDynamicObjects;
+}
+
+// Height Map -----------------------------------------------------------------
+
+void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
+{
+	using DirectX::operator/;
+
+	//creating what is needed for the heightmap
+	HeightMapInfo hminfo;
+	LoadHeightMap("heightmap.bmp", hminfo);
+	unsigned int columns = hminfo.worldWidth;
+	unsigned int rows = hminfo.worldHeight;
+
+	NUMBER_OF_VERTICES = rows*columns;
+	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
+
+	WORLD_WIDTH = rows;
+	WORLD_DEPTH = columns;
+	WORLD_HEIGHT = new float*[WORLD_WIDTH];
+
+	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
+
+	for (DWORD i = 0; i < rows; i++) {
+		WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
+		for (DWORD j = 0; j < columns; j++) {
+			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
+			mapVertex[i*columns + j].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
+			WORLD_HEIGHT[i][j] = hminfo.heightMap[i*columns + j].y;
+		}
+	}
+
+	//assigns uv-coordinates as well as setting the order they will be drawn in 
+	std::vector<DWORD> drawOrder(NUMBER_OF_FACES * 3);
+	int k = 0, texUIndex = 0, texVIndex = 0;
+	for (DWORD j = 0; j < rows - 1; j++) {
+		for (DWORD i = 0; i < columns - 1; i++) {
+			drawOrder[k] = i*columns + j;//bottom left
+			mapVertex[i*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 1.0f));
+			drawOrder[k + 1] = (1 + i)*columns + j;//top left
+			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
+			drawOrder[k + 2] = i*columns + j + 1;//bottom right
+			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
+
+
+			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
+			mapVertex[(1 + i)*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 0.0f));
+			drawOrder[k + 4] = i*columns + j + 1;//bottom right
+			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
+			drawOrder[k + 5] = (1 + i)*columns + j;//top left
+			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
+
+			k += 6;
+			texUIndex++;
+		}
+		texUIndex = 0;
+		texVIndex++;
+	}
+
+	// Change the scale of the textures.
+	DirectX::XMVECTOR temp;
+	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
+	{
+		using DirectX::operator*;
+		temp = DirectX::XMLoadFloat2(&mapVertex[i].texCoord);
+		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05f);
+	}
+
+	std::vector<std::vector<int>> vertexFaces(NUMBER_OF_VERTICES); //So that each vertex knows which faces it's connected to
+
+	//calculates the normal for each face
+	std::vector<DirectX::XMFLOAT3> tempNormal;
+	DirectX::XMFLOAT3 nonNormalized = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+	float vecX, vecY, vecZ;
+	DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++)
+	{
+		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
+		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
+		vecZ = mapVertex[drawOrder[(i * 3)]].pos.z - mapVertex[drawOrder[(i * 3) + 2]].pos.z;
+		edge1 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f);
+
+		vecX = mapVertex[drawOrder[(i * 3) + 2]].pos.x - mapVertex[drawOrder[(i * 3) + 1]].pos.x;
+		vecY = mapVertex[drawOrder[(i * 3) + 2]].pos.y - mapVertex[drawOrder[(i * 3) + 1]].pos.y;
+		vecZ = mapVertex[drawOrder[(i * 3) + 2]].pos.z - mapVertex[drawOrder[(i * 3) + 1]].pos.z;
+		edge2 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f);
+
+
+		DirectX::XMStoreFloat3(&nonNormalized, DirectX::XMVector3Cross(edge2, edge1));
+		tempNormal.push_back(nonNormalized);
+
+		vertexFaces[drawOrder[i * 3]].push_back(i);
+		vertexFaces[drawOrder[(i * 3) + 1]].push_back(i);
+		vertexFaces[drawOrder[(i * 3) + 2]].push_back(i);
+	}
+
+	//calculate the average normal in order to make the worldIdentity smooth
+	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
+
+	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
+	{
+		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
+		size_t facesUsing = vertexFaces[i].size();
+
+		for (size_t j = 0; j < facesUsing; j++)
+		{
+			int k = vertexFaces[i][j];
+			avgNorm.x += tempNormal[k].x;
+			avgNorm.y += tempNormal[k].y;
+			avgNorm.z += tempNormal[k].z;
+		} //end for vertexFaces[i]
+
+		avgNorm.x /= facesUsing;
+		avgNorm.y /= facesUsing;
+		avgNorm.z /= facesUsing;
+
+		averageNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&avgNorm));
+
+		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
+	} //end for NUMBER_OF_VERTICIES
+
+	D3D11_BUFFER_DESC indexBufferDesc;
+	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
+	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	indexBufferDesc.ByteWidth = sizeof(DWORD)*NUMBER_OF_FACES * 3;
+	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
+	indexBufferDesc.CPUAccessFlags = 0;
+	indexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA iinitData;
+	iinitData.pSysMem = &drawOrder[0];
+	Dev->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
+
+	D3D11_BUFFER_DESC vertexBufferDesc;
+	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
+	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
+	vertexBufferDesc.ByteWidth = sizeof(Vertex)*NUMBER_OF_VERTICES;
+	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vertexBufferDesc.CPUAccessFlags = 0;
+	vertexBufferDesc.MiscFlags = 0;
+
+	D3D11_SUBRESOURCE_DATA vertexBufferData;
+	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
+	vertexBufferData.pSysMem = &mapVertex[0];
+	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
 }
 
 float** ObjectHandler::getWorldHeight() const
@@ -222,13 +286,54 @@ int ObjectHandler::getWorldDepth() const
 {
 	return WORLD_DEPTH;
 }
+
 int ObjectHandler::getWorldWidth() const
 {
 	return WORLD_WIDTH;
 }
-// private ---------------------------------------------------------------------------------------
 
-//TODO? Split into multiple functions
+int ObjectHandler::GetHeightMapNrOfFaces() const
+{
+	return NUMBER_OF_FACES;
+}
+
+// Quadtree -------------------------------------------------------------------
+
+void ObjectHandler::MoveStaticObjects() 
+{
+	using DirectX::operator*;
+
+	float scalingFactor = 2.0f;
+	for (int i = 0; i < mStaticObjects.size(); i++) 
+	{
+		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
+		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(10.f * (i / 20 + 1.0f), WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f, 10.0f * (i % 20 + 1.0f));
+
+		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+
+		mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
+	}
+}
+
+void ObjectHandler::InsertToQuadtree() 
+{
+	for (UINT i = 0; i < mStaticObjects.size(); i++) 
+	{
+		DirectX::XMMATRIX world = DirectX::XMMatrixTranspose(mStaticObjects[i].worldMatrixPerObject);
+		for (UINT j = 0; j < mStaticObjects[i].meshVertexData.size(); j++) 
+		{
+			DirectX::XMVECTOR modelVertexPos = DirectX::XMLoadFloat3(&mStaticObjects[i].meshVertexData[j].pos);
+			DirectX::XMVECTOR worldVertexPos = DirectX::XMVector3Transform(modelVertexPos, world);
+			mQuadtree.storeObjects(i, worldVertexPos, mQuadtree.root);
+		}
+	}
+}
+
+/*=============================================================================
+*						Private functions
+*===========================================================================*/
+
 bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, std::wstring filename, ObjectType objectType, bool isRHCoordSys, bool computeNormals)
 {
 	std::wifstream fileIn(filename.c_str());    //Open file
@@ -581,19 +686,11 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 
 	object.meshSubsetIndexStart.push_back(vIndex); //set index start
 
-										//make sure the first subset does not contain "0" indices. Can happen if "g" is defined at the very top of the file
-	if (object.meshSubsetIndexStart[1] == 0)
-	{
-		object.meshSubsetIndexStart.erase(object.meshSubsetIndexStart.begin() + 1);
-		object.nrOfMeshSubsets--;
-	}
-
 	//set default tex coords and norms if those are not specified in the file
 	if (!hasNorm)
 		vertNorm.push_back(DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f));
 	if (!hasTexCoord)
 		vertTexCoord.push_back(DirectX::XMFLOAT2(0.0f, 0.0f));
-
 
 	//----------------------------------------- Material -------------------------------------------------------------------
 
@@ -926,152 +1023,6 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 	return true;
 }
 
-void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
-{
-	using DirectX::operator/;
-
-	//creating what is needed for the heightmap
-	HeightMapInfo hminfo;
-	LoadHeightMap("heightmap.bmp", hminfo);
-	unsigned int columns = hminfo.worldWidth;
-	unsigned int rows = hminfo.worldHeight;
-
-	NUMBER_OF_VERTICES = rows*columns;
-	NUMBER_OF_FACES = (rows - 1)*(columns - 1) * 2;
-
-	WORLD_WIDTH = rows;
-	WORLD_DEPTH = columns;
-	WORLD_HEIGHT = new float*[WORLD_WIDTH];
-
-	std::vector<Vertex> mapVertex(NUMBER_OF_VERTICES);
-
-	for (DWORD i = 0; i < rows; i++) {
-		WORLD_HEIGHT[i] = new float[WORLD_DEPTH];
-		for (DWORD j = 0; j < columns; j++) {
-			mapVertex[i*columns + j].pos = hminfo.heightMap[i*columns + j]; //storing height and position in the struct
-			mapVertex[i*columns + j].normal = DirectX::XMFLOAT3(0.0f, 1.0f, 0.0f);//storing a default normal
-			WORLD_HEIGHT[i][j] = hminfo.heightMap[i*columns + j].y;
-		}
-	}
-
-	//assigns uv-coordinates as well as setting the order they will be drawn in 
-	std::vector<DWORD> drawOrder(NUMBER_OF_FACES * 3);
-	int k = 0, texUIndex = 0, texVIndex = 0;
-	for (DWORD j = 0; j < rows - 1; j++) {
-		for (DWORD i = 0; i < columns - 1; i++) {
-			drawOrder[k] = i*columns + j;//bottom left
-			mapVertex[i*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 1.0f));
-			drawOrder[k + 1] = (1 + i)*columns + j;//top left
-			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
-			drawOrder[k + 2] = i*columns + j + 1;//bottom right
-			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
-
-
-			drawOrder[k + 3] = (1 + i)*columns + j + 1;//top right
-			mapVertex[(1 + i)*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 0.0f));
-			drawOrder[k + 4] = i*columns + j + 1;//bottom right
-			mapVertex[i*columns + j + 1].texCoord = DirectX::XMFLOAT2((texUIndex + 1.0f), (texVIndex + 1.0f));
-			drawOrder[k + 5] = (1 + i)*columns + j;//top left
-			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
-
-			k += 6;
-			texUIndex++;
-		}
-		texUIndex = 0;
-		texVIndex++;
-	}
-
-	// Change the scale of the textures.
-	DirectX::XMVECTOR temp;
-	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
-	{
-		using DirectX::operator*;
-		temp = DirectX::XMLoadFloat2(&mapVertex[i].texCoord);
-		DirectX::XMStoreFloat2(&mapVertex[i].texCoord, temp * 0.05f);
-	}
-
-	std::vector<std::vector<int>> vertexFaces(NUMBER_OF_VERTICES); //So that each vertex knows which faces it's connected to
-
-	//calculates the normal for each face
-	std::vector<DirectX::XMFLOAT3> tempNormal;
-	DirectX::XMFLOAT3 nonNormalized = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-	float vecX, vecY, vecZ;
-	DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++)
-	{
-		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
-		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
-		vecZ = mapVertex[drawOrder[(i * 3)]].pos.z - mapVertex[drawOrder[(i * 3) + 2]].pos.z;
-		edge1 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f);
-
-		vecX = mapVertex[drawOrder[(i * 3) + 2]].pos.x - mapVertex[drawOrder[(i * 3) + 1]].pos.x;
-		vecY = mapVertex[drawOrder[(i * 3) + 2]].pos.y - mapVertex[drawOrder[(i * 3) + 1]].pos.y;
-		vecZ = mapVertex[drawOrder[(i * 3) + 2]].pos.z - mapVertex[drawOrder[(i * 3) + 1]].pos.z;
-		edge2 = DirectX::XMVectorSet(vecX, vecY, vecZ, 0.0f);
-
-
-		DirectX::XMStoreFloat3(&nonNormalized, DirectX::XMVector3Cross(edge2, edge1));
-		tempNormal.push_back(nonNormalized);
-
-		vertexFaces[drawOrder[i * 3]].push_back(i);
-		vertexFaces[drawOrder[(i * 3) + 1]].push_back(i);
-		vertexFaces[drawOrder[(i * 3) + 2]].push_back(i);
-	}
-
-	//calculate the average normal in order to make the worldIdentity smooth
-	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
-
-	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
-	{
-		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-		size_t facesUsing = vertexFaces[i].size();
-
-		for (size_t j = 0; j < facesUsing; j++)
-		{
-			int k = vertexFaces[i][j];
-			avgNorm.x += tempNormal[k].x;
-			avgNorm.y += tempNormal[k].y;
-			avgNorm.z += tempNormal[k].z;
-		} //end for vertexFaces[i]
-
-		avgNorm.x /= facesUsing;
-		avgNorm.y /= facesUsing;
-		avgNorm.z /= facesUsing;
-
-		averageNormal = DirectX::XMVector3Normalize(DirectX::XMLoadFloat3(&avgNorm));
-
-		DirectX::XMStoreFloat3(&mapVertex[i].normal, averageNormal);
-	} //end for NUMBER_OF_VERTICIES
-
-	D3D11_BUFFER_DESC indexBufferDesc;
-	ZeroMemory(&indexBufferDesc, sizeof(indexBufferDesc));
-	indexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	indexBufferDesc.ByteWidth = sizeof(DWORD)*NUMBER_OF_FACES * 3;
-	indexBufferDesc.BindFlags = D3D11_BIND_INDEX_BUFFER;
-	indexBufferDesc.CPUAccessFlags = 0;
-	indexBufferDesc.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA iinitData;
-	iinitData.pSysMem = &drawOrder[0];
-	Dev->CreateBuffer(&indexBufferDesc, &iinitData, &gSquareIndexBuffer);
-
-	D3D11_BUFFER_DESC vertexBufferDesc;
-	ZeroMemory(&vertexBufferDesc, sizeof(vertexBufferDesc));
-	vertexBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	vertexBufferDesc.ByteWidth = sizeof(Vertex)*NUMBER_OF_VERTICES;
-	vertexBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = 0;
-	vertexBufferDesc.MiscFlags = 0;
-
-	D3D11_SUBRESOURCE_DATA vertexBufferData;
-	ZeroMemory(&vertexBufferData, sizeof(vertexBufferData));
-	vertexBufferData.pSysMem = &mapVertex[0];
-	Dev->CreateBuffer(&vertexBufferDesc, &vertexBufferData, &gSquareVertBuffer);
-}
-
-//used in InitializeObjects
 void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 {
 	HRESULT hr;
@@ -1106,6 +1057,7 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 	for (size_t i = 0; i < mStaticObjects.size(); i++)
 	{
 		DirectX::XMStoreFloat4x4(&mStaticObjects[i].objectBufferData.World, worldIdentity);
+
 		InitData.pSysMem = &mStaticObjects[i].objectBufferData;
 		hr = Dev->CreateBuffer(&WBufferDesc, &InitData, &mStaticObjects[i].perObjectWorldBuffer);
 		if (FAILED(hr)) 
@@ -1129,7 +1081,6 @@ void ObjectHandler::CreatePerObjectConstantBuffers(ID3D11Device* Dev)
 	}
 }
 
-//used in InitializeObjects
 void ObjectHandler::CreateMaterialConstantBuffers(ID3D11Device* Dev)
 {
 	HRESULT hr;
@@ -1142,8 +1093,14 @@ void ObjectHandler::CreateMaterialConstantBuffers(ID3D11Device* Dev)
 	materialBufferDesc.MiscFlags = 0;
 	materialBufferDesc.StructureByteStride = 0;
 
-	// Height Map
-	hr = Dev->CreateBuffer(&materialBufferDesc, nullptr, &mHeightMapMaterialBuffer);
+	// Set height map material properties
+	mHeightMapMaterialBufferData = Materials::Grass;
+	mHeightMapMaterialBufferData.HasTexture = 1;
+
+	D3D11_SUBRESOURCE_DATA InitHMData{};
+	InitHMData.pSysMem = &mHeightMapMaterialBufferData;
+
+	hr = Dev->CreateBuffer(&materialBufferDesc, &InitHMData, &mHeightMapMaterialBuffer);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nObjectHandler::CreateMaterialConstantBuffers() Failed to create buffer for height map\n\n");

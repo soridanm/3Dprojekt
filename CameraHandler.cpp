@@ -265,7 +265,7 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 	DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, vp);
 	DirectX::XMStoreFloat4x4(&mCameraProjection, projection);
 
-	// God camera for seeing the effects of teh frustum culling against quadtree
+	// God camera for seeing the effects of teh mFrustum culling against quadtree
 	const DirectX::XMVECTOR GOD_CAM_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 99.0f, 0.0f);
 	const DirectX::XMVECTOR GOD_CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
 	const DirectX::XMMATRIX GOD_CAM_VIEW = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(mGOD_CAM_POS, GOD_CAM_TARGET, GOD_CAM_UP));

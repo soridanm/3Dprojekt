@@ -2,21 +2,11 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: GlobalResources.hpp
 *
 * File summary:
-*
-*
-*
-*
-*
+*	A header with commonly used structs, namespaces, as well as include files.
 */
-
-/*
-* TODO: Split into two files. GlobalResources and GlobalSettings
-*		Move some of the includes
-*/
-
 
 #ifndef GLOBALRESOURCES_HPP
 #define GLOBALRESOURCES_HPP
@@ -34,7 +24,6 @@
 #include <DDSTextureLoader.h>
 #include <objbase.h>
 
-// for reading obj
 #include <string> //might not be necessary
 #include <vector>
 #include <fstream>
@@ -52,7 +41,8 @@
 struct ScreenSize
 {
 	ScreenSize(UINT w, UINT h, LPCSTR ws, LPCSTR hs) 
-		: SCREEN_WIDTH(w), SCREEN_HEIGHT(h), WIDTH_STRING(ws), HEIGHT_STRING(hs) {}
+		: SCREEN_WIDTH(w), SCREEN_HEIGHT(h), WIDTH_STRING(ws), HEIGHT_STRING(hs) 
+	{}
 
 	const UINT SCREEN_WIDTH;
 	const UINT SCREEN_HEIGHT;
@@ -60,8 +50,8 @@ struct ScreenSize
 	const LPCSTR HEIGHT_STRING;
 };
 
-//NOTE: Height must be divisible by 20, and width must be divisible by 40
-namespace ScreenResolution
+// NOTE: Height must be divisible by 20, and width must be divisible by 40
+namespace ScreenResolutionPresets
 {
 	static const ScreenSize LOW_480p	= ScreenSize(640U, 480U, "640\n", "480\n");
 	static const ScreenSize HD_720p		= ScreenSize(1280U, 720U, "1280", "720");
@@ -75,7 +65,8 @@ namespace ScreenResolution
 struct ShadowQuality
 {
 	ShadowQuality(UINT w, LPCSTR s) 
-		: SHADOW_MAP_SIZE(w), SIZE_STRING(s) {}
+		: SHADOW_MAP_SIZE(w), SIZE_STRING(s) 
+	{}
 
 	const UINT SHADOW_MAP_SIZE;
 	const LPCSTR SIZE_STRING;
@@ -90,13 +81,6 @@ namespace ShadowMapPresets
 	static const ShadowQuality ULTRA	= ShadowQuality(4096U, "4096\n");
 };
 
-
-enum HeightMapNormalSetting
-{
-	USING_FACE_NORMALS,			// AKA flat shading. 
-	USING_VERTEX_NORMALS		// AKA smooth shading. Significantly longer load time
-};
-
 enum RenderPassID
 {
 	GEOMETRY_PASS,
@@ -104,31 +88,6 @@ enum RenderPassID
 	LIGHT_PASS,
 	COMPUTE_PASS,
 	SCREEN_PASS
-};
-
-//TODO? Move to some class
-struct HeightMapInfo {
-	int worldWidth;
-	int worldHeight;
-	DirectX::XMFLOAT3 *heightMap;
-};
-
-struct Vertex {
-	Vertex() {}
-	Vertex(float x, float y, float z, float u, float v, float nx, float ny, float nz) 
-		:pos(x, y, z), texCoord(u, v), normal(nx, ny, nz) 
-	{}
-	DirectX::XMFLOAT3 pos;
-	DirectX::XMFLOAT2 texCoord;
-	DirectX::XMFLOAT3 normal;
-};
-
-struct Node {
-	int levels;
-	DirectX::XMVECTOR boxMin;
-	DirectX::XMVECTOR boxMax;
-	Node* children[4];
-	std::vector<UINT>objects;
 };
 
 namespace Colors

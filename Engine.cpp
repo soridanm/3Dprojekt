@@ -20,7 +20,7 @@ bool Engine::Initialize()
 
 	mShaderHandler.InitializeShaders(mDev);
 
-	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
+	mObjectHandler.mQuadtree.mFrustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
@@ -49,8 +49,8 @@ bool Engine::Initialize()
 
 bool Engine::Render()
 {
-	//construct frustum again every frame
-	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
+	//construct mFrustum again every frame
+	mObjectHandler.mQuadtree.mFrustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
 
 	RenderGeometryPass();
 	RenderShadowPass();

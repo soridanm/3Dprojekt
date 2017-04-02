@@ -2,14 +2,15 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: ObjectHandler.hpp
 *
-* File summary:
+* Class summary:
+*	Loads, stores, and moves all objects (including the heighmap). 
 *
+*	NOTE: The heightmap's two textures are stored in the Engine class but apart
+*	from that all textures (as well as materials) are handled by this class.
 *
-*
-*
-*
+*	This file also includes the definitions of several structs used by the class.
 */
 
 #ifndef OBJECTHANDLER_HPP
@@ -17,9 +18,8 @@
 
 #include "GlobalResources.hpp"
 #include "GlobalSettings.hpp"
-#include "QuadtreeHandler.hpp"	
-#include <algorithm>
 
+#include "QuadtreeHandler.hpp"	
 
 enum ObjectType : int
 {
@@ -27,18 +27,35 @@ enum ObjectType : int
 	STATIC_OBJECT
 };
 
+struct Vertex
+{
+	Vertex(
+		float x = 0.0f, float y = 0.0f, float z = 0.0f,
+		float u = 0.0f, float v = 0.0f,
+		float nx = 0.0f, float ny = 0.0f, float nz = 0.0f)
+		: pos(x, y, z), texCoord(u, v), normal(nx, ny, nz)
+	{}
 
-//Might be moved into the class
+	DirectX::XMFLOAT3 pos;
+	DirectX::XMFLOAT2 texCoord;
+	DirectX::XMFLOAT3 normal;
+};
+
 struct cMaterialBuffer
 {
-	cMaterialBuffer(float r = 0.0f, float g = 0.0f, float b = 0.0f, float specPow = 128.0f, int hasTex = 0, int texInd = 0)
-		: SpecularColor(r, g, b), SpecularPower(specPow), DiffuseColor(r, g, b), HasTexture(hasTex), TexArrIndex(texInd), padding(0.0f, 0.0f, 0.0f)
+	cMaterialBuffer(
+		float r = 0.0f, float g = 0.0f, float b = 0.0f, 
+		float specPow = 128.0f, int hasTex = 0, int texInd = 0)
+		: SpecularColor(r, g, b), SpecularPower(specPow), 
+		DiffuseColor(r, g, b), HasTexture(hasTex), TexArrIndex(texInd), 
+		padding(0.0f, 0.0f, 0.0f)
 	{}
+
 	DirectX::XMFLOAT3 SpecularColor;
 	float SpecularPower;
 	DirectX::XMFLOAT3 DiffuseColor;
-	int TexArrIndex;
-	int HasTexture;
+	int TexArrIndex; // 1 = yes, 0 = no
+	int HasTexture;  // 1 = yes, 0 = no
 
 	DirectX::XMFLOAT3 padding;
 }; 
@@ -63,26 +80,35 @@ struct Object
 	//From .obj
 	std::vector<Vertex> meshVertexData;
 	ID3D11Buffer* meshVertexBuffer = nullptr;
-	ID3D11Buffer* meshIndexBuffer = nullptr;
+	ID3D11Buffer* meshIndexBuffer  = nullptr;
 
 	int nrOfMeshSubsets = 0;
-	std::vector<int> meshSubsetIndexStart; // needed?
+	std::vector<int> meshSubsetIndexStart;
 	std::vector<int> meshSubsetMaterialIndex;
 
-	// World Buffer. For static objects this will at some point be set to an identity matrix
+	// World Buffer. For static objects this will be set to an identity matrix
+	DirectX::XMMATRIX worldMatrixPerObject;
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
 	ID3D11Buffer* perObjectWorldBuffer = nullptr;
-	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
 
-	DirectX::XMMATRIX worldMatrixPerObject;
+	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
 };
 
+// Materials will usually be taken from the .mtl file but the heightmap will use the Grass preset
 namespace Materials
 {
 	static const cMaterialBuffer Black_plastic	= cMaterialBuffer(0.5f, 0.5f, 0.5f, 32.0f);
 	static const cMaterialBuffer Black_rubber	= cMaterialBuffer(0.4f, 0.4f, 0.4f, 10.0f);
 	static const cMaterialBuffer Grass			= cMaterialBuffer(0.024f, 0.05f, 0.01f, 1.5f);
 }
+
+struct HeightMapInfo
+{
+	int worldWidth;
+	int worldHeight;
+	DirectX::XMFLOAT3 *heightMap;
+};
+
 
 class ObjectHandler
 {
@@ -92,23 +118,24 @@ public:
 	
 	void InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* DevCon);
 	bool SetHeightMapBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
-	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, ObjectType objectType, int objectIndex, int materialIndex);
-	int GetHeightMapNrOfFaces() const;
+	bool SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, RenderPassID passID, 
+		ObjectType objectType, int objectIndex, int materialIndex);
 
-	void CreateHeightMap(ID3D11Device* Dev); //TODO: Rename
 
 	std::vector<Object>* GetObjectArrayPtr(ObjectType objectType);
 
+	// Height Map
+	void CreateHeightMap(ID3D11Device* Dev);
 	float** getWorldHeight() const;
 	int getWorldDepth() const;
 	int getWorldWidth() const;
+	int GetHeightMapNrOfFaces() const;
+	
+	// Quadtree
 	void MoveStaticObjects();
 	void InsertToQuadtree();
-
-
-	Quadtree mQuadtree; //Should probably be a member of Engine.hpp instead
+	Quadtree mQuadtree;
 private:
-	//TODO: Turn some of these into member variables
 	bool LoadObjectModel(
 		ID3D11Device* Dev, 
 		ID3D11DeviceContext* DevCon, 
@@ -123,8 +150,8 @@ private:
 	void CreateMaterialConstantBuffers(ID3D11Device* Dev);
 
 	
-	std::vector<Object> mStaticObjects;  // objects that will be included in quad-tree
-	std::vector<Object> mDynamicObjects; // Objects that will NOT be included int quad-tree
+	std::vector<Object> mStaticObjects;  // Objects that are included in the quadtree
+	std::vector<Object> mDynamicObjects; // Objects that are NOT included in the quadtree
 
 	// Material
 	std::vector<materialStruct> mMaterialArray; // Stores ALL objects' materials
@@ -132,8 +159,8 @@ private:
 	std::vector<ID3D11Buffer*> mMaterialBufferArray;
 
 	// Texture
-	std::vector<ID3D11ShaderResourceView*> mMeshTextureSRV; //not yet implemented
-	std::vector<std::wstring> mTextureNameArray; // might be implemented like this or with vector<materialStruct>
+	std::vector<ID3D11ShaderResourceView*> mMeshTextureSRV;
+	std::vector<std::wstring> mTextureNameArray;
 
 
 	cPerObjectBuffer mHeightMapWorldBufferData = cPerObjectBuffer();

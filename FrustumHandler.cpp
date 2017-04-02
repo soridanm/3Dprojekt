@@ -1,59 +1,62 @@
 #include "FrustumHandler.hpp"
-/*=============================================================================
-*						Private functions
-*===========================================================================*/
 
 /*============================================================================
 *						Public functions
 *===========================================================================*/
-FrustumHandler::FrustumHandler(DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT4X4 view) {
+FrustumHandler::FrustumHandler(DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT4X4 view) 
+{
 
-	DirectX::XMFLOAT4X4 matrix;
+	DirectX::XMFLOAT4X4 VP;
 
 	//create frustummatrix
-	DirectX::XMStoreFloat4x4(&matrix, DirectX::XMMatrixMultiply((DirectX::XMLoadFloat4x4(&view)), DirectX::XMMatrixTranspose( DirectX::XMLoadFloat4x4(&projection))));
+	DirectX::XMStoreFloat4x4(
+		&VP, 
+		DirectX::XMMatrixMultiply((DirectX::XMLoadFloat4x4(&view)), DirectX::XMMatrixTranspose(DirectX::XMLoadFloat4x4(&projection)))
+	);
 
 	//near plane
-	planes[0].a = matrix._14 + matrix._13;
-	planes[0].b = matrix._24 + matrix._23;
-	planes[0].c = matrix._34 + matrix._33;
-	planes[0].d = matrix._44 + matrix._43;
+	planes[0].a = VP._14 + VP._13;
+	planes[0].b = VP._24 + VP._23;
+	planes[0].c = VP._34 + VP._33;
+	planes[0].d = VP._44 + VP._43;
 
 	//far plane
-	planes[1].a = matrix._14 - matrix._13;
-	planes[1].b = matrix._24 - matrix._23;
-	planes[1].c = matrix._34 - matrix._33;
-	planes[1].d = matrix._44 - matrix._43;
+	planes[1].a = VP._14 - VP._13;
+	planes[1].b = VP._24 - VP._23;
+	planes[1].c = VP._34 - VP._33;
+	planes[1].d = VP._44 - VP._43;
 
 	//left plane
-	planes[2].a = matrix._14 + matrix._11;
-	planes[2].b = matrix._24 + matrix._21;
-	planes[2].c = matrix._34 + matrix._31;
-	planes[2].d = matrix._44 + matrix._41;
+	planes[2].a = VP._14 + VP._11;
+	planes[2].b = VP._24 + VP._21;
+	planes[2].c = VP._34 + VP._31;
+	planes[2].d = VP._44 + VP._41;
 
 	//right plane
-	planes[3].a = matrix._14 - matrix._11;
-	planes[3].b = matrix._24 - matrix._21;
-	planes[3].c = matrix._34 - matrix._31;
-	planes[3].d = matrix._44 - matrix._41;
+	planes[3].a = VP._14 - VP._11;
+	planes[3].b = VP._24 - VP._21;
+	planes[3].c = VP._34 - VP._31;
+	planes[3].d = VP._44 - VP._41;
 
 	//top plane
-	planes[4].a = matrix._14 - matrix._12;
-	planes[4].b = matrix._24 - matrix._22;
-	planes[4].c = matrix._34 - matrix._32;
-	planes[4].d = matrix._44 - matrix._42;
+	planes[4].a = VP._14 - VP._12;
+	planes[4].b = VP._24 - VP._22;
+	planes[4].c = VP._34 - VP._32;
+	planes[4].d = VP._44 - VP._42;
 	//have to normalize
 
 	//bottom plane
-	planes[5].a = matrix._14 + matrix._12;
-	planes[5].b = matrix._24 + matrix._22;
-	planes[5].c = matrix._34 + matrix._32;
-	planes[5].d = matrix._44 + matrix._42;
+	planes[5].a = VP._14 + VP._12;
+	planes[5].b = VP._24 + VP._22;
+	planes[5].c = VP._34 + VP._32;
+	planes[5].d = VP._44 + VP._42;
 
 	//normalize all the planes
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 6; i++)
+	{
 		float length = sqrt((planes[i].a*planes[i].a) + (planes[i].b*planes[i].b) + (planes[i].c*planes[i].c));
-		if (length == 0) {
+		if (length == 0)
+		{
 			return;
 		}
 		planes[i].a /= length;
@@ -63,11 +66,13 @@ FrustumHandler::FrustumHandler(DirectX::XMFLOAT4X4 projection, DirectX::XMFLOAT4
 	}
 }
 
-FrustumHandler::~FrustumHandler() {
+FrustumHandler::~FrustumHandler() 
+{}
 
-}
+bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR boxMax) 
+{
+	using DirectX::operator-;
 
-bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR boxMax) {
 	bool isVisible = true;
 
 	//getting points for the corners used in the diagonals
@@ -81,6 +86,7 @@ bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR bo
 	xMiddle = (xMin + xMax) / 2;
 	yMiddle = (yMin + yMax) / 2;
 	zMiddle = (zMin + zMax) / 2;
+
 	//seting corners used for diagonals
 	DirectX::XMVECTOR corner1, corner2, corner3, corner4, corner5, corner6, corner7, corner8;
 	corner1 = boxMin;
@@ -94,7 +100,6 @@ bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR bo
 
 
 	DirectX::XMVECTOR diagonal[8];
-	using DirectX::operator-;
 	diagonal[0] = corner2 - corner1;
 	diagonal[1] = corner4 - corner3;
 	diagonal[2] = corner6 - corner5;
@@ -103,7 +108,6 @@ bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR bo
 	diagonal[5] = corner3 - corner4;
 	diagonal[6] = corner5 - corner6;
 	diagonal[7] = corner7 - corner8;
-
 
 
 	DirectX::XMVECTOR mostResembling;
@@ -122,10 +126,21 @@ bool FrustumHandler::checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR bo
 				mostResembling = diagonal[j];
 			}
 		}
-		DirectX::XMVECTOR point = { xMiddle - mostResembling.m128_f32[0],yMiddle - mostResembling.m128_f32[1],zMiddle - mostResembling.m128_f32[2],1 };
+
+		DirectX::XMVECTOR point = 
+		{ 
+			xMiddle - mostResembling.m128_f32[0], 
+			yMiddle - mostResembling.m128_f32[1],
+			zMiddle - mostResembling.m128_f32[2], 
+			1.0f 
+		};
+
 		// Check if a point is in front of plane
-		if (-(planes[i].a*point.m128_f32[0] + planes[i].b*point.m128_f32[1] + planes[i].c*point.m128_f32[2]) + planes[i].d < 0.0f)
-			isVisible=false;
+		float testPoint = planes[i].a*point.m128_f32[0] + planes[i].b*point.m128_f32[1] + planes[i].c*point.m128_f32[2] - planes[i].d;
+		if (testPoint > 0.0f)
+		{
+			isVisible = false;
+		}
 	}
 
 	return isVisible;

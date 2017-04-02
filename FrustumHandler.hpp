@@ -2,18 +2,15 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: FrustumHandler.hpp
 *
-* File summary:
-*
-*
-*
-*
-*
+* Class summary:
+*	Constructs a mFrustum to test against the quadtree.
 */
 
 #ifndef FRUSTUMHANDLER_HPP
 #define FRUSTUMHANDLER_HPP
+
 #include "GlobalResources.hpp"
 
 struct Plane {
@@ -22,12 +19,17 @@ struct Plane {
 	float c;
 	float d;
 };
+
 class FrustumHandler {
 public:
-	FrustumHandler(DirectX::XMFLOAT4X4 projection= DirectX::XMFLOAT4X4(0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0), DirectX::XMFLOAT4X4 view= DirectX::XMFLOAT4X4(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0));
+	FrustumHandler( //do with VP
+		DirectX::XMFLOAT4X4 projection = DirectX::XMFLOAT4X4(),
+		DirectX::XMFLOAT4X4 view = DirectX::XMFLOAT4X4()
+	);
 	~FrustumHandler();
 
-	bool checkVisible(DirectX::XMVECTOR, DirectX::XMVECTOR);
+	bool checkVisible(DirectX::XMVECTOR boxMin, DirectX::XMVECTOR boxMax);
+
 	Plane planes[6];
 };
 
