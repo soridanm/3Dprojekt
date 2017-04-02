@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 //-----------------------------------------------------------------------------------------
 //			SHADOW MAP VERSION
 // Only used to fill the depth buffer

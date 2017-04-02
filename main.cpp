@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 //--------------------------------------------------------------------------------------
 // TODO: Move some of this stuff to Engine?
 //      main.hpp
@@ -23,7 +37,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	DemoEngine.gCameraHandler.InitializeDirectInput(hInstance, wndHandle);
 	if (wndHandle)
 	{
-		HRESULT hr = DemoEngine.eCreateDirect3DContext(wndHandle);
+		HRESULT hr = DemoEngine.CreateDirect3DContext(wndHandle);
 		if (FAILED(hr))
 		{
 			exit(-1);
@@ -49,7 +63,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			else
 			{
 				//TODO: write descriptions of these functions
-				DemoEngine.TimeFunction(wndHandle);
+				DemoEngine.UpdateInput(wndHandle);
 				DemoEngine.Render();
 
 				//this should maybe be turned into a function

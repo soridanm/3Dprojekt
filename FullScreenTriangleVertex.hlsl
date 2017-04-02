@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 struct VS_OUT
 {
 	float4 PositionCS	: SV_Position;

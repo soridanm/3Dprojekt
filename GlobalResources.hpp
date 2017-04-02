@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 /*
 * TODO: Split into two files. GlobalResources and GlobalSettings
 *		Move some of the includes

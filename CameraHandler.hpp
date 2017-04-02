@@ -1,8 +1,15 @@
-/*
-* TODO: Move ALL global camera variables to this class
-* If they need to be accessed from other classes then write getVar() funtions for them
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
 *
+* File: CameraHandler.hpp
+*
+* Class summary:
+*	Is responsible for updating the camera's various values, creating/binding the
+*	ViewProjection-matrix constant buffers, as well as processing the input from
+*	the mouse and keyboard.
 */
+
 
 #ifndef CAMERAHANDLER_HPP
 #define CAMERAHANDLER_HPP
@@ -17,31 +24,29 @@ public:
 	CameraHandler();
 	~CameraHandler();
 
-	DirectX::XMFLOAT4 GetCameraPosition();
-
+	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight);
 	void UpdateCamera();
 	bool BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon);
 	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
-	void InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight);
+	
+	DirectX::XMFLOAT4   GetCameraPosition();
+	DirectX::XMFLOAT4X4 GetProjection();
+	DirectX::XMFLOAT4X4 GetView();
+
+	D3D11_VIEWPORT lightVP;
+	D3D11_VIEWPORT playerVP;
+	
+	//input ----------------------------------------------------------------------
 	void DetectInput(double time, HWND &hwnd);
 	void InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd);
 
-	//input ------------------------------------------------------
-	IDirectInputDevice8* DIKeyboard = nullptr;
-	IDirectInputDevice8* DIMouse = nullptr;
 	LPDIRECTINPUT8 DirectInput;
-
-	D3D11_VIEWPORT playerVP;
-	D3D11_VIEWPORT lightVP;
-
-	DirectX::XMVECTOR CAM_POS;
-	DirectX::XMFLOAT4X4 getView();
-	DirectX::XMFLOAT4X4 getProjection();
+	IDirectInputDevice8* DIKeyboard = nullptr;
+	IDirectInputDevice8* DIMouse	= nullptr;
 private:
 	void CreateViewPorts();
 	bool CreatePerFrameConstantBuffer(ID3D11Device* Dev);
 	bool CreateShadowMapConstantBuffer(ID3D11Device* Dev);
-	bool freemoovingCamera;
 	
 	struct cPerFrameBuffer
 	{
@@ -50,42 +55,50 @@ private:
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
 
-	struct terrainValues {
+	// Constant Buffers ----------------------------------------------------------
+	cPerFrameBuffer VPBufferData  = cPerFrameBuffer();
+	ID3D11Buffer* mPerFrameBuffer = nullptr;
+
+	cPerFrameBuffer SMBufferData   = cPerFrameBuffer();
+	ID3D11Buffer* mShadowMapBuffer = nullptr;
+
+	// Camera movement -----------------------------------------------------------
+	bool mFreemoveEnabled = true;
+	const DirectX::XMVECTOR mCAMERA_STARTING_POS = DirectX::XMVectorSet(10.0f, 40.0f, 10.0f, 1.0f);
+	const DirectX::XMVECTOR mDEFAULT_FORWARD     = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
+	const DirectX::XMVECTOR mDEFAULT_RIGHT       = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
+	const DirectX::XMVECTOR mDEFAULT_UP          = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
+	
+	DirectX::XMVECTOR mCamTarget  = DirectX::XMVectorSet(20.0f, 5.0f, 20.0f, 0.0f);
+	DirectX::XMVECTOR mCamPos     = mCAMERA_STARTING_POS;
+	DirectX::XMVECTOR mCamForward = mDEFAULT_FORWARD;
+	DirectX::XMVECTOR mCamRight	  = mDEFAULT_RIGHT;
+	DirectX::XMVECTOR mCamUp      = mDEFAULT_UP;
+
+	float mBackForwardMovement = 0.0f;
+	float mLeftRightMovement   = 0.0f;
+	float mUpDownMovement      = 0.0f;
+	float mCamPitch = 0.0f;
+	float mCamYaw   = 0.0f;
+	float mSpeed    = 15.0f;
+
+	DirectX::XMFLOAT4X4 mCameraProjection;
+
+	// God camera to show the effects of the frustum culling ---------------------
+	const DirectX::XMVECTOR mGOD_CAM_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
+	DirectX::XMFLOAT4X4 mGodCameraViewProjection;
+
+	// For walking on the mTerrainValues ------------------------------------------------
+	struct terrainValues 
+	{
 		int worldWidth;
 		int worldDepth;
 		float** worldHeight;
 	};
-	terrainValues terrain;
+	terrainValues mTerrainValues;
 
-	cPerFrameBuffer VPBufferData;
-	cPerFrameBuffer SMBufferData; //TODO: Move this to somewhere else
-
-	ID3D11Buffer* mPerFrameBuffer;
-	ID3D11Buffer* mShadowMapBuffer;
-
-	const DirectX::XMVECTOR CAMERA_STARTING_POS;
-	DirectX::XMVECTOR CAM_TARGET;
-	DirectX::XMVECTOR CAM_FORWARD;
-	DirectX::XMVECTOR CAM_RIGHT;
-	DirectX::XMVECTOR CAM_UP;
-
-	DirectX::XMVECTOR DEFAULT_FORWARD;
-	DirectX::XMVECTOR DEFAULT_RIGHT;
-	DirectX::XMVECTOR DEFAULT_UP;
-	float MOVE_LR;
-	float MOVE_BF;
-	float MOVE_UD;
-	float CAM_YAW;
-	float CAM_PITCH;
-	float SPEED;
-
-	DIMOUSESTATE MOUSE_LAST_STATE;
-
-	DirectX::XMFLOAT4X4 mCameraProjection;
-
-	const DirectX::XMVECTOR mGOD_CAM_POS = DirectX::XMVectorSet(100.0f, 100.0f, 100.0f, 0.0f);
-	DirectX::XMFLOAT4X4 mGodCameraViewProjection;
+	// Input ---------------------------------------------------------------------
+	DIMOUSESTATE mLastMouseState;
 };
-
 
 #endif // !CAMERAHANDLER_HPP

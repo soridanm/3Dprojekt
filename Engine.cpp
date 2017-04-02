@@ -1,5 +1,14 @@
 #include "Engine.hpp"
 
+/*============================================================================
+*						Public functions
+*===========================================================================*/
+
+Engine::Engine() : mLightHandler(gCameraHandler.GetCameraPosition())
+{}
+
+Engine::~Engine()
+{}
 
 bool Engine::Initialize()
 {
@@ -11,30 +20,38 @@ bool Engine::Initialize()
 
 	mShaderHandler.InitializeShaders(mDev);
 
-	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.getProjection(), gCameraHandler.getView());
+	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
 
 	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
-	//TODO: move to function
+	// Textures for the heightmap
 	ID3D11Resource* textureGrass;
-	HRESULT hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"grass.dds", &textureGrass, &grassTextureView);
+	HRESULT hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"grass.dds", &textureGrass, &mGrassTextureView);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS grass texture from file\n\n");
 		exit(-1);
 	}
+
 	ID3D11Resource* textureStone;
-	hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"seamlessstone.dds", &textureStone, &stoneTextureView);
+	hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"seamlessstone.dds", &textureStone, &mStoneTextureView);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS stone texture from file\n\n");
 		exit(-1);
 	}
+
+	textureGrass->Release();
+	textureStone->Release();
+
 	return true;
 }
 
 bool Engine::Render()
 {
+	//construct frustum again every frame
+	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
+
 	RenderGeometryPass();
 	RenderShadowPass();
 	RenderLightPass();
@@ -43,9 +60,8 @@ bool Engine::Render()
 	return true;
 }
 
-HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
+HRESULT Engine::CreateDirect3DContext(HWND &wndHandle)
 {
-
 	// create a struct to hold information about the swap chain
 	DXGI_SWAP_CHAIN_DESC scd;
 
@@ -53,8 +69,8 @@ HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
 	ZeroMemory(&scd, sizeof(DXGI_SWAP_CHAIN_DESC));
 
 	// fill the swap chain description struct
-	scd.BufferCount = 1;                               // one back buffer
-	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;      // use 32-bit color
+	scd.BufferCount = 1;                                // one back buffer
+	scd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; // use 32-bit color
 	scd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;	// how swap chain is to be used
 	scd.OutputWindow = wndHandle;                       // the window to be used
 	scd.SampleDesc.Count = 1;                           // how many multisamples
@@ -105,71 +121,49 @@ HRESULT Engine::eCreateDirect3DContext(HWND &wndHandle)
 	return hr;
 }
 
-Engine::Engine() : gCameraHandler(), mLightHandler(gCameraHandler.GetCameraPosition()), mShaderHandler()
-{
-	
-}
-
-Engine::~Engine()
-{
-
-}
+/*=============================================================================
+*						Private functions
+*===========================================================================*/
 
 void Engine::RenderGeometryPass()
 {
-	//construct frustum again every frame
-	mObjectHandler.mQuadtree.frustum = FrustumHandler(gCameraHandler.getProjection(), gCameraHandler.getView());
-
 	std::vector<Object>* objectArray = nullptr;
 
 	mDevCon->RSSetViewports(1, &gCameraHandler.playerVP);
 
 	gCameraHandler.BindPerFrameConstantBuffer(mDevCon);
 
-	// ------------------------------ Height Map ------------------------------------------------------
-
+	// Height Map -------------------------------------------------------------
 	mShaderHandler.PrepareRender(mDevCon, GEOMETRY_PASS, true, true);
 
 	SetHeightMapShaderResources(); //TODO: Move to shaderhandler
 	mObjectHandler.SetHeightMapBuffer(mDevCon, GEOMETRY_PASS);
 	mDevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
-	// ------------------------------ Static Objects ------------------------------------------------------
-	// NOTE: Quad-tree stuff goes here
+	// Static Objects ---------------------------------------------------------
 	mShaderHandler.PrepareRender(mDevCon, GEOMETRY_PASS, false);
 
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
 
-	// --------------------- RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE ----------------------------------------
+	// RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE ---------------------------
 	//for (size_t i = 0; i < (*objectArray).size(); i++)
 	//{
 	//	for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
 	//	{
 	//		mObjectHandler.SetObjectBufferWithIndex(DevCon, GEOMETRY_PASS, STATIC_OBJECT, i, j);
-
 	//		int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
 	//		int indexDrawAmount = (*objectArray)[i].meshSubsetIndexStart[j + 1] - indexStart;
-	//		//int indexStart = mObjectHandler.meshSubsetIndexStart[i];
-	//		//int indexDrawAmount = mObjectHandler.meshSubsetIndexStart[i + 1] - indexStart;
-
 	//		DevCon->DrawIndexed(indexDrawAmount, indexStart, 0);
 	//	}
 	//}
-	// --------------------- END RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE ----------------------------------------
-
+	// END RENDER ALL OBJECTS. NO TEST AGAINST QUADTREE -----------------------
 
 	int objInd;
-	std::vector<UINT> toDrawIndexes = mObjectHandler.mQuadtree.getObjects(mObjectHandler.mQuadtree.root);
+	std::vector<UINT> IndicesToDraw = mObjectHandler.mQuadtree.getVisibleObjectIndices(mObjectHandler.mQuadtree.root);
 
-	// TODO! Do this in the getObjects function
-	// TEMPORARY SOLUTION TO DUPLICATE DRAWS
-	//std::sort(toDrawIndexes.begin(), toDrawIndexes.end());
-	//toDrawIndexes.erase(std::unique(toDrawIndexes.begin(), toDrawIndexes.end()), toDrawIndexes.end());
-	// END TEMPORARY SOLUTION TO DUPLICATE DRAWS
-
-	for (size_t i = 0; i < toDrawIndexes.size(); i++)
+	for (size_t i = 0; i < IndicesToDraw.size(); i++)
 	{
-		objInd = toDrawIndexes[i];
+		objInd = IndicesToDraw[i];
 		for (int j = 0; j < (*objectArray)[objInd].GetNrOfMeshSubsets(); j++)
 		{
 			mObjectHandler.SetObjectBufferWithIndex(mDevCon, GEOMETRY_PASS, STATIC_OBJECT, objInd, j);
@@ -181,8 +175,7 @@ void Engine::RenderGeometryPass()
 		}
 	}
 
-	// ------------------------------ Dynamic Objects ------------------------------------------------------
-	// NOTE: Quad-tree stuff does NOT go here
+	// Dynamic Objects --------------------------------------------------------
 	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
 	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
@@ -208,13 +201,11 @@ void Engine::RenderShadowPass()
 
 	gCameraHandler.BindShadowMapPerFrameConstantBuffer(mDevCon, SHADOW_PASS);
 
-	// ------------------------------ Height Map -----------------------------------------------------
+	// Height Map -------------------------------------------------------------
 	mObjectHandler.SetHeightMapBuffer(mDevCon, SHADOW_PASS);
 	mDevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 
-
-	// ------------------------------ Static Objects ------------------------------------------------------
-	// NOTE: Quad-tree stuff does NOT go here
+	// Static Objects ---------------------------------------------------------
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
 	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
@@ -229,8 +220,7 @@ void Engine::RenderShadowPass()
 		}
 	}
 
-	// ------------------------------ Dynamic Objects ------------------------------------------------------
-	// NOTE: Quad-tree stuff goes here
+	// Dynamic Objects ---------------------------------------------------------
 	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
 	for (size_t i = 0; i < (*objectArray).size(); i++)
 	{
@@ -245,6 +235,7 @@ void Engine::RenderShadowPass()
 		}
 	}
 }
+
 void Engine::RenderLightPass()
 {
 	mDevCon->RSSetViewports(1, &gCameraHandler.playerVP);
@@ -255,13 +246,12 @@ void Engine::RenderLightPass()
 
 	mLightHandler.BindLightBuffer(mDevCon, gCameraHandler.GetCameraPosition());
 
-	// Draw full screen triangle
+	// Draw a full screen triangle
 	mDevCon->Draw(3, 0);
 
-	// Set render target to nullptr since the renderTexture can not be bound as a render target 
-	// and used as a shader resource view at the same time
-	// NOTE: If this doesn't work then DevCon->ClearState()
-	//DevCon->OMSetRenderTargets(1, nullptr, nullptr);
+	// Clear state to set render target to nullptr since the renderTexture can 
+	// not be bound as a render target and used as a shader resource view at 
+	// the same time
 	mDevCon->ClearState();
 }
 
@@ -274,7 +264,7 @@ void Engine::RenderComputePass()
 
 	mDevCon->Dispatch(squaresWide, squaresHigh, 1);
 
-	mDevCon->ClearState(); // Used to make sure that mTempTextureUAV is free to use
+	mDevCon->ClearState(); // Used to make sure that mShaderHandler.mTempTextureUAV is free to use
 }
 
 void Engine::RenderScreenPass()
@@ -282,21 +272,21 @@ void Engine::RenderScreenPass()
 	mShaderHandler.PrepareRender(mDevCon, SCREEN_PASS);
 	mDevCon->RSSetViewports(1, &gCameraHandler.playerVP);
 
+	// Draw a full screen triangle
 	mDevCon->Draw(3, 0);
 
 	mDevCon->ClearState();
 }
 
-//This will/should be renamed to something more descriptive
-void Engine::TimeFunction(HWND &wndHandle)
+void Engine::SetHeightMapShaderResources()
+{
+	mDevCon->PSSetShaderResources(1, 1, &mGrassTextureView);
+	mDevCon->PSSetShaderResources(2, 1, &mStoneTextureView);
+}
+
+void Engine::UpdateInput(HWND &wndHandle)
 {
 	mTimeHandler.FrameRateCounter();
 	gCameraHandler.DetectInput(mTimeHandler.GetFrameTime(), wndHandle);
-}
-
-void Engine::SetHeightMapShaderResources()
-{
-	mDevCon->PSSetShaderResources(1, 1, &grassTextureView);
-	mDevCon->PSSetShaderResources(2, 1, &stoneTextureView);
 }
 

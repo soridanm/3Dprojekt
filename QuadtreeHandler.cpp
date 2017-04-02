@@ -1,5 +1,11 @@
 #include"QuadtreeHandler.hpp"
+/*=============================================================================
+*						Private functions
+*===========================================================================*/
 
+/*============================================================================
+*						Public functions
+*===========================================================================*/
 Quadtree::Quadtree(DirectX::XMVECTOR newMin, DirectX::XMVECTOR newMax, int level) {
 	root = new Node();
 	constructNode(newMin, newMax, level,root);
@@ -54,13 +60,13 @@ void Quadtree::storeObjects(UINT index,DirectX::XMVECTOR vertex,Node* parent) {
 	}
 }
 
-std::vector<UINT> Quadtree::getObjects(Node* parent) {
+std::vector<UINT> Quadtree::getVisibleObjectIndices(Node* parent) {
 	std::vector<UINT> objectsToReturn;
 	if (frustum.checkVisible(parent->boxMin, parent-> boxMax)) {
 		std::vector<UINT> currentObjects;
 		if (parent->levels < maxLevel) {
 			for (int i = 0; i < 4; i++) {
-				currentObjects = getObjects(parent->children[i]);
+				currentObjects = getVisibleObjectIndices(parent->children[i]);
 				objectsToReturn.insert(objectsToReturn.end(), currentObjects.begin(), currentObjects.end());
 			}
 		}

@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 //TODO: Rewrite using offsets instead of uv coordinate variables
 //TODO: restructure the ifdef/else/endif mess 
 //TODO: Rename a bunch of variables to improve the readability

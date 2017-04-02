@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 //--------------------------------- Geometry Shader -----------------------------------
 // NOTE: Does not transpose normals correctly when non-uniform scaling is applied
 //--------------------------------------------------------------------------------------

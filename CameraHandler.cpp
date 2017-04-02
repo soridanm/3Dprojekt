@@ -1,88 +1,70 @@
 #include "CameraHandler.hpp"
 
-// public ------------------------------------------------------------------------------
+/*============================================================================
+ *						Public functions
+ *===========================================================================*/
 
-CameraHandler::CameraHandler() : CAMERA_STARTING_POS(DirectX::XMVectorSet(10.0f, 40.0f, 10.0f, 1.0f))
-{
-	VPBufferData	= cPerFrameBuffer();
-	SMBufferData = cPerFrameBuffer();
-	mPerFrameBuffer = nullptr;
-	mShadowMapBuffer = nullptr;
-	freemoovingCamera = true;
-	CAM_POS		= CAMERA_STARTING_POS;
-	CAM_TARGET	= DirectX::XMVectorSet(20.0f, 5.0f, 20.0f, 0.0f);
-	CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	CAM_RIGHT	= DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	CAM_UP		= DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-
-	DEFAULT_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-	DEFAULT_RIGHT	= DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-	DEFAULT_UP		= DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-	MOVE_LR		= 0.0f;
-	MOVE_BF		= 0.0f;
-	MOVE_UD		= 0.0f;
-	CAM_YAW		= 0.0f;
-	CAM_PITCH	= 0.0f;
-	SPEED		= 15.0f;
-}
+CameraHandler::CameraHandler()
+{}
 
 CameraHandler::~CameraHandler()
-{
+{}
 
+void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight)
+{
+	mTerrainValues.worldDepth = worldDepth;
+	mTerrainValues.worldWidth = worldWidth;
+	mTerrainValues.worldHeight = worldHeight;
+	CreateViewPorts();
+	CreatePerFrameConstantBuffer(Dev);
+	CreateShadowMapConstantBuffer(Dev);
 }
 
-DirectX::XMFLOAT4 CameraHandler::GetCameraPosition()
-{
-	DirectX::XMFLOAT4 pos; 
-	DirectX::XMStoreFloat4(&pos, CAM_POS);
-	return pos;
-}
-
-//temp done
-//Used in DetectInput()
 void CameraHandler::UpdateCamera()
 {
-	//limits cam pitch in order to not spin around
-	CAM_PITCH = std::min<float>(std::max<float>(CAM_PITCH, -1.57), 1.57);
-
-	DirectX::XMMATRIX CAM_ROT_MAT;
-	//transforms the cameras target
-	CAM_ROT_MAT = DirectX::XMMatrixRotationRollPitchYaw(CAM_PITCH, CAM_YAW, 0.0f);
-	CAM_TARGET	= DirectX::XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT);
-	CAM_TARGET	= DirectX::XMVector3Normalize(CAM_TARGET);
-
-	DirectX::XMMATRIX YRotation_CAM_directions = DirectX::XMMatrixRotationY(CAM_YAW);
-	//trnsforms the cameras directions
-	CAM_RIGHT = DirectX::XMVector3TransformCoord(DEFAULT_RIGHT, YRotation_CAM_directions);
-
-	////Camera follows the planes
-	//CAM_FORWARD = XMVector3TransformCoord(DEFAULT_FORWARD, YRotation_CAM_directions);
-	//CAM_UP = XMVector3TransformCoord(CAM_UP, YRotation_CAM_directions);
-
-	//freelook camera
-	CAM_FORWARD = DirectX::XMVector3Normalize(XMVector3TransformCoord(DEFAULT_FORWARD, CAM_ROT_MAT));
-	CAM_UP		= DirectX::XMVector3Normalize(XMVector3TransformCoord(DEFAULT_UP, CAM_ROT_MAT));
-
 	using DirectX::operator*;
 	using DirectX::operator+=;
 	using DirectX::operator+;
 
-	//transforms the cameras position
-	CAM_POS += MOVE_LR * CAM_RIGHT;
-	CAM_POS += MOVE_BF * CAM_FORWARD;
-	CAM_POS += MOVE_UD * CAM_UP;
+	// Limits the camera's pitch so that it doesn't do front-/backflips
+	mCamPitch = std::min<float>(std::max<float>(mCamPitch, -1.57), 1.57);
 
-	//following terrain
-	int a= (int)DirectX::XMVectorGetX(CAM_POS), b =(int) DirectX::XMVectorGetZ(CAM_POS);
-	if (a > 0 && b > 0 && a < terrain.worldDepth && b < terrain.worldWidth&&!freemoovingCamera) {
-		CAM_POS = DirectX::XMVectorSet(DirectX::XMVectorGetX(CAM_POS), terrain.worldHeight[b][a] + 5, DirectX::XMVectorGetZ(CAM_POS), 1.0f);
+	DirectX::XMMATRIX CAM_ROT_MAT;
+	// Transforms the camera's target
+	CAM_ROT_MAT = DirectX::XMMatrixRotationRollPitchYaw(mCamPitch, mCamYaw, 0.0f);
+	mCamTarget	= DirectX::XMVector3TransformCoord(mDEFAULT_FORWARD, CAM_ROT_MAT);
+	mCamTarget	= DirectX::XMVector3Normalize(mCamTarget);
+
+	DirectX::XMMATRIX YRotation_CAM_directions = DirectX::XMMatrixRotationY(mCamYaw);
+	
+	// Transforms the camera's directions
+	mCamRight = DirectX::XMVector3TransformCoord(mDEFAULT_RIGHT, YRotation_CAM_directions);
+
+	// Freelook camera
+	mCamForward = DirectX::XMVector3Normalize(XMVector3TransformCoord(mDEFAULT_FORWARD, CAM_ROT_MAT));
+	mCamUp		= DirectX::XMVector3Normalize(XMVector3TransformCoord(mDEFAULT_UP, CAM_ROT_MAT));
+
+	// Transforms the camera's position
+	mCamPos += mLeftRightMovement * mCamRight;
+	mCamPos += mBackForwardMovement * mCamForward;
+	mCamPos += mUpDownMovement * mCamUp;
+
+	// Following terrain
+	int cam_x = static_cast<int>(DirectX::XMVectorGetX(mCamPos));
+	int cam_y = static_cast<int>(DirectX::XMVectorGetZ(mCamPos));
+
+	if (!mFreemoveEnabled 
+		&& cam_x > 0 && cam_y > 0 
+		&& cam_x < mTerrainValues.worldDepth && cam_y < mTerrainValues.worldWidth)
+	{
+		mCamPos = DirectX::XMVectorSet(DirectX::XMVectorGetX(mCamPos), mTerrainValues.worldHeight[cam_y][cam_x] + 5.0f, DirectX::XMVectorGetZ(mCamPos), 1.0f);
 	}
 
-	MOVE_LR = 0.0f;
-	MOVE_BF = 0.0f;
-	MOVE_UD = 0.0f;
+	mLeftRightMovement = 0.0f;
+	mBackForwardMovement = 0.0f;
+	mUpDownMovement = 0.0f;
 
-	CAM_TARGET = CAM_POS + CAM_TARGET;
+	mCamTarget = mCamPos + mCamTarget;
 }
 
 bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
@@ -94,12 +76,11 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 	}
 	else
 	{
-		DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
+		DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(mCamPos, mCamTarget, mCamUp));
 		DirectX::XMStoreFloat4x4(&VPBufferData.ViewProjection, DirectX::XMMatrixMultiply(DirectX::XMLoadFloat4x4(&mCameraProjection), view));
-		DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, CAM_POS);
+		DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, mCamPos);
 	}
 
-	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	DevCon->Map(mPerFrameBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
 	memcpy(viewProjectionMatrixPtr.pData, &VPBufferData, sizeof(cPerFrameBuffer));
@@ -112,19 +93,17 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 
 bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
-	//TODO: this code block might not be needed
-	// TODO: check if map_write_discard is necessary and if it's required to make a mapped subresource
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	DevCon->Map(mShadowMapBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
 	memcpy(viewProjectionMatrixPtr.pData, &SMBufferData, sizeof(cPerFrameBuffer));
 	DevCon->Unmap(mShadowMapBuffer, 0);
 	
-	if (passID == SHADOW_PASS) //ShadowVertex.hlsl
+	if (passID == SHADOW_PASS)
 	{
 		DevCon->VSSetConstantBuffers(0, 1, &mShadowMapBuffer);
 	}
 	
-	if (passID == LIGHT_PASS) //LightFragment.hlsl
+	if (passID == LIGHT_PASS)
 	{
 		DevCon->PSSetConstantBuffers(0, 1, &mShadowMapBuffer);
 	}
@@ -132,20 +111,29 @@ bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* Dev
 	return true;
 }
 
-//used in GraphicsHandler::InitializeGraphics
-void CameraHandler::InitializeCamera(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, int worldWidth, int worldDepth, float** worldHeight)
+DirectX::XMFLOAT4 CameraHandler::GetCameraPosition()
 {
-
-	terrain.worldDepth = worldDepth;
-	terrain.worldWidth = worldWidth;
-	terrain.worldHeight = worldHeight;
-	CreateViewPorts();
-	CreatePerFrameConstantBuffer(Dev);
-	CreateShadowMapConstantBuffer(Dev);
+	DirectX::XMFLOAT4 temp; 
+	DirectX::XMStoreFloat4(&temp, mCamPos);
+	return temp;
 }
 
-//move to input class?
-//used in wWinMain()
+DirectX::XMFLOAT4X4 CameraHandler::GetProjection() 
+{
+	return mCameraProjection;
+}
+
+DirectX::XMFLOAT4X4 CameraHandler::GetView() 
+{
+	DirectX::XMFLOAT4X4 temp;
+	DirectX::XMStoreFloat4x4(&temp, DirectX::XMMatrixLookAtLH(
+		DirectX::XMVectorScale(mCamPos, -1.0f), 
+		DirectX::XMVectorScale(mCamTarget, -1.0f), 
+		{ 0.0f, 1.0f, 0.0f })
+	);
+	 return temp;
+}
+
 void CameraHandler::DetectInput(double time, HWND &hwnd)
 {
 	DIMOUSESTATE mouse_current_state;
@@ -156,68 +144,78 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	DIMouse->GetDeviceState(sizeof(DIMOUSESTATE), &mouse_current_state);
 	DIKeyboard->GetDeviceState(sizeof(keyboardState), (LPVOID)&keyboardState);
 
-
-	//closes the program
-	if (keyboardState[DIK_ESCAPE] & 0x80) {
+	// Closes the program
+	if (keyboardState[DIK_ESCAPE] & 0x80) 
+	{
 		PostMessage(hwnd, WM_DESTROY, 0, 0);
 	}
 
-	SPEED = (keyboardState[DIK_LSHIFT] & 0x80) ? 75.0f : 15.0f;
+	mSpeed = (keyboardState[DIK_LSHIFT] & 0x80) ? 50.0f : 15.0f;
 
-	if (keyboardState[DIK_A] & 0x80) {
+	// WASD movement
+	if (keyboardState[DIK_W] & 0x80) 
+	{
+		mBackForwardMovement += mSpeed*time;
+	}
+	if (keyboardState[DIK_A] & 0x80) 
+	{
+		mLeftRightMovement -= mSpeed*time;
+	}
+	if (keyboardState[DIK_S] & 0x80) 
+	{
+		mBackForwardMovement -= mSpeed*time;
+	}
+	if (keyboardState[DIK_D] & 0x80) 
+	{
+		mLeftRightMovement += mSpeed*time;
+	}
+	// Up-Down movement
+	if (keyboardState[DIK_SPACE] & 0x80) 
+	{
+		mUpDownMovement += mSpeed*time;
+	}
+	if (keyboardState[DIK_C] & 0x80) 
+	{
+		mUpDownMovement -= mSpeed*time;
+	}
+	// Switch between freemove and following the terrain
+	if (keyboardState[DIK_1] & 0x80) 
+	{
+		mFreemoveEnabled = true;
+	}
+	if (keyboardState[DIK_2] & 0x80) 
+	{
+		mFreemoveEnabled = false;
+	}
 
-		MOVE_LR -= SPEED*time;
-	}
-	if (keyboardState[DIK_D] & 0x80) {
-		MOVE_LR += SPEED*time;
-	}
-	if (keyboardState[DIK_W] & 0x80) {
-		MOVE_BF += SPEED*time;
-	}
-	if (keyboardState[DIK_S] & 0x80) {
-		MOVE_BF -= SPEED*time;
-	}
-	if (keyboardState[DIK_SPACE] & 0x80) {
-		MOVE_UD += SPEED*time;
-	}
-	if (keyboardState[DIK_C] & 0x80) {
-		MOVE_UD -= SPEED*time;
-	}
-	if (keyboardState[DIK_1] & 0x80) {
-		freemoovingCamera = true;
-	}
-	if (keyboardState[DIK_2] & 0x80) {
-		freemoovingCamera = false;
-	}
+	// Hold [E] to show the scene from above
 	GOD_CAMERA_ENABLED = (keyboardState[DIK_E] & 0x80) ? true : false;
 
-
-
-	//mouse movement do change camera directions
-	if ((mouse_current_state.lX != MOUSE_LAST_STATE.lX) || (mouse_current_state.lY != MOUSE_LAST_STATE.lY)) 
+	// Camera movement if the mouse has moved
+	if ((mouse_current_state.lX != mLastMouseState.lX) || (mouse_current_state.lY != mLastMouseState.lY)) 
 	{
-		CAM_YAW += mouse_current_state.lX*0.001f;
-		CAM_PITCH += mouse_current_state.lY*0.001f;
-		MOUSE_LAST_STATE = mouse_current_state;
+		mCamYaw += mouse_current_state.lX * 0.001f;
+		mCamPitch += mouse_current_state.lY * 0.001f;
+		mLastMouseState = mouse_current_state;
 	}
 
-	//reset camera directions and position
+	// Pressing [Q] resets the camera
 	if (keyboardState[DIK_Q] & 0x80) 
 	{
-		CAM_POS = CAMERA_STARTING_POS;
-		CAM_TARGET = DirectX::XMVectorSet(5.0f, 5.0f, 5.0f, 0.0f);
-		CAM_FORWARD = DirectX::XMVectorSet(0.0f, 0.0f, 1.0f, 0.0f);
-		CAM_RIGHT = DirectX::XMVectorSet(1.0f, 0.0f, 0.0f, 0.0f);
-		CAM_UP = DirectX::XMVectorSet(0.0f, 1.0f, 0.0f, 0.0f);
-		CAM_PITCH = 0.0f;
-		CAM_YAW = 0.0f;
+		mCamPos     = mCAMERA_STARTING_POS;
+		mCamTarget  = DirectX::XMVectorSet(5.0f, 5.0f, 5.0f, 0.0f);
+		mCamForward = mDEFAULT_FORWARD;
+		mCamRight   = mDEFAULT_RIGHT;
+		mCamUp      = mDEFAULT_UP;
+		mCamPitch   = 0.0f;
+		mCamYaw     = 0.0f;
 	}
-	MOUSE_LAST_STATE = mouse_current_state;
+	mLastMouseState = mouse_current_state;
 	UpdateCamera();
 }
 
-//used in wWinMain()
-void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //creates the directx input, sets the data format
+// Creates the DirectX input and sets the data format
+void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd)
 {
 	HRESULT hr = DirectInput8Create(hInstance, DIRECTINPUT_VERSION, IID_IDirectInput8, (void**)&DirectInput, NULL);
 
@@ -231,8 +229,9 @@ void CameraHandler::InitializeDirectInput(HINSTANCE &hInstance, HWND &hwnd) //cr
 	hr = DIMouse->SetCooperativeLevel(hwnd, DISCL_EXCLUSIVE | DISCL_NOWINKEY | DISCL_FOREGROUND);
 }
 
-
-// private ------------------------------------------------------------------------------
+/*=============================================================================
+ *						Private functions
+ *===========================================================================*/
 
 void CameraHandler::CreateViewPorts()
 {
@@ -255,10 +254,10 @@ bool CameraHandler::CreatePerFrameConstantBuffer(ID3D11Device* Dev)
 {
 	float aspect_ratio = static_cast<float>(SCREEN_RESOLUTION.SCREEN_WIDTH) / static_cast<float>(SCREEN_RESOLUTION.SCREEN_HEIGHT);
 	float degrees_field_of_view = 90.0f;
-	float near_plane			= 0.1f;
-	float far_plane				= 500.f;
+	float near_plane = 0.1f;
+	float far_plane	 = 500.f;
 
-	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(CAM_POS, CAM_TARGET, CAM_UP));
+	DirectX::XMMATRIX view = DirectX::XMMatrixTranspose(DirectX::XMMatrixLookAtLH(mCamPos, mCamTarget, mCamUp));
 	DirectX::XMMATRIX projection = DirectX::XMMatrixTranspose(DirectX::XMMatrixPerspectiveFovLH(
 		DirectX::XMConvertToRadians(degrees_field_of_view), aspect_ratio, near_plane, far_plane));
 	DirectX::XMMATRIX vp = DirectX::XMMatrixMultiply(projection, view);
@@ -297,7 +296,7 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	float aspect_ratio = 1.0f;
 	float degrees_field_of_view = 90.0f;
 	float near_plane = 0.1f;
-	float far_plane = 150.f;
+	float far_plane  = 150.f;
 
 	DirectX::XMVECTOR LIGHT_POS = DirectX::XMVectorSet(100.0f, 120.0f, 100.0f, 0.0f);
 	DirectX::XMVECTOR LIGHT_TARGET = DirectX::XMVectorSet(100.0f, 0.0f, 99.0f, 0.0f);
@@ -328,13 +327,4 @@ bool CameraHandler::CreateShadowMapConstantBuffer(ID3D11Device* Dev)
 	}
 
 	return true;
-}
-
-DirectX::XMFLOAT4X4 CameraHandler::getProjection() {
-	return mCameraProjection;
-}
-DirectX::XMFLOAT4X4 CameraHandler::getView() {
-	DirectX::XMFLOAT4X4 temp;
-	DirectX::XMStoreFloat4x4(&temp, DirectX::XMMatrixLookAtLH(DirectX::XMVectorScale(CAM_POS, -1.0f), DirectX::XMVectorScale(CAM_TARGET, -1.0f), { 0.0f, 1.0f, 0.0f }));
-	 return temp;
 }

@@ -1,5 +1,25 @@
-#include "ObjectHandler.hpp"
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
 
+#include "ObjectHandler.hpp"
+/*=============================================================================
+*						Private functions
+*===========================================================================*/
+
+/*============================================================================
+*						Public functions
+*===========================================================================*/
 ObjectHandler::ObjectHandler()
 {}
 

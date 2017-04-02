@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 //-----------------------------------------------------------------------------------------
 //			SHADOW PASS VERSION
 // Ony outputs the clip-space position since that's the only information

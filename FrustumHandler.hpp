@@ -1,3 +1,17 @@
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
+
 #ifndef FRUSTUMHANDLER_HPP
 #define FRUSTUMHANDLER_HPP
 #include "GlobalResources.hpp"

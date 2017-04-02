@@ -4,7 +4,13 @@
 */
 
 #include "LightHandler.hpp"
+/*=============================================================================
+*						Private functions
+*===========================================================================*/
 
+/*============================================================================
+*						Public functions
+*===========================================================================*/
 // private ------------------------------------------------------------------------------
 
 
@@ -13,7 +19,7 @@
 
 LightHandler::LightHandler(DirectX::XMFLOAT4 CAM_POS)
 {
-	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
+	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, mCamPos);
 	mLightBufferData.cameraPositionWS = CAM_POS;
 	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 0.05f);
 
@@ -80,7 +86,7 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS
 	mLightBufferData.LightArray[1] = shadow_light;
 
 	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
-	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
+	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, mCamPos);
 	mLightBufferData.cameraPositionWS = CAM_POS;
 
 	return true;
@@ -103,10 +109,10 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 	//DirectX::XMVECTOR testMove = DirectX::XMVECTOR()
 
 	//set the light position to the camera position
-	//DirectX::XMStoreFloat4(&mLightBufferData.LightArray[0].PositionWS, CAM_POS);
+	//DirectX::XMStoreFloat4(&mLightBufferData.LightArray[0].PositionWS, mCamPos);
 	mLightBufferData.LightArray[0].PositionWS = CAM_POS;
 	//update the camera position in the Light buffer
-	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, CAM_POS);
+	//DirectX::XMStoreFloat4(&mLightBufferData.cameraPositionWS, mCamPos);
 	mLightBufferData.cameraPositionWS = CAM_POS;
 
 	// Map light buffer

@@ -1,4 +1,16 @@
-
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
 
 #ifndef LIGHTHANDLER_HPP
 #define LIGHTHANDLER_HPP
@@ -48,7 +60,7 @@ private:
 	{
 		cLightBuffer() 
 		{
-			//DirectX::XMStoreFloat4(&cameraPositionWS, CAM_POS);
+			//DirectX::XMStoreFloat4(&cameraPositionWS, mCamPos);
 			globalAmbient = DirectX::XMFLOAT4(0.05f, 0.05f, 0.05f, 0.05f);
 
 			for (int i = 0; i < NR_OF_LIGHTS; i++)

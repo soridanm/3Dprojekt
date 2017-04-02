@@ -1,4 +1,16 @@
-
+/**
+* Course: DV142 - 3D-Programming
+* Authors: Viktor Enfeldt, Peter Meunier
+*
+* File: Handler.hpp
+*
+* File summary:
+*
+*
+*
+*
+*
+*/
 
 #ifndef OBJECTHANDLER_HPP
 #define OBJECTHANDLER_HPP
