@@ -5,17 +5,8 @@
 * File: Handler.hpp
 *
 * File summary:
-*
-*
-*
-*
-*
+*	Creates the application window and launches it.
 */
-
-//--------------------------------------------------------------------------------------
-// TODO: Move some of this stuff to Engine?
-//      main.hpp
-//--------------------------------------------------------------------------------------
 
 #define DIRECTINPUT_VERSION 0x0800
 
@@ -23,7 +14,7 @@
 
 
 HWND InitWindow(HINSTANCE hInstance);
-LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 
 int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLine, int nCmdShow)
@@ -31,30 +22,26 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	Engine DemoEngine;
 	
 	MSG msg = { 0 };
-	HWND wndHandle = InitWindow(hInstance); //1. Skapa fönster
-	//InitDirectInput(hInstance, wndHandle);//creates input
+	HWND wndHandle = InitWindow(hInstance); // Create window
 		
 	DemoEngine.gCameraHandler.InitializeDirectInput(hInstance, wndHandle);
+
 	if (wndHandle)
 	{
 		HRESULT hr = DemoEngine.CreateDirect3DContext(wndHandle);
 		if (FAILED(hr))
 		{
+			OutputDebugString(L"\nmain.cpp : wWinMain() Failed to create 3DContext\n\n");
 			exit(-1);
 		}
 
-		DemoEngine.Initialize(); /* SetViewPort(), CreatePerFrameConstantBuffer()
-								  * CreateShaders(), Create-/SetLightBuffer(), InitializeGBuffer()
-								  * CreateHeightMap(), 
-								  *
-								  */
+		DemoEngine.Initialize();
 
 		ShowWindow(wndHandle, nCmdShow);
 
 		PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE);
 		while (WM_QUIT != msg.message)
 		{
-			
 			if (PeekMessage(&msg, nullptr, 0, 0, PM_REMOVE))
 			{
 				TranslateMessage(&msg);
@@ -62,12 +49,11 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 			}
 			else
 			{
-				//TODO: write descriptions of these functions
 				DemoEngine.UpdateInput(wndHandle);
 				DemoEngine.Render();
 
 				//this should maybe be turned into a function
-				DemoEngine.gSwapChain->Present(1, 0); //9. Växla front- och back-buffer
+				DemoEngine.gSwapChain->Present(1, 0); // Show the back buffer which has just been rendered to
 			}
 		}
 		//this REALLY should be turned into a function
@@ -134,4 +120,3 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 	return DefWindowProc(hWnd, message, wParam, lParam);
 }
-

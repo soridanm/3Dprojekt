@@ -2,14 +2,11 @@
  * Course: DV142 - 3D-Programming
  * Authors: Viktor Enfeldt, Peter Meunier
  * 
- * File: Handler.hpp 
+ * File: TimeHandler.hpp 
  *
- * File summary:
- *
- *
- *
- *
- *
+ * Class summary:
+ *   Keeps track of the framerate/frametimes so that input is not tied to
+ *   the frame rate.
  */
 
 #ifndef TIMEHANDLER_HPP
@@ -25,9 +22,11 @@ public:
 
 	void FrameRateCounter();
 	void StartTimer();
+
+	void SetFrameCount(int newCount);
+	
 	double GetTime();
 	double GetFrameTime();
-	void SetFrameCount(int newCount);
 private:
 	int FRAME_COUNT	= 0;
 	double COUNTS_PER_SECOND = 0.0;
@@ -35,6 +34,5 @@ private:
 	int FPS	= 0;
 	__int64 FRAME_TIME_OLD = 0;
 };
-
 
 #endif // !TIMEHANDLER_HPP

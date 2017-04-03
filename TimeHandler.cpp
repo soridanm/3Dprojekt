@@ -1,26 +1,15 @@
-/*
-* TODO: Commenting
-*
-* TODO? have a look over the data types used for the numbers. Consider using larger integers
-*/
 
 #include "TimeHandler.hpp"
-/*=============================================================================
-*						Private functions
-*===========================================================================*/
 
 /*============================================================================
 *						Public functions
 *===========================================================================*/
-TimeHandler::TimeHandler()
-{
 
-}
+TimeHandler::TimeHandler()
+{}
 
 TimeHandler::~TimeHandler()
-{
-
-}
+{}
 
 void TimeHandler::FrameRateCounter()
 {
@@ -44,6 +33,11 @@ void TimeHandler::StartTimer()
 	COUNTER_START = frequencyCount.QuadPart;
 }
 
+void TimeHandler::SetFrameCount(int newCount)
+{
+	FRAME_COUNT = newCount;
+}
+
 //used in wWinMain
 double TimeHandler::GetTime()
 {
@@ -53,9 +47,7 @@ double TimeHandler::GetTime()
 	return static_cast<double>(currentTime.QuadPart - COUNTER_START) / COUNTS_PER_SECOND;
 }
 
-//TODO: Comments
-//used in wWinMain
-//used by DetectInput
+//used by Engine::UpdateInput()
 double TimeHandler::GetFrameTime()
 {
 	LARGE_INTEGER currentTime;
@@ -67,9 +59,4 @@ double TimeHandler::GetFrameTime()
 	if (tickCount < 0) tickCount = 0;
 
 	return static_cast<double>(tickCount) / COUNTS_PER_SECOND;
-}
-
-void TimeHandler::SetFrameCount(int newCount)
-{
-	FRAME_COUNT = newCount;
 }

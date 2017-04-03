@@ -5,8 +5,12 @@
 * File: QuadreeHandler.hpp
 *
 * Class summary:
-*	Basic quadree that doesn't split any geometry.
-*	Number of levels in the quadtree is specified by NR_OF_QUADREE_LEVELS  in 
+*	Basic quadree that doesn't split any geometry and is only run on startup.
+*	"Stores" the static objects in the scene by saving their individual arrays
+*	of indexes to their locations in ObjectHandler.mStaticObjects in the leaves
+*	of the tree. Note that parent nodes do not store any object indexes.
+*
+*	The "depth" of the quadtree is specified by NR_OF_QUADREE_LEVELS in 
 *	GlobalSettings.hpp
 */
 

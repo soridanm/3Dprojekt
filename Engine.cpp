@@ -18,7 +18,7 @@ bool Engine::Initialize()
 
 	mLightHandler.InitializeLights(mDev, gCameraHandler.GetCameraPosition());
 
-	mShaderHandler.InitializeShaders(mDev);
+	mShaderHandler.InitializeShaders(mDev, gSwapChain);
 
 	mObjectHandler.mQuadtree.mFrustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
 
@@ -101,22 +101,8 @@ HRESULT Engine::CreateDirect3DContext(HWND &wndHandle)
 		&gSwapChain,
 		&mDev,
 		&MaxSupportedFeatureLevel,
-		&mDevCon);
-
-
-	if (SUCCEEDED(hr))
-	{
-		// get the address of the back buffer
-		ID3D11Texture2D* pBackBuffer = nullptr;
-		gSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pBackBuffer);
-
-		// use the back buffer address to create the render target
-		mDev->CreateRenderTargetView(pBackBuffer, NULL, mShaderHandler.GetBackBufferRTV());
-		pBackBuffer->Release();
-
-		// set the render target as the back buffer
-		mDevCon->OMSetRenderTargets(1, mShaderHandler.GetBackBufferRTV(), NULL);
-	}
+		&mDevCon
+	);
 
 	return hr;
 }
@@ -264,7 +250,7 @@ void Engine::RenderComputePass()
 
 	mDevCon->Dispatch(squaresWide, squaresHigh, 1);
 
-	mDevCon->ClearState(); // Used to make sure that mShaderHandler.mTempTextureUAV is free to use
+	mDevCon->ClearState(); // Used to make sure that mShaderHandler.mComputePassTempTextureUAV is free to use
 }
 
 void Engine::RenderScreenPass()

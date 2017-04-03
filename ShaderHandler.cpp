@@ -5,13 +5,11 @@
 
 #include "ShaderHandler.hpp"
 
-/*=============================================================================
-*						Private functions
-*===========================================================================*/
 
 /*============================================================================
 *						Public functions
 *===========================================================================*/
+
 ShaderHandler::ShaderHandler()
 {
 	for (int i = 0; i < GBUFFER_COUNT; i++)
@@ -25,10 +23,12 @@ ShaderHandler::~ShaderHandler()
 
 }
 
-//public
-ID3D11RenderTargetView** ShaderHandler::GetBackBufferRTV()
+void ShaderHandler::InitializeShaders(ID3D11Device* Dev, IDXGISwapChain* SwapChain)
 {
-	return &mBackbufferRTV;
+	CreateShaders(Dev);
+	CreateRenderTextures(Dev, SwapChain);
+	CreateSamplerStates(Dev);
+	CreateRasterizerStates(Dev);
 }
 
 void ShaderHandler::PrepareRender(ID3D11DeviceContext* DevCon, RenderPassID passID, bool clearRenderTargets, bool isHeightMap)
@@ -41,18 +41,108 @@ void ShaderHandler::PrepareRender(ID3D11DeviceContext* DevCon, RenderPassID pass
 	SetRasterizerState(DevCon, passID);
 }
 
-void ShaderHandler::InitializeShaders(ID3D11Device* Dev)
+ID3D11RenderTargetView** ShaderHandler::GetBackBufferRTV()
 {
-	CreateShaders(Dev);
-	CreateRenderTextures(Dev);
-	CreateSamplerStates(Dev);
-	CreateRasterizerStates(Dev);
+	return &mBackbufferRTV;
 }
 
 
-//private
+/*=============================================================================
+*						Private functions
+*===========================================================================*/
 
-// DONE
+void ShaderHandler::CreateShaders(ID3D11Device* Dev)
+{
+	ID3DBlob* pS = nullptr;
+
+	// Geometry Pass -----------------------------------------------
+	{
+		CompileShader(&pS, L"GBufferVertex.hlsl", "VS_main", "vs_5_0");
+		CreateShader(Dev, pS, VERTEX_SHADER, GEOMETRY_PASS);
+
+		CreateInputLayout(Dev, pS, GEOMETRY_PASS);
+
+		pS->Release();
+		CompileShader(&pS, L"GBufferGeometry.hlsl", "GS_main", "gs_5_0");
+		CreateShader(Dev, pS, GEOMETRY_SHADER, GEOMETRY_PASS);
+
+		pS->Release();
+		CompileShader(&pS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0");
+		CreateShader(Dev, pS, PIXEL_SHADER, GEOMETRY_PASS);
+
+		// Height map version ------------------
+		D3D_SHADER_MACRO HeightMapMacros[] =
+		{
+			"HEIGHT_MAP",  "1",
+			NULL, NULL
+		};
+
+		pS->Release();
+		CompileShader(&pS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0", HeightMapMacros);
+		CreateShader(Dev, pS, PIXEL_SHADER_HEIGHTMAP_VERSION, GEOMETRY_PASS);
+	}
+
+	// Shadow Pass -----------------------------------------------
+	{
+		pS->Release();
+		CompileShader(&pS, L"ShadowVertex.hlsl", "VS_main", "vs_5_0");
+		CreateShader(Dev, pS, VERTEX_SHADER, SHADOW_PASS);
+
+		CreateInputLayout(Dev, pS, SHADOW_PASS);
+
+		pS->Release();
+		CompileShader(&pS, L"ShadowFragment.hlsl", "PS_main", "ps_5_0");
+		CreateShader(Dev, pS, PIXEL_SHADER, SHADOW_PASS);
+	}
+
+	// Light Pass -----------------------------------------------
+	{
+		pS->Release();
+		CompileShader(&pS, L"FullScreenTriangleVertex.hlsl", "VS_main", "vs_5_0");
+		CreateShader(Dev, pS, VERTEX_SHADER, LIGHT_PASS);
+
+		//no input layout since geometry is generated in the vertex shader
+
+		D3D_SHADER_MACRO LightPassFragmentMacros[] =
+		{
+			"SHADOW_MAP_SIZE",  SHADOW_QUALITY.SIZE_STRING,
+			NULL, NULL
+		};
+
+		pS->Release();
+		CompileShader(&pS, L"LightFragment.hlsl", "PS_main", "ps_5_0", LightPassFragmentMacros);
+		CreateShader(Dev, pS, PIXEL_SHADER, LIGHT_PASS);
+	}
+
+	// Compute Pass -----------------------------------------------
+	{
+		D3D_SHADER_MACRO ComputeShaderMacros[] =
+		{
+			"TEXTURE_WIDTH",  SCREEN_RESOLUTION.WIDTH_STRING,
+			"TEXTURE_HEIGHT", SCREEN_RESOLUTION.HEIGHT_STRING,
+			NULL, NULL
+		};
+
+		pS->Release();
+		CompileShader(&pS, L"FXAACompute.hlsl", "FXAA_main", "cs_5_0", ComputeShaderMacros);
+		CreateShader(Dev, pS, COMPUTE_SHADER, COMPUTE_PASS);
+
+		pS->Release();
+	}
+
+	// Screen Pass -----------------------------------------------
+	{
+		// Full Screen vertex shader already compiled
+		
+		// no input layout since geometry is generated in the vertex shader
+
+		CompileShader(&pS, L"ComputePassPixel.hlsl", "PS_main", "ps_5_0");
+		CreateShader(Dev, pS, PIXEL_SHADER, COMPUTE_PASS);
+
+		pS->Release();
+	}
+}
+
 void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID passID, bool clearRenderTargets)
 {
 	switch (passID)
@@ -76,7 +166,6 @@ void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID p
 			DevCon->ClearRenderTargetView(mGraphicsBuffer[2].renderTargetView, Colors::fBlack);				//Diffuse
 			DevCon->ClearRenderTargetView(mGraphicsBuffer[3].renderTargetView, Colors::fBlack);				//Specular
 			DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH, 1.0f, 0);
-			//DevCon->ClearDepthStencilView(mDepthStecilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 		}
 	}
 	break;
@@ -92,16 +181,16 @@ void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID p
 	case LIGHT_PASS:
 	{
 		// set the render target as the texture that'll be used as input to the compute shader
-		DevCon->OMSetRenderTargets(1, &mRenderTextureRTV, nullptr);
+		DevCon->OMSetRenderTargets(1, &mLightPassOutputTextureRTV, nullptr);
 		if (clearRenderTargets)
 		{
-			DevCon->ClearRenderTargetView(mRenderTextureRTV, Colors::fBlack);
+			DevCon->ClearRenderTargetView(mLightPassOutputTextureRTV, Colors::fBlack);
 		}
 	}
 	break;
 	case COMPUTE_PASS:
 	{
-		ID3D11UnorderedAccessView* uav[] = { mTempTextureUAV };
+		ID3D11UnorderedAccessView* uav[] = { mComputePassTempTextureUAV };
 		DevCon->CSSetUnorderedAccessViews(0, 1, uav, nullptr);
 	}
 	break;
@@ -119,7 +208,6 @@ void ShaderHandler::SetRenderTargets(ID3D11DeviceContext* DevCon, RenderPassID p
 	} //end passID switch
 }
 
-// temp DONE
 void ShaderHandler::SetInputLayoutAndTopology(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
 	switch (passID)
@@ -127,39 +215,21 @@ void ShaderHandler::SetInputLayoutAndTopology(ID3D11DeviceContext* DevCon, Rende
 	case GEOMETRY_PASS:
 	{
 		// Set Vertex Shader input
-		DevCon->IASetInputLayout(mVertexLayout);
+		DevCon->IASetInputLayout(mGeometryPassInputLayout);
 		DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 		break;
 	case SHADOW_PASS:
 	{
-		DevCon->IASetInputLayout(mVertexLayout);
+		DevCon->IASetInputLayout(mGeometryPassInputLayout);
 		DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 		break;
 
 	case LIGHT_PASS:
+	case SCREEN_PASS:
 	{
 		/* Full screen triangle is created in Vertex shader by using the vertexID so no input layout is set to nullptr*/
-		const uintptr_t n0 = 0;
-		DevCon->IASetInputLayout(nullptr);
-		DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-		DevCon->IASetVertexBuffers(0, 0,
-			reinterpret_cast<ID3D11Buffer *const *>(&n0),
-			reinterpret_cast<const UINT *>(n0),
-			reinterpret_cast<const UINT *>(&n0)
-		);
-	}
-		break;
-
-	case COMPUTE_PASS:
-	{
-
-	}
-		break;
-	case SCREEN_PASS: //TODO: This should be the same case as LIGHT_PASS
-	{
-		/* Full screen triangle is created in Vertex shader by using the vertexID so no input layout needed */
 		const uintptr_t n0 = 0;
 		DevCon->IASetInputLayout(nullptr);
 		DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -175,7 +245,6 @@ void ShaderHandler::SetInputLayoutAndTopology(ID3D11DeviceContext* DevCon, Rende
 	} //end passID switch
 }
 
-// DONE!
 void ShaderHandler::SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID, bool isHeightMap)
 {
 	switch (passID)
@@ -200,7 +269,6 @@ void ShaderHandler::SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID,
 		DevCon->PSSetShader(mShadowPassPixelShader, nullptr, 0);
 	}
 	break;
-
 	case LIGHT_PASS:
 	{
 		DevCon->VSSetShader(mFullScreenVertexShader, nullptr, 0);
@@ -210,7 +278,6 @@ void ShaderHandler::SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID,
 		DevCon->PSSetShader(mLightPassPixelShader, nullptr, 0);
 	}
 	break;
-
 	case COMPUTE_PASS:
 	{
 		DevCon->VSSetShader(nullptr, nullptr, 0);
@@ -227,7 +294,7 @@ void ShaderHandler::SetShaders(ID3D11DeviceContext* DevCon, RenderPassID passID,
 		DevCon->HSSetShader(nullptr, nullptr, 0);
 		DevCon->DSSetShader(nullptr, nullptr, 0);
 		DevCon->GSSetShader(nullptr, nullptr, 0);
-		DevCon->PSSetShader(mComputePassPixelShader, nullptr, 0);
+		DevCon->PSSetShader(mScreenPassPixelShader, nullptr, 0);
 	}
 	break;
 	default:
@@ -241,7 +308,7 @@ void ShaderHandler::SetSamplers(ID3D11DeviceContext* DevCon, RenderPassID passID
 	{
 	case GEOMETRY_PASS:
 	{
-		DevCon->PSSetSamplers(0, 1, &mSampleState);
+		DevCon->PSSetSamplers(0, 1, &mGeometryPassSampler);
 	}
 	break;
 	case LIGHT_PASS:
@@ -258,11 +325,6 @@ void ShaderHandler::SetShaderResources(ID3D11DeviceContext* DevCon, RenderPassID
 {
 	switch (passID)
 	{
-	case GEOMETRY_PASS:
-	{
-
-	}
-	break;
 	case LIGHT_PASS:
 	{
 		ID3D11ShaderResourceView* GBufferTextureViews[] =
@@ -279,12 +341,12 @@ void ShaderHandler::SetShaderResources(ID3D11DeviceContext* DevCon, RenderPassID
 	break;
 	case COMPUTE_PASS:
 	{
-		DevCon->CSSetShaderResources(0, 1, &mRenderTextureSRV);
+		DevCon->CSSetShaderResources(0, 1, &mComputePassOutputTextureSRV);
 	}
 	break;
 	case SCREEN_PASS:
 	{
-		DevCon->PSSetShaderResources(0, 1, &mTempTextureSRV);
+		DevCon->PSSetShaderResources(0, 1, &mSreenPassInputTextureSRV);
 	}
 	break;
 	default:
@@ -363,7 +425,7 @@ void ShaderHandler::CreateShader(ID3D11Device* Dev, ID3DBlob* pS, ShaderType sha
 
 	case COMPUTE_PASS:
 		vertexShader = &mFullScreenVertexShader;
-		pixelShader = &mComputePassPixelShader;
+		pixelShader = &mScreenPassPixelShader;
 		computeShader = &mComputeShader;
 		break;
 
@@ -420,7 +482,7 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0,	12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0,	20,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
-		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mVertexLayout);
+		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mGeometryPassInputLayout);
 		failed = (FAILED(hr)) ? true : false;
 	}
 	break;
@@ -432,7 +494,7 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0,	12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
 			{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0,	20,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
-		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mVertexLayout);
+		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mGeometryPassInputLayout);
 		failed = (FAILED(hr)) ? true : false;
 	}
 	break;
@@ -447,98 +509,7 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 	}
 }
 
-//bool?
-//TODO: Not sure is reuse of pS is okay or not
-//TODO: create texture sampler state
-void ShaderHandler::CreateShaders(ID3D11Device* Dev)
-{
-	ID3DBlob* pS = nullptr;
-
-	// Geometry Pass -----------------------------------------------
-	{
-		CompileShader(&pS, L"GBufferVertex.hlsl", "VS_main", "vs_5_0");
-		CreateShader(Dev, pS, VERTEX_SHADER, GEOMETRY_PASS);
-
-		//create input layout
-		CreateInputLayout(Dev, pS, GEOMETRY_PASS);
-
-		pS->Release();
-		CompileShader(&pS, L"GBufferGeometry.hlsl", "GS_main", "gs_5_0");
-		CreateShader(Dev, pS, GEOMETRY_SHADER, GEOMETRY_PASS);
-
-		pS->Release();
-		CompileShader(&pS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0");
-		CreateShader(Dev, pS, PIXEL_SHADER, GEOMETRY_PASS);
-
-		// Height map version
-		D3D_SHADER_MACRO HeightMapMacros[] =
-		{
-			"HEIGHT_MAP",  "1",
-			NULL, NULL
-		};
-
-		pS->Release();
-		CompileShader(&pS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0", HeightMapMacros);
-		CreateShader(Dev, pS, PIXEL_SHADER_HEIGHTMAP_VERSION, GEOMETRY_PASS);
-	}
-	// Shadow Pass -----------------------------------------------
-	{
-		pS->Release();
-		CompileShader(&pS, L"ShadowVertex.hlsl", "VS_main", "vs_5_0");
-		CreateShader(Dev, pS, VERTEX_SHADER, SHADOW_PASS);
-
-		//create input layout
-		CreateInputLayout(Dev, pS, SHADOW_PASS);
-
-		pS->Release();
-		CompileShader(&pS, L"ShadowFragment.hlsl", "PS_main", "ps_5_0");
-		CreateShader(Dev, pS, PIXEL_SHADER, SHADOW_PASS);
-	}
-	// Light Pass -----------------------------------------------
-	{
-		pS->Release();
-		CompileShader(&pS, L"FullScreenTriangleVertex.hlsl", "VS_main", "vs_5_0");
-		CreateShader(Dev, pS, VERTEX_SHADER, LIGHT_PASS);
-
-		//no input layout since geometry is generated in the vertex shader
-
-		D3D_SHADER_MACRO LightPassFragmentMacros[] =
-		{
-			"SHADOW_MAP_SIZE",  SHADOW_QUALITY.SIZE_STRING,
-			NULL, NULL
-		};
-
-		pS->Release();
-		CompileShader(&pS, L"LightFragment.hlsl", "PS_main", "ps_5_0", LightPassFragmentMacros);
-		CreateShader(Dev, pS, PIXEL_SHADER, LIGHT_PASS);
-	}
-	// Compute Pass -----------------------------------------------
-	{
-		D3D_SHADER_MACRO ComputeShaderMacros[] =
-		{
-			"TEXTURE_WIDTH",  SCREEN_RESOLUTION.WIDTH_STRING,
-			"TEXTURE_HEIGHT", SCREEN_RESOLUTION.HEIGHT_STRING,
-			NULL, NULL
-		};
-
-		pS->Release();
-		CompileShader(&pS, L"FXAACompute.hlsl", "FXAA_main", "cs_5_0", ComputeShaderMacros);
-		CreateShader(Dev, pS, COMPUTE_SHADER, COMPUTE_PASS);
-
-		// Full Screen vertex shader already compiled
-
-		//no input layout since geometry is generated in the vertex shader
-
-		pS->Release();
-		CompileShader(&pS, L"ComputePassPixel.hlsl", "PS_main", "ps_5_0");
-		CreateShader(Dev, pS, PIXEL_SHADER, COMPUTE_PASS);
-
-		pS->Release();
-	}
-}
-
-// TODO: Should probably add hr checks. also Relese()
-void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev)
+void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev, IDXGISwapChain* SwapChain)
 {
 	HRESULT hr;
 	// --------------------------------- Graphics Buffer --------------------------------------------
@@ -595,8 +566,6 @@ void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev)
 			mDepthStencilTexture,	// Depth stencil texture
 			&depthStencilViewDesc,	// Depth stencil desc
 			&mDepthStecilView);		// [out] Depth stencil view
-
-		//TODO: Release
 	}
 
 	// ------------------------------------ Shadow Map ----------------------------------------------
@@ -656,8 +625,8 @@ void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev)
 			exit(-1);
 		}
 
-		Dev->CreateRenderTargetView(texture, nullptr, &mRenderTextureRTV);
-		Dev->CreateShaderResourceView(texture, nullptr, &mRenderTextureSRV);
+		Dev->CreateRenderTargetView(texture, nullptr, &mLightPassOutputTextureRTV);
+		Dev->CreateShaderResourceView(texture, nullptr, &mComputePassOutputTextureSRV);
 		texture->Release();
 
 		// Texture that will be used as output from the Compute shader
@@ -672,10 +641,22 @@ void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev)
 			exit(-1);
 		}
 
-		Dev->CreateUnorderedAccessView(texture, nullptr, &mTempTextureUAV);
-		Dev->CreateShaderResourceView(texture, nullptr, &mTempTextureSRV);
+		Dev->CreateUnorderedAccessView(texture, nullptr, &mComputePassTempTextureUAV);
+		Dev->CreateShaderResourceView(texture, nullptr, &mSreenPassInputTextureSRV);
 
 		texture->Release();
+	}
+
+	// ----------------------------------- Screen Pass ---------------------------------------------
+	{
+		ID3D11Texture2D* pTempBackBuffer = nullptr;
+		// Gets the adress of teh back buffer
+		SwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), (LPVOID*)&pTempBackBuffer);
+
+		// Create render target by using buffer adress
+		Dev->CreateRenderTargetView(pTempBackBuffer, nullptr, &mBackbufferRTV);
+
+		pTempBackBuffer->Release();
 	}
 
 }
@@ -702,7 +683,7 @@ void ShaderHandler::CreateSamplerStates(ID3D11Device* Dev)
 		samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
 
 		// Create the texture sampler state.
-		hr = Dev->CreateSamplerState(&samplerDesc, &mSampleState);
+		hr = Dev->CreateSamplerState(&samplerDesc, &mGeometryPassSampler);
 		if (FAILED(hr))
 		{
 			OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass sampler state\n\n");
@@ -710,7 +691,7 @@ void ShaderHandler::CreateSamplerStates(ID3D11Device* Dev)
 		}
 	}
 	// --------------------------------- Light Pass --------------------------------------------
-	// A comparison sampler used sampling the shadow map
+	// A comparison sampler used to sample the shadow map
 	{
 		D3D11_SAMPLER_DESC shadowSamplerDesc{};
 		shadowSamplerDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
