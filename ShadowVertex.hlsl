@@ -8,7 +8,6 @@
 *	Transforms the vertex positions to clip-space
 */
 
-//TODO: remove normal and texcoord from input as well as the camera position
 
 cbuffer PER_FRAME	:register(b0)
 {
@@ -21,12 +20,9 @@ cbuffer PER_OBJECT		: register(b1)
 	float4x4 worldMatrix;
 };
 
-//TODO: change input layout since only the position is relevant
 struct VS_IN
 {
 	float3 Position : POSITION;
-	float2 TexCoord : TEXCOORD;
-	float3 Normal   : NORMAL;
 };
 
 struct VS_OUT

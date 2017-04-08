@@ -61,8 +61,8 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	using DirectX::operator*;
 
 	//TODO: make std::vector of worldIdentity matrixes for each object
-	UINT32 vertexSize = sizeof(Vertex);
-	UINT32 offset = 0;
+	UINT32 vertexSize = sizeof(Vertex);// (passID == SHADOW_PASS) ? sizeof(DirectX::XMFLOAT3) : sizeof(Vertex);
+	UINT32 offset = 0; // (passID == SHADOW_PASS) ? ;
 
 	std::vector<Object>* objectArray; // pointer to one of the arrays of objects in ObjectHandler
 	if (objectType == STATIC_OBJECT)  { objectArray = &mStaticObjects; }
@@ -309,9 +309,9 @@ void ObjectHandler::MoveStaticObjects()
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
 		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(
-			14.f * (i / 20 + 1.0f),
-			WORLD_HEIGHT[14 * (i % 20 + 1)][14 * (i / 20 + 1)] + 4.0f,
-			14.0f * (i % 20 + 1.0f));
+			10.0f * (i / 20 + 1.0f),
+			WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f,
+			10.0f * (i % 20 + 1.0f));
 
 		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
@@ -337,6 +337,7 @@ void ObjectHandler::InsertToQuadtree()
 *						Private functions
 *===========================================================================*/
 
+// The width and height of the .bmp file must be multiples of 4
 bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, std::wstring filename, ObjectType objectType, bool isRHCoordSys, bool computeNormals)
 {
 	std::wifstream fileIn(filename.c_str());    //Open file

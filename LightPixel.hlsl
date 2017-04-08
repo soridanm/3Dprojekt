@@ -25,6 +25,11 @@
 
 #define NR_OF_LIGHTS 2
 
+#if defined(__INTELLISENSE__)
+#define SHADOW_MAP_SIZE 1.0f
+#endif
+
+
 //TODO: do this division on the cpu
 #ifdef SHADOW_MAP_SIZE
 static const float inverseShadowMapSize = rcp(SHADOW_MAP_SIZE);
@@ -133,12 +138,10 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	}
 	
 	float shadow_coefficient = (outside_shadow_map) ? 1.0 : shadow_sum;
-
 	// FOR DEBUGGING: Overwrites the Percentage-Closer Filtering
 	//shadow_coefficient = (!outside_shadow_map) ? ShadowMap.SampleCmpLevelZero(compSampler, shadow_tex_coord - texOffset(0.5, 0.5), light_depth_value) : 1.0;
 	//shadow_coefficient = (light_depth_value < ShadowMap.Sample(textureSampler, shadow_tex_coord).r) ? 1.0 : 0.0;
 	// !FOR DEBUGGING
-
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
 		// The light contributes with its ambient part even if the pixel is in shadow
@@ -173,14 +176,14 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//float3 finalColor = positionWS/255.0;
 	//float3 finalColor = diffuseColor;
 	//float3 finalColor = specularValues.rgb;
-
+	//float3 finalColor = float3(attenuation, attenuation, attenuation);
 	//float3 finalColor = float3(diffuse_coefficient, diffuse_coefficient, diffuse_coefficient);
 	//float3 finalColor = diffuse_component;
 	//float3 finalColor = float3(specular_coefficient, specular_coefficient, specular_coefficient);
 	//float3 finalColor = float3(1.0, 0.0, 0.0);
 
 	//float3 finalColor = float3(shadow_tex_coord, 0.0);
-	//float3 finalColor = float3(shadow_coefficient, 0.0, 0.0);
+	//float3 finalColor = float3(shadow_coefficient, shadow_coefficient, shadow_coefficient);
 
 	float3 finalColor = saturate(final_color);
 

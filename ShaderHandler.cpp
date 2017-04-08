@@ -221,7 +221,7 @@ void ShaderHandler::SetInputLayoutAndTopology(ID3D11DeviceContext* DevCon, Rende
 		break;
 	case SHADOW_PASS:
 	{
-		DevCon->IASetInputLayout(mGeometryPassInputLayout);
+		DevCon->IASetInputLayout(mShadowPassInputLayout);
 		DevCon->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	}
 		break;
@@ -490,11 +490,9 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 	{
 		D3D11_INPUT_ELEMENT_DESC inputDesc[] =
 		{
-			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT, 0,	0,	D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "TEXCOORD",	0, DXGI_FORMAT_R32G32_FLOAT,	0,	12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-			{ "NORMAL",		0, DXGI_FORMAT_R32G32B32_FLOAT,	0,	20,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
+			{ "POSITION",	0, DXGI_FORMAT_R32G32B32_FLOAT, 0,	0,	D3D11_INPUT_PER_VERTEX_DATA, 0 }
 		};
-		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mGeometryPassInputLayout);
+		hr = Dev->CreateInputLayout(inputDesc, ARRAYSIZE(inputDesc), pS->GetBufferPointer(), pS->GetBufferSize(), &mShadowPassInputLayout);
 		failed = (FAILED(hr)) ? true : false;
 	}
 	break;
