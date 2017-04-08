@@ -66,7 +66,7 @@ struct Light
 
 cbuffer pointLightProperties	: register (b1)
 {
-	float4 camera_positionWS;
+	float4 camera_positionWS;	// TODO: Pick which camera to use
 	float4 global_ambient;
 	Light Lights[NR_OF_LIGHTS];
 };
@@ -76,7 +76,7 @@ struct PS_IN
 	float4 PositionCS	: SV_Position; //pixel location
 };
 
-//TODO: comment
+// Turns a pixel offset into a texCoord offset since the comparison sampler uses texture coordinates
 float2 TexOffset(int u, int v)
 {
 	return float2(u, v) * inverseShadowMapSize;
@@ -97,23 +97,27 @@ float ShadowCoefficient(float2 texCoord, float lightDepth)
 	return shadow_sum *= 0.0625; // Division by 16;
 }
 
-
-float3 DiffuseComponent(float3 toLight, float3 normal, float3 diffuseColor, int i)
+// TODO: write comments on these to explain the math
+float DiffuseCoefficient(float3 toLight, float3 normal)
 {
-	return max(0, dot(toLight, normal)) * (diffuseColor * Lights[i].color);
+	return max(0.0, dot(toLight, normal));
+}
+
+float3 DiffuseComponent(float diffuseCoefficient, float3 diffuseColor, int i)
+{
+	return diffuseCoefficient * (diffuseColor * Lights[i].color);
 }
 
 float3 SpecularComponent(float3 toLight, float3 toCamera, float3 normal, float4 specularColor, int i)
 {
-	float coef = pow(saturate(dot(reflect(-toLight, normal), toCamera)), specularColor.a);
-	return coef * (specularColor.rgb * Lights[i].color);
+	float specular_coefficient = pow(saturate(dot(reflect(-toLight, normal), toCamera)), specularColor.a);
+	return specular_coefficient * (specularColor.rgb * Lights[i].color);
 }
 
 float AttenuationFactor(float3 positionWS, int i)
 {
 	float light_dist = distance(Lights[i].light_positionWS.xyz, positionWS);
-	return rcp(Lights[i].constant_attenuation 
-		+ light_dist * (Lights[i].linear_attenuation + light_dist * Lights[i].quadratic_attenuation));
+	return rcp(Lights[i].constant_attenuation + light_dist * (Lights[i].linear_attenuation + light_dist * Lights[i].quadratic_attenuation));
 }
 
 float4 PS_main ( PS_IN input ) : SV_Target
@@ -125,18 +129,16 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float4 specularValues	= SpecularTexture.Load(int3(input.PositionCS.xy, 0));
 
 	// Phong lighting variables
-	float attenuation, diffuse_coefficient, specular_coefficient;
-	float3 ambient_component, diffuse_component, specular_component, light_contribution;
+	float diffuse_coefficient;
+	float3 diffuse_component, specular_component;
+
 	float3 final_color = global_ambient.rgb * diffuseColor.rgb; // All positions are hit by the global ambient light
 
 	// Used for the diffuse and specular calculations
 	float3 to_camera = normalize(camera_positionWS.xyz - positionWS); // vector from surface to camera
 	float3 to_light;			// vector from light source to surface
-	float3 reflection;			// vector of reflected light after light hits surface
-	float distance_to_light;	// distance between the light and the surface point
 
 	// Used for the shadow map calculations
-	//float4x4 lightViewProjection = mul(lightView, lightProjection); //TODO: change the cbuffer to a single matrix
 	float4 light_view_pos = mul(float4(positionWS, 1.0), lightViewProjection); // The clip space position of the point from the light's point of view
 	float bias = 0.00002;
 	
@@ -158,33 +160,19 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	for (int i = 0; i < NR_OF_LIGHTS; i++)
 	{
 		// The light contributes with its ambient part even if the pixel is in shadow
-		//ambient_component = Lights[i].ambient_coefficient * (Lights[i].color * diffuseColor); // light intesities
 		final_color += Lights[i].ambient_coefficient * (Lights[i].color * diffuseColor); // light intesities
 
 		// If the pixel is in full shadow then the diffuse and specular parts won't contribute to the final color so we won't calculate them
-		if (!(Lights[i].hasShadow == 1 && shadow_coefficient == 0.0))
+		if (Lights[i].hasShadow != 1 || shadow_coefficient != 0.0)
 		{
 			to_light = normalize(Lights[i].light_positionWS.xyz - positionWS);
-			reflection = reflect(-to_light, normal);
-			distance_to_light = distance(Lights[i].light_positionWS.xyz, positionWS);
 
-			// Diffuse part
-			diffuse_coefficient = max(dot(to_light, normal), 0.0);
-			//diffuse_component = diffuse_coefficient * diffuseColor * Lights[i].color;
-			diffuse_component = DiffuseComponent(to_light, normal, diffuseColor, i);
+			diffuse_coefficient = DiffuseCoefficient(to_light, normal);
+			diffuse_component = DiffuseComponent(diffuse_coefficient, diffuseColor, i);
 
-			// Specular part
-			/* specular_coefficient equals 0.0 if the light is behind the surface */
-			//specular_coefficient = (diffuse_coefficient > 0.0) ? pow(max(dot(reflection, to_camera), 0.0), specularValues.a) : 0.0;
-			
-			//specular_coefficient = (diffuse_coefficient > 0.0) ? pow(saturate(dot(reflection, to_camera)), specularValues.a) : 0.0;
-			//specular_component = specular_coefficient * (specularValues.rgb * Lights[i].color);
-			specular_component = (diffuse_coefficient > 0.0) ? SpecularComponent(to_light, to_camera, normal, specularValues, i) : float3(0.0, 0.0, 0.0);
+			specular_component = (diffuse_coefficient != 0.0) ? SpecularComponent(to_light, to_camera, normal, specularValues, i) : float3(0.0, 0.0, 0.0);
 
-			// rcp(x) = (1.0 / x)
-			attenuation = rcp(Lights[i].constant_attenuation + distance_to_light * (Lights[i].linear_attenuation + distance_to_light * Lights[i].quadratic_attenuation));
-
-			final_color += attenuation * (diffuse_component + specular_component) * ((Lights[i].hasShadow == 1) ? shadow_coefficient : 1.0);
+			final_color += (diffuse_component + specular_component) * (AttenuationFactor(positionWS, i) * ((Lights[i].hasShadow == 1) ? shadow_coefficient : 1.0));
 		}
 	}
 
