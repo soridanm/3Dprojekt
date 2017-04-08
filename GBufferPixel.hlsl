@@ -6,16 +6,23 @@
 *
 * File summary: Pixel shader of the Geometry pass
 *	Outputs information to the G-buffers and if the object is a heightmap then
-*	it also applies a simple height based blend mapping on the textures.
+*	it applies a simple height-based blend mapping on the textures.
 */
 
-#if HEIGHT_MAP
-Texture2D DiffuseMap	: register(t1);
-Texture2D DiffuseMap2	: register(t2);
+// Used for syntax highlighting
+#if defined(__INTELLISENSE__)
+//#define HEIGHT_MAP
+#endif
+
+
+#ifdef IS_HEIGHT_MAP
+Texture2D LowerTexture	: register(t1);
+Texture2D HigherTexture	: register(t2);
 #else 
 Texture2D Texture		: register(t1);
 #endif
 
+//TODO: rename and check settings
 SamplerState AnisoSampler	: register(s0);
 
 cbuffer MaterialBuffer		: register(b0)
@@ -49,22 +56,26 @@ struct PS_OUT
 PS_OUT PS_main(in PS_IN input) //: SV_Target
 {
 	PS_OUT output = (PS_OUT)0;
-	// Sample the diffuse map
-#if HEIGHT_MAP
+
+#ifdef IS_HEIGHT_MAP
 	float height = saturate(input.PositionWS.y * 0.05); // input.PositionWS.y / 20.0
-	float3 diffuse_part = (hasTexture == 1) ? (((1.0 - height) * DiffuseMap.Sample(AnisoSampler, input.TexCoord).rgb) + (height * DiffuseMap2.Sample(AnisoSampler, input.TexCoord).rgb)) : DiffuseColor.rgb;
+	float3 diffuse_part = 
+		(hasTexture == 1) 
+			? ((1.0 - height) * LowerTexture.Sample(AnisoSampler, input.TexCoord).rgb
+			+ height * HigherTexture.Sample(AnisoSampler, input.TexCoord).rgb)
+			: DiffuseColor.rgb;
 #else
 	float3 diffuse_part = (hasTexture == 1) ? Texture.Sample(AnisoSampler, input.TexCoord).rgb : DiffuseColor.rgb;
-	//diffuse_part = (hasTexture == 1) ? float3(0.0, 1.0, 0.0) : float3(1.0, 0.0, 0.0);
 #endif
+
 	// Normalize the normal after interpolation
-	float3 normalWS	= normalize(input.NormalWS);
+	float3 normalWS = normalize(input.NormalWS);
 
 	// Ouput G-Buffer values
-	output.Normal			= float4(normalWS, 1.0);
-	output.Position			= float4(input.PositionWS, 1.0);
-	output.DiffuseAlbedo	= float4(diffuse_part, 1.0);
-	output.SpecularAlbedo	= float4(SpecularColor, SpecularPower);
+	output.Normal = float4(normalWS, 1.0);
+	output.Position = float4(input.PositionWS, 1.0);
+	output.DiffuseAlbedo = float4(diffuse_part, 1.0);
+	output.SpecularAlbedo = float4(SpecularColor, SpecularPower);
 
 	return output;
-};
+}

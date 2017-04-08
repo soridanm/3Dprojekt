@@ -2,12 +2,18 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: LightPixel.hlsl
 *
-* File summary:
+* File summary: Pixel shader used in the light pass
+*	Calculates Phong lighting and shadows using 16-tap percentage closer filtering.
 *
+*	Ambient:
 *
+*	Diffuse:
 *
+*	Specular:
+*
+*	Attenuation:
 *
 *
 */
@@ -19,6 +25,7 @@
 
 #define NR_OF_LIGHTS 2
 
+//TODO: do this division on the cpu
 #ifdef SHADOW_MAP_SIZE
 static const float inverseShadowMapSize = rcp(SHADOW_MAP_SIZE);
 #else 
@@ -31,7 +38,7 @@ Texture2D<float4> NormalTexture			: register(t0); // x-y-z-unused
 Texture2D<float4> PositionTexture		: register(t1); // x-y-z-unused
 Texture2D<float4> DiffuseAlbedoTexture	: register(t2); // r-g-b-unused
 Texture2D<float4> SpecularTexture		: register(t3); // r-g-b-specularPower
-Texture2D<float>  ShadowMap				: register(t4); // r
+Texture2D<float>  ShadowMap				: register(t4); // depth
 
 SamplerComparisonState compSampler : register(s0);
 SamplerState textureSampler; // TODO: look up sampler settings
@@ -46,7 +53,7 @@ struct Light
 {
 	float4 light_positionWS;
 	float3 color;
-	int hasShadow;
+	int hasShadow; // 1 = true
 	float constant_attenuation;
 	float linear_attenuation;
 	float quadratic_attenuation;
@@ -65,6 +72,7 @@ struct PS_IN
 	float4 PositionCS	: SV_Position; //pixel location
 };
 
+//TODO: comment
 float2 texOffset(int u, int v)
 {
 	return float2(u, v) * inverseShadowMapSize;
@@ -95,8 +103,6 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	float bias = 0.00002;
 	
 	float2 shadow_tex_coord;
-	//shadow_tex_coord.x = (( light_view_pos.x / light_view_pos.w) / 2.0) + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
-	//shadow_tex_coord.y = ((-light_view_pos.y / light_view_pos.w) / 2.0) + 0.5;  // Dividing by 2.0 and adding 0.5 gives position as uv coordinates [0, 1]
 	shadow_tex_coord.x = (light_view_pos.x * rcp(light_view_pos.w) * 0.5) + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
 	shadow_tex_coord.y = (-light_view_pos.y * rcp(light_view_pos.w) * 0.5) + 0.5;  // Dividing by 2.0 and adding 0.5 gives position as uv coordinates [0, 1]
 
@@ -108,6 +114,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 	//subtract the bias to avoid self-shadowing
 	light_depth_value -= bias;
 
+	// TODO: turn into a function
 	// Test if the point is outside the light's view frustum
 	bool outside_shadow_map = (saturate(shadow_tex_coord.y) != shadow_tex_coord.y && saturate(shadow_tex_coord.x) != shadow_tex_coord.x) ? true : false;
 	// 16-tap (4x4 texel area) Percentage-Closer Filtering using a comparison sampler

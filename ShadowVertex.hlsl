@@ -2,21 +2,11 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: ShadowVertex.hlsl
 *
-* File summary:
-*
-*
-*
-*
-*
+* File summary: Vertex shader of the Shadow pass
+*	Transforms the vertex positions to clip-space
 */
-
-//-----------------------------------------------------------------------------------------
-//			SHADOW PASS VERSION
-// Ony outputs the clip-space position since that's the only information
-// needed to fill in the depth buffer
-//-----------------------------------------------------------------------------------------
 
 //TODO: remove normal and texcoord from input as well as the camera position
 
@@ -35,7 +25,7 @@ cbuffer PER_OBJECT		: register(b1)
 struct VS_IN
 {
 	float3 Position : POSITION;
-	float2 TexCoord : TEXCOORD; // <- look up number
+	float2 TexCoord : TEXCOORD;
 	float3 Normal   : NORMAL;
 };
 
@@ -48,12 +38,7 @@ VS_OUT VS_main(in VS_IN input)
 {
 	VS_OUT output = (VS_OUT)0;
 
-	//float4x4 viewProjection = mul(view, projection);
-	//float4x4 worldViewProjection = mul(worldMatrix, viewProjection);
-
-	float4 temp = mul(float4(input.Position, 1.0), worldMatrix);
-
-	output.PositionCS = mul(temp, viewProjection);
+	output.PositionCS = mul(mul(float4(input.Position, 1.0), worldMatrix), viewProjection);
 
 	return output;
 }

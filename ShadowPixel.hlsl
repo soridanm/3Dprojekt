@@ -2,20 +2,11 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: ShadowPixel.hlsl
 *
-* File summary:
-*
-*
-*
-*
-*
+* File summary: Pixel shader of the Shadow pass
+*	Fills in the depth texture that's used in the light pass
 */
-
-//-----------------------------------------------------------------------------------------
-//			SHADOW MAP VERSION
-// Only used to fill the depth buffer
-//-----------------------------------------------------------------------------------------
 
 struct PS_IN
 {
@@ -23,6 +14,4 @@ struct PS_IN
 };
 
 void PS_main(in PS_IN input) 
-{
-
-}
+{}

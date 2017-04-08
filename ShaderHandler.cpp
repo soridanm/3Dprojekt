@@ -73,7 +73,7 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 		// Height map version ------------------
 		D3D_SHADER_MACRO HeightMapMacros[] =
 		{
-			"HEIGHT_MAP",  "1",
+			"IS_HEIGHT_MAP",  "1",
 			NULL, NULL
 		};
 

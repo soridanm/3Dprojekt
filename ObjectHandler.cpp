@@ -308,7 +308,10 @@ void ObjectHandler::MoveStaticObjects()
 	{
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
-		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(10.f * (i / 20 + 1.0f), WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f, 10.0f * (i % 20 + 1.0f));
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(
+			14.f * (i / 20 + 1.0f),
+			WORLD_HEIGHT[14 * (i % 20 + 1)][14 * (i / 20 + 1)] + 4.0f,
+			14.0f * (i % 20 + 1.0f));
 
 		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
@@ -1014,7 +1017,11 @@ bool ObjectHandler::LoadHeightMap(char* filename, HeightMapInfo &hminfo)
 			height = bitmapImage[offset];
 			index = (hminfo.worldHeight*j) + i;
 
-			hminfo.heightMap[index] = DirectX::XMFLOAT3(static_cast<float>(i), static_cast<float>(height) / smoothingValue, static_cast<float>(j));
+			hminfo.heightMap[index] = 
+				DirectX::XMFLOAT3(
+					static_cast<float>(i), 
+					static_cast<float>(height) / smoothingValue, 
+					static_cast<float>(j));
 			offset += 3;
 		}
 	}

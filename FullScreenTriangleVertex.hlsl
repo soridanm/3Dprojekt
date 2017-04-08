@@ -2,14 +2,10 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: FullScreenTriangleVertex.hlsl
 *
-* File summary:
-*
-*
-*
-*
-*
+* File summary: Vertex shader used in both the Light pass and the Screen pass
+*	Generates a single triangle that covers the entire screen.
 */
 
 struct VS_OUT
@@ -17,7 +13,7 @@ struct VS_OUT
 	float4 PositionCS	: SV_Position;
 };
 
-// Generates a full screen triangle using vertexID which goes from 0 to 2
+// Generates a full screen triangle using vertexID (= 0, 1, 2)
 VS_OUT VS_main(in uint vertexID : SV_VertexID)
 {
 	VS_OUT output = (VS_OUT)0;
