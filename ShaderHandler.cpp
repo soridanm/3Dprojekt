@@ -67,7 +67,7 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 		CreateShader(Dev, pS, GEOMETRY_SHADER, GEOMETRY_PASS);
 
 		pS->Release();
-		CompileShader(&pS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0");
+		CompileShader(&pS, L"GBufferPixel.hlsl", "PS_main", "ps_5_0");
 		CreateShader(Dev, pS, PIXEL_SHADER, GEOMETRY_PASS);
 
 		// Height map version ------------------
@@ -78,7 +78,7 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 		};
 
 		pS->Release();
-		CompileShader(&pS, L"GBufferFragment.hlsl", "PS_main", "ps_5_0", HeightMapMacros);
+		CompileShader(&pS, L"GBufferPixel.hlsl", "PS_main", "ps_5_0", HeightMapMacros);
 		CreateShader(Dev, pS, PIXEL_SHADER_HEIGHTMAP_VERSION, GEOMETRY_PASS);
 	}
 
@@ -91,7 +91,7 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 		CreateInputLayout(Dev, pS, SHADOW_PASS);
 
 		pS->Release();
-		CompileShader(&pS, L"ShadowFragment.hlsl", "PS_main", "ps_5_0");
+		CompileShader(&pS, L"ShadowPixel.hlsl", "PS_main", "ps_5_0");
 		CreateShader(Dev, pS, PIXEL_SHADER, SHADOW_PASS);
 	}
 
@@ -103,14 +103,14 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 
 		//no input layout since geometry is generated in the vertex shader
 
-		D3D_SHADER_MACRO LightPassFragmentMacros[] =
+		D3D_SHADER_MACRO LightPassPixelMacros[] =
 		{
 			"SHADOW_MAP_SIZE",  SHADOW_QUALITY.SIZE_STRING,
 			NULL, NULL
 		};
 
 		pS->Release();
-		CompileShader(&pS, L"LightFragment.hlsl", "PS_main", "ps_5_0", LightPassFragmentMacros);
+		CompileShader(&pS, L"LightPixel.hlsl", "PS_main", "ps_5_0", LightPassPixelMacros);
 		CreateShader(Dev, pS, PIXEL_SHADER, LIGHT_PASS);
 	}
 

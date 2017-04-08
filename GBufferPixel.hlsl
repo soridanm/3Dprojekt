@@ -2,17 +2,12 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: GBufferPixel.hlsl
 *
-* File summary:
-*
-*
-*
-*
-*
+* File summary: Pixel shader of the Geometry pass
+*	Outputs information to the G-buffers and if the object is a heightmap then
+*	it also applies a simple height based blend mapping on the textures.
 */
-
-// G-Buffer fragment shader
 
 #if HEIGHT_MAP
 Texture2D DiffuseMap	: register(t1);

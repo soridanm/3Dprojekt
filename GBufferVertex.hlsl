@@ -2,21 +2,12 @@
 * Course: DV142 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: GBufferVertex.hlsl
 *
-* File summary:
-*
-*
-*
-*
-*
+* File summary: Vertex shader of the Geometry pass
+*	Turns the Position coordinates in to homogeneous coordinates.
+*	Other than that only works as a pass-through
 */
-
-//-----------------------------------------------------------------------------------------
-//			DEFERRED VERSION
-// Turns the Position into homogeneous coordinates.
-// Otherwise only works as a passthrough
-//-----------------------------------------------------------------------------------------
 
 struct VS_IN
 {
@@ -38,7 +29,7 @@ VS_OUT VS_main(in VS_IN input)
 
 	output.Position = float4(input.Position, 1.0);
 	output.TexCoord = input.TexCoord;
-	output.Normal = input.Normal;
+	output.Normal   = input.Normal;
 
 	return output;
 }
