@@ -72,6 +72,7 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 	if (GOD_CAMERA_ENABLED)
 	{
 		VPBufferData.ViewProjection = mGodCameraViewProjection;
+		
 		DirectX::XMStoreFloat4(&VPBufferData.CameraPosition, mGOD_CAM_POS);
 	}
 	else
@@ -93,6 +94,16 @@ bool CameraHandler::BindPerFrameConstantBuffer(ID3D11DeviceContext* DevCon)
 
 bool CameraHandler::BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID)
 {
+	if (GOD_CAMERA_ENABLED)
+	{
+		DirectX::XMStoreFloat4(&SMBufferData.CameraPosition, mGOD_CAM_POS);
+	}
+	else
+	{
+		// Update the camera position that's used for the light calculations
+		DirectX::XMStoreFloat4(&SMBufferData.CameraPosition, mCamPos);
+	}
+
 	D3D11_MAPPED_SUBRESOURCE viewProjectionMatrixPtr;
 	DevCon->Map(mShadowMapBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &viewProjectionMatrixPtr);
 	memcpy(viewProjectionMatrixPtr.pData, &SMBufferData, sizeof(cPerFrameBuffer));

@@ -5,10 +5,8 @@
 *						Public functions
 *===========================================================================*/
 
-LightHandler::LightHandler(DirectX::XMFLOAT4 camPos)
-{
-	mLightBufferData.cameraPositionWS = camPos;
-}
+LightHandler::LightHandler()
+{}
 
 LightHandler::~LightHandler()
 {}
@@ -34,7 +32,7 @@ bool LightHandler::CreateLightBuffer(ID3D11Device* Dev)
 	return true;
 }
 
-bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 camPos)
+bool LightHandler::InitializeLights(ID3D11Device* Dev)
 {
 	CreateLightBuffer(Dev);
 
@@ -64,7 +62,6 @@ bool LightHandler::InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 camPos)
 
 	// Other variables
 	mLightBufferData.globalAmbient = DirectX::XMFLOAT4(0.1f, 0.1f, 0.1f, 0.0f);
-	mLightBufferData.cameraPositionWS = camPos;
 
 	return true;
 }
@@ -73,9 +70,6 @@ bool LightHandler::BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT
 {
 	//set light #1's position to the camera position
 	mLightBufferData.LightArray[0].PositionWS = camPos;
-
-	//update the camera position in the Light buffer
-	mLightBufferData.cameraPositionWS = camPos;
 
 	// Map light buffer
 	D3D11_MAPPED_SUBRESOURCE LightBufferPtr;

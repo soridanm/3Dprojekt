@@ -4,7 +4,7 @@
 *						Public functions
 *===========================================================================*/
 
-Engine::Engine() : mLightHandler(gCameraHandler.GetCameraPosition())
+Engine::Engine()
 {}
 
 Engine::~Engine()
@@ -16,7 +16,7 @@ bool Engine::Initialize()
 
 	gCameraHandler.InitializeCamera(mDev, mDevCon, mObjectHandler.getWorldDepth(), mObjectHandler.getWorldWidth(), mObjectHandler.getWorldHeight());
 
-	mLightHandler.InitializeLights(mDev, gCameraHandler.GetCameraPosition());
+	mLightHandler.InitializeLights(mDev);
 
 	mShaderHandler.InitializeShaders(mDev, gSwapChain);
 

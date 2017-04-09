@@ -12,7 +12,7 @@
 cbuffer PER_FRAME	:register(b0)
 {
 	float4x4 viewProjection;
-	float4 cameraPosition; //NOT USED IN THIS SHADER
+	float4 cameraPosition; //not used in this shader
 }
 
 cbuffer PER_OBJECT		: register(b1)

@@ -19,12 +19,12 @@ const int NR_OF_LIGHTS = 2;
 class LightHandler
 {
 public:
-	LightHandler(DirectX::XMFLOAT4 camPos);
+	LightHandler();
 	~LightHandler();
 
 	bool CreateLightBuffer(ID3D11Device* Dev);
-	bool InitializeLights(ID3D11Device* Dev, DirectX::XMFLOAT4 CAM_POS);
-	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 CAM_POS);
+	bool InitializeLights(ID3D11Device* Dev);
+	bool BindLightBuffer(ID3D11DeviceContext* DevCon, DirectX::XMFLOAT4 camPos);
 private:
 	struct Light
 	{
@@ -59,7 +59,6 @@ private:
 			}
 		}
 
-		DirectX::XMFLOAT4 cameraPositionWS;
 		DirectX::XMFLOAT4 globalAmbient;
 		Light LightArray[NR_OF_LIGHTS];
 	};

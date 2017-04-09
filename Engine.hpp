@@ -60,7 +60,7 @@ private:
 	TimeHandler	  mTimeHandler   = TimeHandler();
 	ObjectHandler mObjectHandler = ObjectHandler();
 	ShaderHandler mShaderHandler = ShaderHandler();
-	LightHandler  mLightHandler;
+	LightHandler  mLightHandler  = LightHandler();
 };
 
 
