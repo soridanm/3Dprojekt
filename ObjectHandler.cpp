@@ -181,10 +181,10 @@ void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
 			mapVertex[(1 + i)*columns + j].texCoord = DirectX::XMFLOAT2((texUIndex + 0.0f), (texVIndex + 0.0f));
 
 			k += 6;
-			texUIndex++;
+			texVIndex++;
 		}
-		texUIndex = 0;
-		texVIndex++;
+		texVIndex = 0;
+		texUIndex++;
 	}
 
 	// Change the scale of the textures.
