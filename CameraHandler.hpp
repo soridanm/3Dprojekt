@@ -1,5 +1,5 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
 * File: CameraHandler.hpp
@@ -52,7 +52,7 @@ private:
 	struct cPerFrameBuffer
 	{
 		DirectX::XMFLOAT4X4 ViewProjection;
-		DirectX::XMFLOAT4 CameraPosition; //TODO: See if this one or the light one should stay
+		DirectX::XMFLOAT4 CameraPosition;
 	};
 	static_assert((sizeof(cPerFrameBuffer) % 16) == 0, "cPerFrameBuffer size must be 16-byte aligned");
 

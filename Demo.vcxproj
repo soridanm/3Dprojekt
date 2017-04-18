@@ -128,7 +128,7 @@
     <ClCompile Include="TimeHandler.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="ComputePassPixel.hlsl">
+    <FxCompile Include="ScreenPassPixel.hlsl">
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
       <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
@@ -305,19 +305,11 @@
     <ClInclude Include="TimeHandler.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <Text Include="known_issues.txt" />
-    <Text Include="library.txt" />
-    <Text Include="TODO.txt" />
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="grass.dds" />
     <Image Include="gray-marble.dds" />
     <Image Include="heightmap.bmp" />
     <Image Include="marble.dds" />
-    <Image Include="peninsula.bmp" />
     <Image Include="seamlessstone.dds" />
-    <Image Include="stone.dds" />
-    <Image Include="world.bmp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="materials.mtl" />

@@ -1,5 +1,5 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
 * File: GBufferGeometry.hlsl

@@ -1,5 +1,5 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
 * File: LightPixel.hlsl
@@ -8,7 +8,6 @@
 *	Calculates Phong lighting and shadows using 16-tap percentage closer filtering.
 */
 
-// TODO? Gamma correction
 
 #define NR_OF_LIGHTS 2
 

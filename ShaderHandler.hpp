@@ -1,5 +1,5 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
 * File: ShaderHandler.hpp
@@ -86,7 +86,7 @@ private:
 	ID3D11Texture2D* mDepthStencilTexture    = nullptr;
 
 	// Geometry Pass ----------------------------------------------------------
-	ID3D11SamplerState* mGeometryPassSampler  = nullptr; //TODO: Rename
+	ID3D11SamplerState* mGeometryPassSampler  = nullptr;
 	ID3D11InputLayout*  mGeometryPassInputLayout = nullptr;
 
 	ID3D11VertexShader*   mGeometryPassVertexShader         = nullptr;
@@ -122,7 +122,7 @@ private:
 	ID3D11PixelShader* mScreenPassPixelShader = nullptr;
 
 	ID3D11ShaderResourceView* mSreenPassInputTextureSRV = nullptr;
-	ID3D11RenderTargetView* mBackbufferRTV = nullptr; //TODO: Remove this from other classes
+	ID3D11RenderTargetView* mBackbufferRTV = nullptr;
 };
 
 

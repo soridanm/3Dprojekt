@@ -122,7 +122,7 @@ void Engine::RenderGeometryPass()
 	// Height Map -------------------------------------------------------------
 	mShaderHandler.PrepareRender(mDevCon, GEOMETRY_PASS, true, true);
 
-	SetHeightMapShaderResources(); //TODO: Move to shaderhandler
+	SetHeightMapShaderResources();
 	mObjectHandler.SetHeightMapBuffer(mDevCon, GEOMETRY_PASS);
 	mDevCon->DrawIndexed(mObjectHandler.GetHeightMapNrOfFaces() * 3, 0, 0);
 

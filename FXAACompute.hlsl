@@ -1,27 +1,25 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: FXAACompute.hlsl
 *
 * File summary:
-*
-*
-*
-*
-*
+*	A hlsl version of Simon Rodriguez' OpenGL FXAA algorithm.
+*	http://blog.simonrodriguez.fr/articles/30-07-2016_implementing_fxaa.html
 */
-
-//TODO: Rewrite using offsets instead of uv coordinate variables
-//TODO: restructure the ifdef/else/endif mess 
-//TODO: Rename a bunch of variables to improve the readability
 
 Texture2D<float4>   inputTex  : register(t0);
 RWTexture2D<float4> outputTex : register(u0);
 SamplerState samp;
 
+//Used for syntax highlighting
+#if defined(__INTELLISENSE__)
+#define TEXTURE_WIDTH	1.0f
+#define TEXTURE_HEIGHT	1.0f
+#endif
 
-// TODO: Improve this mess of an if-else case
+
 #ifdef TEXTURE_WIDTH
 #ifdef TEXTURE_HEIGHT
 groupshared float2 inverseScreenSize = float2((1.0 / TEXTURE_WIDTH), (1.0 / TEXTURE_HEIGHT));
@@ -34,15 +32,13 @@ groupshared float2 inverseScreenSize = float2(-1.0, -1.0);
 
 #define EDGE_THRESHOLD_MIN 0.0312
 #define EDGE_THRESHOLD_MAX 0.125
-
 #define ITERATIONS 7U
-groupshared static float QUALITY[7] = { 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0 };
 #define SUBPIXEL_QUALITY 0.75
 
+groupshared static float QUALITY[7] = { 1.5, 2.0, 2.0, 2.0, 2.0, 4.0, 8.0 };
 
-//static float3 kernel1D = float3(0.27901f, 0.44198f, 0.27901f);
 
-//TODO: See if this can be optimized
+
 float rgb2luma(float3 rgb)
 {
 	return sqrt(dot(rgb, float3(0.299, 0.587, 0.114)));
@@ -62,7 +58,7 @@ void FXAA_main(
 
 	float2 screen_pos = dispaThreadID.xy;
 
-	GroupMemoryBarrierWithGroupSync(); //Needed?
+	GroupMemoryBarrierWithGroupSync();
 
 	float3 colorCenter = inputTex.SampleLevel(samp, orig_uv, 0.0).rgb;
 	float3 testCenter = inputTex[screen_pos].rgb;
@@ -85,25 +81,19 @@ void FXAA_main(
 
 	float4 result = float4(1.0, 1.0, 1.0, 1.0);
 
-
-	// Early exit if no edge is DRtected in the area or if the area is really dark, 
+	// Early exit if no edge is detected in the area or if the area is really dark, 
 	// or if the TEXTURE_WIDHT/HEIGHT macros have not gotten to the shader
-	if (lumaRange < max(EDGE_THRESHOLD_MIN, (lumaMax * EDGE_THRESHOLD_MAX)) 
-		|| inverseScreenSize.x == -1.0)						//TODO: get rid of this statement and handle the macros better
+	if (lumaRange < max(EDGE_THRESHOLD_MIN, (lumaMax * EDGE_THRESHOLD_MAX)) || inverseScreenSize.x == -1.0)
 	{
 		result = float4(colorCenter, 1.0);
-		/*if (testCenter.r == colorCenter.r && testCenter.g == colorCenter.g && testCenter.b == colorCenter.b)
-		{
-			result = float4(1.0, 0.0, 0.0, 1.0);
-		}*/
 	} else {
-		// The four remaining corner lumaD
+		// The four remaining corners' lumas
 		float lumaDR = rgb2luma(inputTex[screen_pos + float2( 1.0, 1.0)].rgb);
 		float lumaDL = rgb2luma(inputTex[screen_pos + float2(-1.0, 1.0)].rgb);
 		float lumaUR = rgb2luma(inputTex[screen_pos + float2( 1.0,-1.0)].rgb);
 		float lumaUL = rgb2luma(inputTex[screen_pos + float2(-1.0,-1.0)].rgb);
 
-		// Combine the four edges' lumaD
+		// Combine the four edges' lumas
 		float lumaDU = lumaD + lumaU;
 		float lumaLR = lumaL + lumaR;
 
@@ -119,7 +109,7 @@ void FXAA_main(
 
 		bool isHorizontal = (edgeHor >= edgeVer);
 
-		// Select the two neighbouring texels' lumaD in the opposite direction of the local edge
+		// Select the two neighbouring texels' lumas in the opposite direction of the local edge
 		float luma1 = isHorizontal ? lumaD : lumaL;
 		float luma2 = isHorizontal ? lumaU : lumaR;
 		// Compute gradients in this direction
@@ -129,13 +119,13 @@ void FXAA_main(
 		// Which directinon is the steepest?
 		bool is1Steepest = abs(grad1) >= abs(grad2);
 
-		// Normalized gradient in the corresponding directino
+		// Normalized gradient in the corresponding direction
 		float gradScaled = 0.25 * max(abs(grad1), abs(grad2));
 
 		// Choose the step size (one pixel) according to the edge direction
 		float stepLength = isHorizontal ? inverseScreenSize.y : inverseScreenSize.x;
 
-		// average loma in the correct direction
+		// average luma in the correct direction
 		float lumaLocalAverage = 0.0;
 
 		if (is1Steepest)
@@ -161,13 +151,12 @@ void FXAA_main(
 
 		// Compute offset (for each iteration step) in the right directio
 		float2 offset = isHorizontal ? float2(inverseScreenSize.x, 0.0) : float2(0.0, inverseScreenSize.y);
-		// Compute UVs to explore each side of the edge. // NOTE: Something about QUALITY
+		// Compute UVs to explore each side of the edge.
 		float2 uv1 = currentUV - offset;
 		float2 uv2 = currentUV + offset;
 
-		//inputTex.SampleLevel(samp, orig_uv, 0.0).rgb;
-		// Read the lumas at both current extremities of the exploration segment, and compute the delta wrt(?) to the local average luma
-		float lumaEnd1 = rgb2luma(inputTex.SampleLevel(samp, uv1, 0.0).rgb); //TODO: do this with offsets instead of uv1 and uv2
+		// Read the lumas at both current extremities of the exploration segment, and compute the delta to the local average luma
+		float lumaEnd1 = rgb2luma(inputTex.SampleLevel(samp, uv1, 0.0).rgb);
 		float lumaEnd2 = rgb2luma(inputTex.SampleLevel(samp, uv2, 0.0).rgb);
 		lumaEnd1 -= lumaLocalAverage;
 		lumaEnd2 -= lumaLocalAverage;
@@ -245,19 +234,17 @@ void FXAA_main(
 		// Do not offset if the luma variation is incorrect
 		float finalOffset = correctVariation ? pixelOffset : 0.0;
 
-
 		// Sub-pixel shifting
 		// Full weighted average of the luma over the 3x3 neighborhood
 		float lumaAvg = (1.0 / 12.0) * (2.0 * (lumaDU + lumaLR) + lumaLC + lumaRC);
 
-		//TODO: Rename
 		// Ratio of the delta between the global average and the center luma, over the luma range in the 3x3 neighbourhood
 		float subPixelOffset1 = saturate(abs(lumaAvg - lumaC) / lumaRange);
 		float subPixelOffset2 = (-2.0 * subPixelOffset1 + 3.0) * subPixelOffset1 * subPixelOffset1;
 		// Compute a sub-pixel offset based on this delta
-		float finalSubPixelOffset = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY; //TODO: optimize
+		float finalSubPixelOffset = subPixelOffset2 * subPixelOffset2 * SUBPIXEL_QUALITY;
 
-		// Pixk the biggest of the two offsets
+		// Pick the biggest of the two offsets
 		finalOffset = max(finalOffset, finalSubPixelOffset);
 
 		float2 finalUV = orig_uv;
@@ -275,7 +262,6 @@ void FXAA_main(
 		//result = float4(1.0, 0.0, 0.0, 0.0);
 	}
 
-
 	//Flat color
 	//float4 result = float4(1.0f, 0.0f, 0.0f, 1.0f);
 
@@ -288,15 +274,6 @@ void FXAA_main(
 
 	//Thread ID
 	//float4 result = float4((screen_pos.x / 1920.0f), (screen_pos.y / 1080.0f), 0.0f, 1.0f);
-
-	//Edge filter
-	//float4 result = abs(image_row[min(pos.x+1,640)] - image_row[max(pos.x-1,0)]); 
-
-	//Horizontal blur 1x3
-	//float4 result = image_row[max(pos.x - 1, 0)] * kernel1D[0]
-	//	+ image_row[pos.x] * kernel1D[1]
-	//	+ image_row[min(pos.x + 1, 1280)] * kernel1D[2];
-
 
 	outputTex[screen_pos] = result;
 }

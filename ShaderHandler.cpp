@@ -1,7 +1,3 @@
-/*
-* TODO: Input layout
-*
-*/
 
 #include "ShaderHandler.hpp"
 
@@ -136,8 +132,8 @@ void ShaderHandler::CreateShaders(ID3D11Device* Dev)
 		
 		// no input layout since geometry is generated in the vertex shader
 
-		CompileShader(&pS, L"ComputePassPixel.hlsl", "PS_main", "ps_5_0");
-		CreateShader(Dev, pS, PIXEL_SHADER, COMPUTE_PASS);
+		CompileShader(&pS, L"ScreenPassPixel.hlsl", "PS_main", "ps_5_0");
+		CreateShader(Dev, pS, PIXEL_SHADER, SCREEN_PASS);
 
 		pS->Release();
 	}
@@ -425,10 +421,11 @@ void ShaderHandler::CreateShader(ID3D11Device* Dev, ID3DBlob* pS, ShaderType sha
 
 	case COMPUTE_PASS:
 		vertexShader = &mFullScreenVertexShader;
-		pixelShader = &mScreenPassPixelShader;
 		computeShader = &mComputeShader;
 		break;
-
+	case SCREEN_PASS:
+		pixelShader = &mScreenPassPixelShader;
+		break;
 	default:
 		break;
 	} //end passID switch
@@ -486,7 +483,7 @@ void ShaderHandler::CreateInputLayout(ID3D11Device* Dev, ID3DBlob* pS, RenderPas
 		failed = (FAILED(hr)) ? true : false;
 	}
 	break;
-	case SHADOW_PASS: // TODO: Change input layout to only include POSITION
+	case SHADOW_PASS:
 	{
 		D3D11_INPUT_ELEMENT_DESC inputDesc[] =
 		{
@@ -614,7 +611,7 @@ void ShaderHandler::CreateRenderTextures(ID3D11Device* Dev, IDXGISwapChain* Swap
 		texDesc.MipLevels = 1;
 		texDesc.ArraySize = 1;
 		texDesc.SampleDesc.Count = 1;
-		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM; //TODO: look into which file format would be most appropriate to use
+		texDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 
 		hr = Dev->CreateTexture2D(&texDesc, nullptr, &texture);
 		if (FAILED(hr))

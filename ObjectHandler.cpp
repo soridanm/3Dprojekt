@@ -60,9 +60,8 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 {
 	using DirectX::operator*;
 
-	//TODO: make std::vector of worldIdentity matrixes for each object
-	UINT32 vertexSize = sizeof(Vertex);// (passID == SHADOW_PASS) ? sizeof(DirectX::XMFLOAT3) : sizeof(Vertex);
-	UINT32 offset = 0; // (passID == SHADOW_PASS) ? ;
+	UINT32 vertexSize = sizeof(Vertex);
+	UINT32 offset = 0;
 
 	std::vector<Object>* objectArray; // pointer to one of the arrays of objects in ObjectHandler
 	if (objectType == STATIC_OBJECT)  { objectArray = &mStaticObjects; }

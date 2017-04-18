@@ -1,14 +1,11 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
-* File: Handler.hpp
+* File: ScreenPassPixel.hlsl
 *
 * File summary:
-*
-*
-*
-*
+*	Outputs a given texture to the screen.
 *
 */
 

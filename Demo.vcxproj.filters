@@ -62,9 +62,6 @@
     <FxCompile Include="ShadowVertex.hlsl">
       <Filter>Source Files\Shaders</Filter>
     </FxCompile>
-    <FxCompile Include="ComputePassPixel.hlsl">
-      <Filter>Source Files\Shaders</Filter>
-    </FxCompile>
     <FxCompile Include="FXAACompute.hlsl">
       <Filter>Source Files\Shaders</Filter>
     </FxCompile>
@@ -78,6 +75,9 @@
       <Filter>Source Files\Shaders</Filter>
     </FxCompile>
     <FxCompile Include="LightPixel.hlsl">
+      <Filter>Source Files\Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="ScreenPassPixel.hlsl">
       <Filter>Source Files\Shaders</Filter>
     </FxCompile>
   </ItemGroup>
@@ -114,17 +114,6 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <Text Include="known_issues.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="library.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-    <Text Include="TODO.txt">
-      <Filter>Resource Files</Filter>
-    </Text>
-  </ItemGroup>
-  <ItemGroup>
     <Image Include="gray-marble.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
@@ -134,16 +123,7 @@
     <Image Include="seamlessstone.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
-    <Image Include="world.bmp">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="peninsula.bmp">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
     <Image Include="heightmap.bmp">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
-    <Image Include="stone.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="grass.dds">

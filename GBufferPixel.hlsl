@@ -1,5 +1,5 @@
 /**
-* Course: DV142 - 3D-Programming
+* Course: DV1542 - 3D-Programming
 * Authors: Viktor Enfeldt, Peter Meunier
 *
 * File: GBufferPixel.hlsl
@@ -22,7 +22,6 @@ Texture2D HigherTexture	: register(t2);
 Texture2D Texture		: register(t1);
 #endif
 
-//TODO: rename and check settings
 SamplerState AnisoSampler	: register(s0);
 
 cbuffer MaterialBuffer		: register(b0)
