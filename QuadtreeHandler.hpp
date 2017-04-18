@@ -29,6 +29,17 @@ struct Node
 	DirectX::XMVECTOR boxMax;
 	Node* children[4];
 	std::vector<UINT>objects;
+
+	// Override the new and delete operators to ensure correct heap allignment
+	void* operator new(size_t i)
+	{
+		return _mm_malloc(i, 16);
+	}
+
+	void operator delete(void* p)
+	{
+		_mm_free(p);
+	}
 };
 
 class Quadtree 
