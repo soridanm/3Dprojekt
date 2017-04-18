@@ -131,9 +131,6 @@
     <Image Include="marble.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
-    <Image Include="grass.dds">
-      <Filter>Resource Files\Textures</Filter>
-    </Image>
     <Image Include="seamlessstone.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
@@ -147,6 +144,9 @@
       <Filter>Resource Files\Textures</Filter>
     </Image>
     <Image Include="stone.dds">
+      <Filter>Resource Files\Textures</Filter>
+    </Image>
+    <Image Include="grass.dds">
       <Filter>Resource Files\Textures</Filter>
     </Image>
   </ItemGroup>

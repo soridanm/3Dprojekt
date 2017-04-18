@@ -29,7 +29,7 @@ bool Engine::Initialize()
 	HRESULT hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"grass.dds", &textureGrass, &mGrassTextureView);
 	if (FAILED(hr))
 	{
-		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS grass texture from file\n\n");
+		OutputDebugString(L"\nEngine::InitializeGraphics() Failed to create DDS grass texture from file\n\n");
 		exit(-1);
 	}
 
@@ -37,7 +37,7 @@ bool Engine::Initialize()
 	hr = DirectX::CreateDDSTextureFromFile(mDev, mDevCon, L"seamlessstone.dds", &textureStone, &mStoneTextureView);
 	if (FAILED(hr))
 	{
-		OutputDebugString(L"\nGraphicsHandler::InitializeGraphics() Failed to create DDS stone texture from file\n\n");
+		OutputDebugString(L"\nEngine::InitializeGraphics() Failed to create DDS stone texture from file\n\n");
 		exit(-1);
 	}
 

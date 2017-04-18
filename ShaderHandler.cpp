@@ -684,7 +684,7 @@ void ShaderHandler::CreateSamplerStates(ID3D11Device* Dev)
 		hr = Dev->CreateSamplerState(&samplerDesc, &mGeometryPassSampler);
 		if (FAILED(hr))
 		{
-			OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create geometry pass sampler state\n\n");
+			OutputDebugString(L"\nShaderHandler::CreateShaders() Failed to create geometry pass sampler state\n\n");
 			exit(-1);
 		}
 	}
@@ -710,7 +710,7 @@ void ShaderHandler::CreateSamplerStates(ID3D11Device* Dev)
 		hr = Dev->CreateSamplerState(&shadowSamplerDesc, &mShadowSampler);
 		if (FAILED(hr))
 		{
-			OutputDebugString(L"\nGraphicsHandler::CreateShaders() Failed to create shadow pass sampler state\n\n");
+			OutputDebugString(L"\nShaderHandler::CreateShaders() Failed to create shadow pass sampler state\n\n");
 			exit(-1);
 		}
 	}
