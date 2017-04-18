@@ -129,7 +129,7 @@ float4 PS_main ( PS_IN input ) : SV_Target
 
 	// Used for the shadow map calculations
 	float4 light_view_pos = mul(float4(positionWS, 1.0), lightViewProjection); // The clip space position of the point from the light's point of view
-	float bias = 0.00001;
+	float bias = 0.000015;
 	
 	float2 shadow_tex_coord;
 	shadow_tex_coord.x = (light_view_pos.x * rcp(light_view_pos.w) * 0.5) + 0.5;  // Dividing by w gives positions as normalized device coordinates [-1, 1]
