@@ -359,9 +359,9 @@ void ShaderHandler::SetRasterizerState(ID3D11DeviceContext* DevCon, RenderPassID
 	switch (passID)
 	{
 	case GEOMETRY_PASS:
+	case SHADOW_PASS:
 		DevCon->RSSetState(mRasterizerState[0]);
 		break;
-	case SHADOW_PASS:
 	case LIGHT_PASS:
 	case COMPUTE_PASS:
 	case SCREEN_PASS:
@@ -720,38 +720,38 @@ void ShaderHandler::CreateRasterizerStates(ID3D11Device* Dev)
 {
 	HRESULT hr;
 
-	D3D11_RASTERIZER_DESC BFSstate;
-	BFSstate.FillMode = D3D11_FILL_SOLID;
-	BFSstate.CullMode = D3D11_CULL_NONE;
-	BFSstate.FrontCounterClockwise = FALSE;
-	BFSstate.DepthBias = 0;
-	BFSstate.DepthBiasClamp = 0.0f;
-	BFSstate.SlopeScaledDepthBias = 0.0f;
-	BFSstate.DepthClipEnable = TRUE;
-	BFSstate.ScissorEnable = FALSE;
-	BFSstate.MultisampleEnable = FALSE;
-	BFSstate.AntialiasedLineEnable = FALSE;
+	D3D11_RASTERIZER_DESC RSState1;
+	RSState1.FillMode = D3D11_FILL_SOLID;
+	RSState1.CullMode = D3D11_CULL_NONE;
+	RSState1.FrontCounterClockwise = FALSE;
+	RSState1.DepthBias = 0;
+	RSState1.DepthBiasClamp = 0.0f;
+	RSState1.SlopeScaledDepthBias = 0.0f;
+	RSState1.DepthClipEnable = TRUE;
+	RSState1.ScissorEnable = FALSE;
+	RSState1.MultisampleEnable = FALSE;
+	RSState1.AntialiasedLineEnable = FALSE;
 
-	hr = Dev->CreateRasterizerState(&BFSstate, &mRasterizerState[0]);
+	hr = Dev->CreateRasterizerState(&RSState1, &mRasterizerState[0]);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nShaderHandler::CreateRasterizerStates() Failed to create first rasterizer state\n\n");
 		exit(-1);
 	}
 
-	D3D11_RASTERIZER_DESC noBFSstate;
-	noBFSstate.FillMode = D3D11_FILL_SOLID;
-	noBFSstate.CullMode = D3D11_CULL_BACK;
-	noBFSstate.FrontCounterClockwise = FALSE;
-	noBFSstate.DepthBias = 0;
-	noBFSstate.DepthBiasClamp = 0.0f;
-	noBFSstate.SlopeScaledDepthBias = 0.0f;
-	noBFSstate.DepthClipEnable = TRUE;
-	noBFSstate.ScissorEnable = FALSE;
-	noBFSstate.MultisampleEnable = FALSE;
-	noBFSstate.AntialiasedLineEnable = FALSE;
+	D3D11_RASTERIZER_DESC RSState2;
+	RSState2.FillMode = D3D11_FILL_SOLID;
+	RSState2.CullMode = D3D11_CULL_BACK;
+	RSState2.FrontCounterClockwise = FALSE;
+	RSState2.DepthBias = 0;
+	RSState2.DepthBiasClamp = 0.0f;
+	RSState2.SlopeScaledDepthBias = 0.0f;
+	RSState2.DepthClipEnable = TRUE;
+	RSState2.ScissorEnable = FALSE;
+	RSState2.MultisampleEnable = FALSE;
+	RSState2.AntialiasedLineEnable = FALSE;
 
-	hr = Dev->CreateRasterizerState(&noBFSstate, &mRasterizerState[1]);
+	hr = Dev->CreateRasterizerState(&RSState2, &mRasterizerState[1]);
 	if (FAILED(hr))
 	{
 		OutputDebugString(L"\nShaderHandler::CreateRasterizerStates() Failed to create second rasterizer state\n\n");
