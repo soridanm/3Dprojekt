@@ -28,7 +28,7 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 	CreateMaterialConstantBuffers(Dev);
 
 
-	mQuadtree = Quadtree(DirectX::XMVectorZero(), DirectX::XMVectorSet(WORLD_WIDTH, 50.0f, WORLD_DEPTH, 0), 1);
+	mQuadtree = Quadtree(DirectX::XMVectorZero(), DirectX::XMVectorSet(static_cast<float>(WORLD_WIDTH), 50.0f, static_cast<float>(WORLD_DEPTH), 0.0f), 1);
 	InsertToQuadtree();
 
 }
@@ -188,7 +188,7 @@ void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
 
 	// Change the scale of the textures.
 	DirectX::XMVECTOR temp;
-	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
+	for (int i = 0; i < NUMBER_OF_VERTICES; i++)
 	{
 		using DirectX::operator*;
 		temp = DirectX::XMLoadFloat2(&mapVertex[i].texCoord);
@@ -203,7 +203,7 @@ void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
 	float vecX, vecY, vecZ;
 	DirectX::XMVECTOR edge1 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	DirectX::XMVECTOR edge2 = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
-	for (unsigned int i = 0; i < NUMBER_OF_FACES; i++)
+	for (int i = 0; i < NUMBER_OF_FACES; i++)
 	{
 		vecX = mapVertex[drawOrder[(i * 3)]].pos.x - mapVertex[drawOrder[(i * 3) + 2]].pos.x;
 		vecY = mapVertex[drawOrder[(i * 3)]].pos.y - mapVertex[drawOrder[(i * 3) + 2]].pos.y;
@@ -228,7 +228,7 @@ void ObjectHandler::CreateHeightMap(ID3D11Device* Dev)
 	DirectX::XMVECTOR averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 	DirectX::XMFLOAT3 avgNorm = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 
-	for (unsigned int i = 0; i < NUMBER_OF_VERTICES; i++)
+	for (int i = 0; i < NUMBER_OF_VERTICES; i++)
 	{
 		averageNormal = DirectX::XMVectorSet(0.0f, 0.0f, 0.0f, 0.0f);
 		size_t facesUsing = vertexFaces[i].size();
@@ -303,7 +303,7 @@ void ObjectHandler::MoveStaticObjects()
 	using DirectX::operator*;
 
 	float scalingFactor = 2.0f;
-	for (int i = 0; i < mStaticObjects.size(); i++) 
+	for (size_t i = 0; i < mStaticObjects.size(); i++) 
 	{
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
@@ -866,7 +866,7 @@ bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevC
 	for (int i = 0; i < object.nrOfMeshSubsets; i++)
 	{
 		bool hasMat = false;
-		for (int j = 0; j < mMaterialArray.size(); j++)
+		for (size_t j = 0; j < mMaterialArray.size(); j++)
 		{
 			int int1 = i;
 			int int2 = j;

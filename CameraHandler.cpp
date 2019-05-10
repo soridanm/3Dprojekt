@@ -27,7 +27,7 @@ void CameraHandler::UpdateCamera()
 	using DirectX::operator+;
 
 	// Limits the camera's pitch so that it doesn't do front-/backflips
-	mCamPitch = std::min<float>(std::max<float>(mCamPitch, -1.57), 1.57);
+	mCamPitch = std::min<float>(std::max<float>(mCamPitch, -1.57f), 1.57f);
 
 	DirectX::XMMATRIX CAM_ROT_MAT;
 	// Transforms the camera's target
@@ -163,31 +163,33 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 
 	mSpeed = (keyboardState[DIK_LSHIFT] & 0x80) ? 50.0f : 15.0f;
 
+    float fTime = static_cast<float>(time);
+
 	// WASD movement
 	if (keyboardState[DIK_W] & 0x80) 
 	{
-		mBackForwardMovement += mSpeed*time;
+		mBackForwardMovement += mSpeed*fTime;
 	}
 	if (keyboardState[DIK_A] & 0x80) 
 	{
-		mLeftRightMovement -= mSpeed*time;
+		mLeftRightMovement -= mSpeed*fTime;
 	}
 	if (keyboardState[DIK_S] & 0x80) 
 	{
-		mBackForwardMovement -= mSpeed*time;
+		mBackForwardMovement -= mSpeed*fTime;
 	}
 	if (keyboardState[DIK_D] & 0x80) 
 	{
-		mLeftRightMovement += mSpeed*time;
+		mLeftRightMovement += mSpeed*fTime;
 	}
 	// Up-Down movement
 	if (keyboardState[DIK_SPACE] & 0x80) 
 	{
-		mUpDownMovement += mSpeed*time;
+		mUpDownMovement += mSpeed*fTime;
 	}
 	if (keyboardState[DIK_C] & 0x80) 
 	{
-		mUpDownMovement -= mSpeed*time;
+		mUpDownMovement -= mSpeed*fTime;
 	}
 	// Switch between freemove and following the terrain
 	if (keyboardState[DIK_1] & 0x80) 
