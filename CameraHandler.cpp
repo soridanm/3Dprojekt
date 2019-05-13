@@ -158,7 +158,8 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	// Closes the program
 	if (keyboardState[DIK_ESCAPE] & 0x80) 
 	{
-		PostMessage(hwnd, WM_DESTROY, 0, 0);
+		//PostMessage(hwnd, WM_DESTROY, 0, 0);
+		PostMessage(hwnd, WM_CLOSE, 0, 0); // To prevent other applications from going fullscreen
 	}
 
 	mSpeed = (keyboardState[DIK_LSHIFT] & 0x80) ? 50.0f : 15.0f;

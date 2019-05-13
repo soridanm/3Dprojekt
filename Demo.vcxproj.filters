@@ -22,6 +22,15 @@
     <Filter Include="Resource Files\Textures">
       <UniqueIdentifier>{2b165103-11b6-4218-a235-2e853af89e83}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\AudioEngine">
+      <UniqueIdentifier>{5a88928f-c07a-48c2-8f42-90169119244a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\AudioEngine">
+      <UniqueIdentifier>{b323b05c-f32a-45af-bde8-19e022bc37ce}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files\Sounds">
+      <UniqueIdentifier>{8cc807d6-0677-48e5-9a82-f5ff56a962fa}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -50,6 +59,12 @@
     </ClCompile>
     <ClCompile Include="ShaderHandler.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioEngine\AudioManager.cpp">
+      <Filter>Source Files\AudioEngine</Filter>
+    </ClCompile>
+    <ClCompile Include="AudioEngine\Sound.cpp">
+      <Filter>Source Files\AudioEngine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -112,6 +127,18 @@
     <ClInclude Include="GlobalSettings.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="AudioEngine\AudioManager.hpp">
+      <Filter>Header Files\AudioEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioEngine\Channel.hpp">
+      <Filter>Header Files\AudioEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioEngine\globals.hpp">
+      <Filter>Header Files\AudioEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="AudioEngine\Sound.hpp">
+      <Filter>Header Files\AudioEngine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Image Include="gray-marble.dds">
@@ -143,5 +170,10 @@
     <Object Include="cube.obj">
       <Filter>Resource Files\Models and materials</Filter>
     </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Media Include="Sounds\1kHz.wav">
+      <Filter>Resource Files\Sounds</Filter>
+    </Media>
   </ItemGroup>
 </Project>

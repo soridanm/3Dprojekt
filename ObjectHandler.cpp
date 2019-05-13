@@ -63,7 +63,7 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	UINT32 vertexSize = sizeof(Vertex);
 	UINT32 offset = 0;
 
-	std::vector<Object>* objectArray; // pointer to one of the arrays of objects in ObjectHandler
+	std::vector<Object>* objectArray = nullptr; // pointer to one of the arrays of objects in ObjectHandler
 	if (objectType == STATIC_OBJECT)  { objectArray = &mStaticObjects; }
 	if (objectType == DYNAMIC_OBJECT) { objectArray = &mDynamicObjects; }
 
