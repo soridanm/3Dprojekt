@@ -81,11 +81,19 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 
 		DirectX::XMMATRIX scaleMatrix    = DirectX::XMMatrixScaling(scale, scale, scale);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
-		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f);
-
+		
+		float3 pos = { 100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f };
+		
+		//DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f);
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+		//DirectX::
 		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
+
+		// Audio stuff
+		(*objectArray)[objectIndex].mUpdatedSinceLastFrame = true;
+		(*objectArray)[objectIndex].mPosition = pos;
 	}
 
 	if (objectType == STATIC_OBJECT)
@@ -307,14 +315,22 @@ void ObjectHandler::MoveStaticObjects()
 	{
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
-		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(
+		
+		float3 pos = { 
 			10.0f * (i / 20 + 1.0f),
 			WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f,
-			10.0f * (i % 20 + 1.0f));
+			10.0f * (i % 20 + 1.0f) 
+		};
+		
+		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
 
 		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
 
 		mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
+
+		// Audio stuff
+		mStaticObjects[i].mUpdatedSinceLastFrame = true;
+		mStaticObjects[i].mPosition = pos;
 	}
 }
 
@@ -337,7 +353,11 @@ void ObjectHandler::InsertToQuadtree()
 *===========================================================================*/
 
 // The width and height of the .bmp file must be multiples of 4
-bool ObjectHandler::LoadObjectModel(ID3D11Device* Dev, ID3D11DeviceContext* DevCon, std::wstring filename, ObjectType objectType, bool isRHCoordSys, bool computeNormals)
+bool ObjectHandler::LoadObjectModel(
+	ID3D11Device* Dev, ID3D11DeviceContext* DevCon, 
+	std::wstring filename, ObjectType objectType, 
+	bool isRHCoordSys, bool computeNormals,
+	bool loopAudio)
 {
 	std::wifstream fileIn(filename.c_str());    //Open file
 	std::wstring meshMatLib;                    //String to hold the obj material library filename

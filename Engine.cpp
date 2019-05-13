@@ -12,6 +12,41 @@ Engine::~Engine()
 
 bool Engine::Initialize()
 {
+	// AudioManager
+	// Create and initialize a sound info structure
+	FMOD_CREATESOUNDEXINFO info;
+	memset(&info, 0, sizeof(FMOD_CREATESOUNDEXINFO));
+	info.cbsize = sizeof(FMOD_CREATESOUNDEXINFO);
+
+	// Specify sampling rate, format, and number of channels to use
+	// In this case, 44100 Hz, signed 16-bit PCM, Stereo
+	info.defaultfrequency = 44100;
+	info.format = FMOD_SOUND_FORMAT_PCM16;
+	info.numchannels = 2;
+
+	// Size of the entire sound in bytes. Since the sound will be
+	// looping, it does not need to be too long. In this example
+	// we will be using the equivalent of a 5 seconds sound.
+	// i.e. sampleRate * channels * bytesPerSample * durationInSeconds
+	info.length = 44100 * 2 * sizeof(signed short) * 5;
+
+	// Number of samples we will be submitting at a time
+	// A smaller value results in less latency between operations
+	// but if it is too small we get problems in the sound
+	// In this case we will aim for a latency of 100ms
+	// i.e. sampleRate * durationInSeconds = 44100 * 0.1 = 4410
+	info.decodebuffersize = 4410/2;
+
+	// Specify the callback function that will provide the audio data
+	info.pcmreadcallback = &AudioManager::WriteSoundData;
+	info.userdata = &mAudioManager; // Get access to the audiomanager
+
+	mAudioManager.Init(info);
+
+	// Load all sounds
+	mAudioManager.Load("Sounds/1kHz.wav");
+
+
 	mObjectHandler.InitializeObjects(mDev, mDevCon);
 
 	gCameraHandler.InitializeCamera(mDev, mDevCon, mObjectHandler.getWorldDepth(), mObjectHandler.getWorldWidth(), mObjectHandler.getWorldHeight());
@@ -44,6 +79,26 @@ bool Engine::Initialize()
 	textureGrass->Release();
 	textureStone->Release();
 
+
+
+
+
+
+
+
+	// Add Audio to the objects
+
+	std::vector<Object> *objects = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
+
+	mAudioManager.Play("Sounds/1kHz.wav", 1.0f, 1.0f, true, &objects->at(1));
+	
+	
+	mAudioManager.Play("Sounds/1kHz.wav", 1.0f, 1.7f, true, &objects->at(9));
+
+
+
+
+
 	return true;
 }
 
@@ -51,6 +106,8 @@ bool Engine::Render()
 {
 	//construct mFrustum again every frame
 	mObjectHandler.mQuadtree.mFrustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
+
+	UpdateAudio();
 
 	RenderGeometryPass();
 	RenderShadowPass();
@@ -152,6 +209,9 @@ void Engine::RenderGeometryPass()
 		objInd = IndicesToDraw[i];
 		for (int j = 0; j < (*objectArray)[objInd].GetNrOfMeshSubsets(); j++)
 		{
+			// Audio stuff
+			(*objectArray)[i].mUpdatedSinceLastFrame = false;
+
 			mObjectHandler.SetObjectBufferWithIndex(mDevCon, GEOMETRY_PASS, STATIC_OBJECT, objInd, j);
 
 			int indexStart = (*objectArray)[objInd].meshSubsetIndexStart[j];
@@ -167,6 +227,10 @@ void Engine::RenderGeometryPass()
 	{
 		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
 		{
+			// Audio stuff
+			(*objectArray)[i].mUpdatedSinceLastFrame = false;
+
+
 			mObjectHandler.SetObjectBufferWithIndex(mDevCon, GEOMETRY_PASS, DYNAMIC_OBJECT, i, j);
 			
 			int indexStart = (*objectArray)[i].meshSubsetIndexStart[j];
@@ -276,3 +340,13 @@ void Engine::UpdateInput(HWND &wndHandle)
 	gCameraHandler.DetectInput(mTimeHandler.GetFrameTime(), wndHandle);
 }
 
+void Engine::UpdateAudio()
+{
+	
+	// if camera moved
+	mAudioManager.Update(0.0f, true, gCameraHandler.GetCameraPosition());
+
+	//else
+	//mAudioManager.Update(0.0f, false);
+
+}

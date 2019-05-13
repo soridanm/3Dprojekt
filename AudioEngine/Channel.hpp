@@ -2,6 +2,9 @@
 
 #include "Sound.hpp"
 #include "globals.hpp"
+
+#include "../ObjectHandler.hpp"
+
 #include <algorithm>
 
 constexpr float MIN_PITCH = 0.25f;
@@ -10,8 +13,8 @@ constexpr float MAX_PITCH = 4.0f;
 class Channel
 {
 public:
-	Channel(float volume = 1.0f, float pitch = 1.0f, bool loop = false)
-		: mSound(0), mPosition(0)
+	Channel(float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr)
+		: mSound(0), mPosition(0), mObject(object)
 	{
 		SetVolume(volume);
 		SetPitch(pitch);
@@ -20,6 +23,18 @@ public:
 
 	~Channel() {}
 
+	bool GetObjectUpdated() const
+	{
+		if (mObject) {
+			return mObject->GetUpdatedSinceLastFrame();
+		} 
+		return false;
+	}
+
+	float3 GetObjectPosition() const
+	{
+		return mObject->mPosition;
+	}
 
 	bool GetLoop() const { return mLoop; }
 	void SetLoop(bool loop) { mLoop = loop; }
@@ -29,6 +44,15 @@ public:
 
 	float GetPitch() const { return mPitch; }
 	void SetPitch(float pitch) { mPitch = std::clamp<float>(pitch, MIN_PITCH, MAX_PITCH); }
+
+
+	// todo change falloff function
+	void SetVolumeBasedOnDistance(float dist)
+	{
+		float vol = 1.0f / (1.0f + (dist / 10.f));
+		SetVolume(vol);
+	}
+
 
 	void Play(Sound* sound)
 	{
@@ -45,6 +69,15 @@ public:
 	{
 		// If there is no sound assigned to the channel do nothing  
 		if (mSound == 0) return;
+
+
+		// todo update the volume based on distance between the camera and the object
+		if (mObject) {
+
+
+
+		}
+
 
 		// We need to write "count" samples to the "data" array
 		// Since output is stereo it is easier to advance in pairs
@@ -85,21 +118,11 @@ public:
 	}
 
 
-	//// globals
-	//static Channel& getInstance()
-	//{
-	//	static Channel instance; // guaranteed to be destroyed. Instantiated on first use.
-	//	return instance;
-	//}
-
-
 private:
+	Object* mObject = nullptr; // The object associated with the sound
 
-	
-	//Channel(Channel const&); //don't implement
-	//void operator=(Channel const&); //don't implement
 
-private:
+
 	Sound* mSound;
 	bool mLoop;
 	float mVolume;

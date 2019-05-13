@@ -21,6 +21,9 @@
 
 #include "QuadtreeHandler.hpp"	
 
+#include "AudioEngine/globals.hpp"
+
+
 enum ObjectType : int
 {
 	DYNAMIC_OBJECT,
@@ -75,6 +78,11 @@ struct cPerObjectBuffer
 };
 static_assert((sizeof(cPerObjectBuffer) % 16) == 0, "cPerObjectBuffer size must be 16-byte aligned");
 
+
+
+
+
+
 struct Object
 {
 	//From .obj
@@ -91,7 +99,12 @@ struct Object
 	cPerObjectBuffer objectBufferData = cPerObjectBuffer();
 	ID3D11Buffer* perObjectWorldBuffer = nullptr;
 
+
+	bool mUpdatedSinceLastFrame = true;
+	float3 mPosition;
+
 	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
+	bool GetUpdatedSinceLastFrame() { return mUpdatedSinceLastFrame; }
 };
 
 // Materials will usually be taken from the .mtl file but the heightmap will use the Grass preset
@@ -142,7 +155,8 @@ private:
 		std::wstring filename,
 		ObjectType objectType,
 		bool isRHCoordSys,
-		bool computeNormals);
+		bool computeNormals,
+		bool loopAudio = true);
 
 	bool LoadHeightMap(char* filename, HeightMapInfo &hminfo);
 

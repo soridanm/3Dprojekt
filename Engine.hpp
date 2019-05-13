@@ -23,6 +23,8 @@
 #include "Camerahandler.hpp"
 #include "Objecthandler.hpp"
 
+#include "AudioEngine/AudioManager.hpp"
+
 #include <vector>
 #include <algorithm>
 
@@ -38,6 +40,8 @@ public:
 	HRESULT CreateDirect3DContext(HWND &wndHandle);
 
 	void UpdateInput(HWND &wndHandle);
+
+	void UpdateAudio();
 
 	// Public since they're used in main.cpp
 	CameraHandler gCameraHandler = CameraHandler();
@@ -61,6 +65,9 @@ private:
 	ObjectHandler mObjectHandler = ObjectHandler();
 	ShaderHandler mShaderHandler = ShaderHandler();
 	LightHandler  mLightHandler  = LightHandler();
+
+	AudioManager  mAudioManager;
+
 };
 
 

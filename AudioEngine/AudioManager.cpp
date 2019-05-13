@@ -35,8 +35,17 @@ AudioManager::~AudioManager()
 	system = 0;
 }
 
-void AudioManager::Update(float elapsed)
+void AudioManager::Update(float elapsed, bool cameraUpdated, DirectX::XMFLOAT4 cameraPos)
 {
+	// Update sound volumes
+	for (auto &c : mChannels) {
+		if (cameraUpdated || c.GetObjectUpdated()) {
+			float dist = GetDistance({ cameraPos.x, cameraPos.y, cameraPos.z }, c.GetObjectPosition());
+
+			c.SetVolumeBasedOnDistance(dist);
+		}
+	}
+
 	system->update();
 }
 
@@ -66,7 +75,7 @@ void AudioManager::Load(const std::string& path) { LoadOrStream(path, false); }
 
 void AudioManager::Stream(const std::string& path) { LoadOrStream(path, true); }
 
-void AudioManager::Play(const std::string& path, float volume, float pitch, bool loop)
+void AudioManager::Play(const std::string& path, float volume, float pitch, bool loop, Object *object)
 {
 	// Search for the sound
 	SoundMap::iterator sound = sounds.find(path);
@@ -77,7 +86,7 @@ void AudioManager::Play(const std::string& path, float volume, float pitch, bool
 
 
 	//Channel::getInstance().Play(sound->second);
-	Channel c(volume, pitch, loop);
+	Channel c(volume, pitch, loop, object);
 	c.Play(sound->second);
 	mChannels.push_back(c);
 

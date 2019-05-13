@@ -29,6 +29,18 @@ inline T SafeAdd(T a, T b)
 	return (b < 0) ? (((min - b) < a) ? (a+b) : min) : ((max - a) > b) ? (a + b) : max;
 }
 
+typedef union
+{
+	struct { float x, y, z; };
+	struct { float r, g, b; };
+} float3;
+
+
+inline float GetDistance(float3 a, float3 b)
+{
+	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
+}
+
 
 static const int testData = 432;
 

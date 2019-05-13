@@ -5,12 +5,18 @@
 #include "Channel.hpp"
 #include "Sound.hpp"
 
+#include "..\ObjectHandler.hpp"
+
+
 #include <fmod.hpp>
 #include <fmod_errors.h>
 
 #include <iostream>
 #include <map>
 #include <vector>
+
+
+
 
 
 
@@ -24,6 +30,7 @@ inline void ExitOnError(FMOD_RESULT result)
 		exit(-1);
 	}
 }
+
 
 
 
@@ -64,10 +71,10 @@ public:
 		return FMOD_OK;
 	}
 
-	void Update(float elapsed);
+	void Update(float elapsed, bool cameraUpdated, DirectX::XMFLOAT4 cameraPos = DirectX::XMFLOAT4{});
 	void Load(const std::string& path);
 	void Stream(const std::string& path);
-	void Play(const std::string& path, float volume = 1.0f, float pitch = 1.0f, bool loop = false);
+	void Play(const std::string& path, float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr);
 
 	AudioManager();
 	~AudioManager();
@@ -103,7 +110,7 @@ private:
 
 	/// low-level audio
 
-	// cound = 44100 Hz * 1 second * 1 channel
+	// sound = 44100 Hz * 1 second * 1 channel
 	//PCM16 data[44100];
 
 
