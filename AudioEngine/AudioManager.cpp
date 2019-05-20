@@ -40,17 +40,14 @@ void AudioManager::Update(float elapsed, bool cameraUpdated, DirectX::XMFLOAT4 c
 	// Update sound volumes
 	for (auto &c : mChannels) {
 		// todo background audio
-		if (cameraUpdated || c.GetObjectUpdated()) {
+		if (c.HasObject() && (cameraUpdated || c.GetObjectUpdated())) {
 			float3 objPos = c.GetObjectPosition();
 			float dist = GetDistance({ camPos.x, camPos.y, camPos.z }, objPos);
 
-			// y is up so only x and z coords are used for panning
-			float pan = GetPan({ camPos.x, camPos.z }, { camRight.x, camRight.z }, { objPos.x, objPos.z });
-
 			c.SetVolumeBasedOnDistance(dist);
 
-			c.SetPan(pan);
-			c.UpdatePan();
+			// y is up so only x and z coords are used for panning
+			c.CalcAndSetPan({ camPos.x, camPos.z }, { camRight.x, camRight.z }, { objPos.x, objPos.z });
 		}
 	}
 

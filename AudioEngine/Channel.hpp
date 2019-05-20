@@ -10,17 +10,35 @@
 constexpr float MIN_PITCH = 0.25f;
 constexpr float MAX_PITCH = 4.0f;
 
+struct volumePoint
+{
+	float volume;
+	float leftGain;
+	float rightGain;
 
+	volumePoint(float v = 0.0f, float l = 0.0f, float r = 0.0f) : volume(v), leftGain(l), rightGain(r) {}
+
+	inline volumePoint operator+(const volumePoint& rh) const
+	{
+		return volumePoint(volume + rh.volume, leftGain + rh.leftGain, rightGain + rh.rightGain);
+	}
+
+	inline volumePoint operator*(const float& m) const
+	{
+		return volumePoint(volume*m, leftGain*m, rightGain*m);
+	}
+};
 
 class Channel
 {
 public:
 	Channel(float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr)
-		: mSound(0), mPosition(0), mObject(object), mPan(0.0f)
+		: mSound(0), mPosition(0), mObject(object), mPan(0.0f), mHasObject((object != nullptr))
 	{
 		SetVolume(volume);
 		SetPitch(pitch);
 		SetLoop(loop);
+		UpdatePan();
 	}
 
 	~Channel() {}
@@ -38,29 +56,47 @@ public:
 		return mObject->mPosition;
 	}
 
+	bool HasObject() const { return mHasObject; }
+
 	bool GetLoop() const { return mLoop; }
 	void SetLoop(bool loop) { mLoop = loop; }
 
-	float GetVolume() const { return mVolume; }
-	void SetVolume(float volume) { mVolume = std::clamp<float>(volume, 0.0f, 1.0f); }
+	float GetVolume() const { return mVolPoint.volume; }
+
+	void SetVolume(float volume) 
+	{
+		mVolPoint.volume = std::clamp<float>(volume, 0.0f, 1.0f);
+	}
 
 	float GetPitch() const { return mPitch; }
+
 	void SetPitch(float pitch) { mPitch = std::clamp<float>(pitch, MIN_PITCH, MAX_PITCH); }
 
 	float GetPan() const { return mPan; }
-	void SetPan(float val)
+
+	void CalcAndSetPan(float2 camPos, float2 camRight, float2 objPos)
 	{
-		mPan = std::clamp<float>(val, -1.0f, 1.0f);
+		float2 toObj = objPos - camPos;
+		toObj.normalize();
+		camRight.normalize();
+
+		// [0,pi]
+		float angle = acos(camRight.dot(toObj));
+
+		// [1,-1]
+		float pan = -(((angle*2.0f) / PI) - 1.0f);
+
+		mPan = std::clamp<float>(pan, -1.0f, 1.0f);
 		UpdatePan();
 	}
+
 
 	// Constant power panning
 	void UpdatePan()
 	{
 		const double angle = mPan * PI_4;
-		mLeftGain  = static_cast<float>(SQRT2_2 * (cos(angle) - sin(angle)));
-		mRightGain = static_cast<float>(SQRT2_2 * (cos(angle) + sin(angle)));
-
+		mVolPoint.leftGain = static_cast<float>(SQRT2_2 * (cos(angle) - sin(angle)));
+		mVolPoint.rightGain = static_cast<float>(SQRT2_2 * (cos(angle) + sin(angle)));
 	}
 
 	// todo change falloff function
@@ -87,16 +123,6 @@ public:
 		// If there is no sound assigned to the channel do nothing  
 		if (mSound == 0) return;
 
-
-		// todo update the volume based on distance between the camera and the object
-		if (mObject) {
-
-
-
-		}
-
-		// todo interpolate between previous pan and gain values to prevent clipping sounds
-
 		// We need to write "count" samples to the "data" array
 		// Since output is stereo it is easier to advance in pairs
 		for (int i = 0; i < count; i += 2) {
@@ -111,46 +137,43 @@ public:
 				}
 			}
 
+			// Fade between old values and new ones to prevent popping
+			volumePoint vp;
+
+			if (mHasObject) {
+				float fade = static_cast<float>(i) / static_cast<float>(count-2);
+				vp = (mVolPoint * fade) + (mOldVolPoint * (1.0f - fade));
+			} else {
+				vp = mVolPoint;
+			}
+
 			// Read value from the sound data at the current position
-
-
-
-
-			//PCM16 value = static_cast<PCM16>(mSound->data[static_cast<int>(mPosition)] * mVolume);
-			PCM16 value = static_cast<PCM16>(lineInter(mSound->data, mPosition) * mVolume);
-
-			
+			const PCM16 value = static_cast<PCM16>(lineInter(mSound->data, mPosition) * vp.volume);
 
 			// Write value to both the left and right channels
-			//data[i]     += static_cast<PCM16>(value * gVolume);
-			//data[i + 1] += static_cast<PCM16>(value * gVolume);
-			
-			PCM16 t = SafeAdd(data[i], static_cast<PCM16>(value * gPerSoundGain));
-
-			data[i]     = SafeAdd(data[i], static_cast<PCM16>(value * gPerSoundGain * mLeftGain));
-			data[i + 1] = SafeAdd(data[i + 1], static_cast<PCM16>(value * gPerSoundGain * mRightGain));
+			data[i]     = SafeAdd(data[i],     static_cast<PCM16>(value * gPerSoundGain * vp.leftGain));
+			data[i + 1] = SafeAdd(data[i + 1], static_cast<PCM16>(value * gPerSoundGain * vp.rightGain));
 
 			// Advance the position by one sample
 			mPosition += mPitch;
 		}
+
+		mOldVolPoint = mVolPoint;
 	}
 
 
 private:
 	Object* mObject = nullptr; // The object associated with the sound
-
-
-
+	const bool mHasObject;
 	Sound* mSound;
+
 	bool mLoop;
-	float mVolume;
-
-	float mLeftGain;
-	float mRightGain;
-	
-	float mPan;
-
-
 	float mPosition;
 	float mPitch;
+
+	float mPan;
+
+	volumePoint mVolPoint;
+	volumePoint mOldVolPoint = { 0.0f, 0.0f, 0.0f };
+
 };

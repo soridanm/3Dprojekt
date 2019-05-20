@@ -35,7 +35,8 @@ bool Engine::Initialize()
 	// but if it is too small we get problems in the sound
 	// In this case we will aim for a latency of 100ms
 	// i.e. sampleRate * durationInSeconds = 44100 * 0.1 = 4410
-	info.decodebuffersize = 4410;
+	//info.decodebuffersize = 4410;
+	info.decodebuffersize = DECODE_BUFFER_SIZE;
 
 	// Specify the callback function that will provide the audio data
 	info.pcmreadcallback = &AudioManager::WriteSoundData;
@@ -94,6 +95,9 @@ bool Engine::Initialize()
 	
 	
 	mAudioManager.Play("Sounds/1kHz.wav", 1.0f, 1.7f, true, &objects->at(9));
+	
+	
+	mAudioManager.Play("Sounds/1kHz.wav", 0.4f, 0.7f, true);
 
 
 
