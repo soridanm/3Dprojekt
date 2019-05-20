@@ -35,7 +35,7 @@ bool Engine::Initialize()
 	// but if it is too small we get problems in the sound
 	// In this case we will aim for a latency of 100ms
 	// i.e. sampleRate * durationInSeconds = 44100 * 0.1 = 4410
-	info.decodebuffersize = 4410/2;
+	info.decodebuffersize = 4410;
 
 	// Specify the callback function that will provide the audio data
 	info.pcmreadcallback = &AudioManager::WriteSoundData;

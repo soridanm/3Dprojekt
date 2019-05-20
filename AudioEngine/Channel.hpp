@@ -95,6 +95,7 @@ public:
 
 		}
 
+		// todo interpolate between previous pan and gain values to prevent clipping sounds
 
 		// We need to write "count" samples to the "data" array
 		// Since output is stereo it is easier to advance in pairs
