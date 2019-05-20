@@ -10,11 +10,13 @@
 constexpr float MIN_PITCH = 0.25f;
 constexpr float MAX_PITCH = 4.0f;
 
+
+
 class Channel
 {
 public:
 	Channel(float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr)
-		: mSound(0), mPosition(0), mObject(object)
+		: mSound(0), mPosition(0), mObject(object), mPan(0.0f)
 	{
 		SetVolume(volume);
 		SetPitch(pitch);
@@ -45,6 +47,21 @@ public:
 	float GetPitch() const { return mPitch; }
 	void SetPitch(float pitch) { mPitch = std::clamp<float>(pitch, MIN_PITCH, MAX_PITCH); }
 
+	float GetPan() const { return mPan; }
+	void SetPan(float val)
+	{
+		mPan = std::clamp<float>(val, -1.0f, 1.0f);
+		UpdatePan();
+	}
+
+	// Constant power panning
+	void UpdatePan()
+	{
+		const double angle = mPan * PI_4;
+		mLeftGain  = static_cast<float>(SQRT2_2 * (cos(angle) - sin(angle)));
+		mRightGain = static_cast<float>(SQRT2_2 * (cos(angle) + sin(angle)));
+
+	}
 
 	// todo change falloff function
 	void SetVolumeBasedOnDistance(float dist)
@@ -109,8 +126,8 @@ public:
 			
 			PCM16 t = SafeAdd(data[i], static_cast<PCM16>(value * gPerSoundGain));
 
-			data[i]     = SafeAdd(data[i], static_cast<PCM16>(value * gPerSoundGain));
-			data[i + 1] = SafeAdd(data[i + 1], static_cast<PCM16>(value * gPerSoundGain));
+			data[i]     = SafeAdd(data[i], static_cast<PCM16>(value * gPerSoundGain * mLeftGain));
+			data[i + 1] = SafeAdd(data[i + 1], static_cast<PCM16>(value * gPerSoundGain * mRightGain));
 
 			// Advance the position by one sample
 			mPosition += mPitch;
@@ -126,7 +143,13 @@ private:
 	Sound* mSound;
 	bool mLoop;
 	float mVolume;
+
+	float mLeftGain;
+	float mRightGain;
 	
+	float mPan;
+
+
 	float mPosition;
 	float mPitch;
 };

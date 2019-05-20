@@ -343,8 +343,8 @@ void Engine::UpdateInput(HWND &wndHandle)
 void Engine::UpdateAudio()
 {
 	
-	// if camera moved
-	mAudioManager.Update(0.0f, true, gCameraHandler.GetCameraPosition());
+	// todo only if camera moved
+	mAudioManager.Update(0.0f, true, gCameraHandler.GetCameraPosition(), gCameraHandler.GetCameraRight());
 
 	//else
 	//mAudioManager.Update(0.0f, false);

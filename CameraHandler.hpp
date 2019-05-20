@@ -31,6 +31,7 @@ public:
 	bool BindShadowMapPerFrameConstantBuffer(ID3D11DeviceContext* DevCon, RenderPassID passID);
 	
 	DirectX::XMFLOAT4   GetCameraPosition();
+	DirectX::XMFLOAT4   GetCameraRight();
 	DirectX::XMFLOAT4X4 GetProjection();
 	DirectX::XMFLOAT4X4 GetView();
 

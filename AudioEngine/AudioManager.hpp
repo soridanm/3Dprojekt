@@ -71,7 +71,9 @@ public:
 		return FMOD_OK;
 	}
 
-	void Update(float elapsed, bool cameraUpdated, DirectX::XMFLOAT4 cameraPos = DirectX::XMFLOAT4{});
+	void Update(float elapsed, bool cameraUpdated, 
+		DirectX::XMFLOAT4 camPos = DirectX::XMFLOAT4(), 
+		DirectX::XMFLOAT4 camRight = DirectX::XMFLOAT4());
 	void Load(const std::string& path);
 	void Stream(const std::string& path);
 	void Play(const std::string& path, float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr);
