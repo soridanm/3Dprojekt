@@ -15,14 +15,6 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 {
 	CreateHeightMap(Dev);
 	LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, false);
-	//LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false);
-
-	/*for (int i = 0; i < 400; i++) 
-	{
-		LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false);
-	}*/
-
-
 
 	for (int i = 0; i < 2; i++) {
 		LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false);
