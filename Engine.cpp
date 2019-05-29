@@ -33,10 +33,7 @@ bool Engine::Initialize()
 	// Number of samples we will be submitting at a time
 	// A smaller value results in less latency between operations
 	// but if it is too small we get problems in the sound
-	// In this case we will aim for a latency of 100ms
-	// i.e. sampleRate * durationInSeconds = 44100 * 0.1 = 4410
-	//info.decodebuffersize = 4410;
-	info.decodebuffersize = DECODE_BUFFER_SIZE;
+	info.decodebuffersize = 2048; // 2048/44.1kHz = ~50 ms delay
 
 	// Specify the callback function that will provide the audio data
 	info.pcmreadcallback = &AudioManager::WriteSoundData;
@@ -49,9 +46,8 @@ bool Engine::Initialize()
 	mAudioManager.Load("Sounds/high.wav");
 	mAudioManager.Load("Sounds/drums.wav");
 	mAudioManager.Load("Sounds/guitar.wav");
-	//mAudioManager.Load("Sounds/Song_bird.wav");
-	mAudioManager.Load("Sounds/whitenoise.wav");
-	mAudioManager.Load("Sounds/Disco16.wav");
+
+
 
 
 	mObjectHandler.InitializeObjects(mDev, mDevCon);
@@ -87,29 +83,19 @@ bool Engine::Initialize()
 	textureStone->Release();
 
 
+	/// Add Audio to the objects
 
-
-
-
-
-
-	// Add Audio to the objects
-
+	// The two cubes
 	std::vector<Object> *sObjects = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
-
 	mAudioManager.Play("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
-
 	mAudioManager.Play("Sounds/guitar.wav", 1.0f, 1.0f, true, &sObjects->at(1));
 
+	// The teapot
 	std::vector<Object> *dObjects = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
-	
 	mAudioManager.Play("Sounds/1kHz.wav", 0.5f, 0.88f, true, &dObjects->at(0));
 	
-	
-	
+	// The background noise
 	mAudioManager.Play("Sounds/high.wav", 0.1f, 1.0f, true);
-
-
 
 
 
@@ -223,7 +209,7 @@ void Engine::RenderGeometryPass()
 		objInd = IndicesToDraw[i];
 		for (int j = 0; j < (*objectArray)[objInd].GetNrOfMeshSubsets(); j++)
 		{
-			// Audio stuff
+			// Reset update check at beginning of frame
 			(*objectArray)[i].mUpdatedSinceLastFrame = false;
 
 			mObjectHandler.SetObjectBufferWithIndex(mDevCon, GEOMETRY_PASS, STATIC_OBJECT, objInd, j);
@@ -237,11 +223,11 @@ void Engine::RenderGeometryPass()
 
 	// Dynamic Objects --------------------------------------------------------
 	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
-	for (size_t i = 0; i < (*objectArray).size(); i++)
+	for (int i = 0; i < (int)(*objectArray).size(); i++)
 	{
 		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
 		{
-			// Audio stuff
+			// Reset update check at beginning of frame
 			(*objectArray)[i].mUpdatedSinceLastFrame = false;
 
 
@@ -271,7 +257,7 @@ void Engine::RenderShadowPass()
 
 	// Static Objects ---------------------------------------------------------
 	objectArray = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
-	for (size_t i = 0; i < (*objectArray).size(); i++)
+	for (int i = 0; i < (int)(*objectArray).size(); i++)
 	{
 		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
 		{
@@ -286,7 +272,7 @@ void Engine::RenderShadowPass()
 
 	// Dynamic Objects ---------------------------------------------------------
 	objectArray = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
-	for (size_t i = 0; i < (*objectArray).size(); i++)
+	for (int i = 0; i < (int)(*objectArray).size(); i++)
 	{
 		for (int j = 0; j < (*objectArray)[i].GetNrOfMeshSubsets(); j++)
 		{
@@ -356,11 +342,5 @@ void Engine::UpdateInput(HWND &wndHandle)
 
 void Engine::UpdateAudio()
 {
-	
-	// todo only if camera moved
-	mAudioManager.Update(0.0f, true, gCameraHandler.GetCameraPosition(), gCameraHandler.GetCameraRight());
-
-	//else
-	//mAudioManager.Update(0.0f, false);
-
+	mAudioManager.Update(0.0f, gCameraHandler.GetCameraPosition(), gCameraHandler.GetCameraRight());
 }

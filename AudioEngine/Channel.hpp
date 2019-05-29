@@ -6,10 +6,49 @@
 #include "../ObjectHandler.hpp"
 
 #include <algorithm>
+#include <limits>
+
+#ifdef max
+#undef max
+#endif
+
+#ifdef min
+#undef min
+#endif
 
 constexpr float MIN_PITCH = 0.25f;
 constexpr float MAX_PITCH = 4.0f;
 
+// Lower values prevent clipping when many sounds are present
+static const float gPerSoundGain = 0.25f;
+
+#pragma region Helperfunctions
+
+// return a linearly interpolated value between two samples
+inline float linInter(PCM16* data, float pos)
+{
+	int a = (int)floor(pos);
+	float mix = pos - a;
+
+	return (data[a] * (1.0f - mix) + data[a + 1] * mix);
+}
+
+
+// Prevent under-/overflow
+template <typename T>
+inline T SafeAdd(T a, T b)
+{
+	static const T min = std::numeric_limits<T>::min();
+	static const T max = std::numeric_limits<T>::max();
+
+	return (b < 0) ? (((min - b) < a) ? (a + b) : min) : ((max - a) > b) ? (a + b) : max;
+}
+
+#pragma endregion
+
+
+
+// volume settings for an object at a point in time
 struct volumePoint
 {
 	float volume;
@@ -56,23 +95,24 @@ public:
 		return mObject->mPosition;
 	}
 
-	bool HasObject() const { return mHasObject; }
-
-	bool GetLoop() const { return mLoop; }
-	void SetLoop(bool loop) { mLoop = loop; }
-
-	float GetVolume() const { return mVolPoint.volume; }
 
 	void SetVolume(float volume) 
 	{
 		mVolPoint.volume = std::clamp<float>(volume, 0.0f, 1.0f);
 	}
 
-	float GetPitch() const { return mPitch; }
+	void SetPitch(float pitch) 
+	{ 
+		mPitch = std::clamp<float>(pitch, MIN_PITCH, MAX_PITCH); 
+	}
 
-	void SetPitch(float pitch) { mPitch = std::clamp<float>(pitch, MIN_PITCH, MAX_PITCH); }
+	void SetLoop(bool loop) { mLoop = loop; }
 
-	float GetPan() const { return mPan; }
+	bool  HasObject() const { return mHasObject; }
+	bool  GetLoop()   const { return mLoop; }
+	float GetVolume() const { return mVolPoint.volume; }
+	float GetPitch()  const { return mPitch; }
+	float GetPan()    const { return mPan; }
 
 
 	void CalcAndSetPan(float2 camPos, float2 camRight, float2 objPos)
@@ -96,18 +136,15 @@ public:
 	void UpdatePan()
 	{
 		const double angle = mPan * PI_4;
-		constexpr float mg = 0.1f; // min gain
+		constexpr float mg = 0.1f; // min gain per ear
 
-
-
-		mVolPoint.leftGain = static_cast<float>(mg + (1.0f - mg) * SQRT2_2 * (cos(angle) - sin(angle)));
-		mVolPoint.rightGain = static_cast<float>(mg + (1.0f - mg) * SQRT2_2 * (cos(angle) + sin(angle)));
+		mVolPoint.leftGain  = (float)(mg + (1.0f - mg) * SQRT2_2 * (cos(angle) - sin(angle)));
+		mVolPoint.rightGain = (float)(mg + (1.0f - mg) * SQRT2_2 * (cos(angle) + sin(angle)));
 	}
 
 	// Volume based on the inverse distance.
 	void SetVolumeBasedOnDistance(float dist)
 	{
-		//float vol = 1.0f / (1.0f + (dist / 10.f));
 		float vol = std::min<float>(1.0f, (10.0f / dist));
 		SetVolume(vol);
 	}
@@ -147,18 +184,18 @@ public:
 			volumePoint vp;
 
 			if (mHasObject) {
-				float fade = static_cast<float>(i) / static_cast<float>(count-2);
+				float fade = (float)i / (float)(count-2);
 				vp = (mVolPoint * fade) + (mOldVolPoint * (1.0f - fade));
 			} else {
 				vp = mVolPoint;
 			}
 
 			// Read value from the sound data at the current position
-			const PCM16 value = static_cast<PCM16>(lineInter(mSound->data, mPosition) * vp.volume);
+			const PCM16 value = (PCM16)(linInter(mSound->data, mPosition) * vp.volume);
 
 			// Write value to both the left and right channels
-			data[i]     = SafeAdd(data[i],     static_cast<PCM16>(value * gPerSoundGain * vp.leftGain));
-			data[i + 1] = SafeAdd(data[i + 1], static_cast<PCM16>(value * gPerSoundGain * vp.rightGain));
+			data[i]     = SafeAdd(data[i],     (PCM16)(value * gPerSoundGain * vp.leftGain));
+			data[i + 1] = SafeAdd(data[i + 1], (PCM16)(value * gPerSoundGain * vp.rightGain));
 
 			// Advance the position by one sample
 			mPosition += mPitch;
@@ -179,7 +216,6 @@ private:
 
 	float mPan;
 
-	volumePoint mVolPoint;
+	volumePoint mVolPoint    = { 0.0f, 0.0f, 0.0f };
 	volumePoint mOldVolPoint = { 0.0f, 0.0f, 0.0f };
-
 };

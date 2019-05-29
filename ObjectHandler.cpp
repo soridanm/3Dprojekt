@@ -84,22 +84,6 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		rotation += 0.005f;
 		float scale = 10.0f;
 
-
-		//DirectX::XMMATRIX scaleMatrix    = DirectX::XMMatrixScaling(scale, scale, scale);
-		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
-		
-
-
-		float3 pos = { 100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f };
-		
-		//DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f);
-		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
-
-
-		//DirectX::
-		/*DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;*/
-
-
 		float x = 15.0f;
 		float y = 300.0f;
 		float z = 15.0f;
@@ -118,10 +102,9 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
 		DirectX::XMFLOAT4X4 test = (*objectArray)[objectIndex].objectBufferData.World;
 
-			// Audio stuff
+		// Update the position used by the audio engine
 		(*objectArray)[objectIndex].mUpdatedSinceLastFrame = true;
 		(*objectArray)[objectIndex].mPosition = float3{ test._14, test._24, test._34 };
-		//(*objectArray)[objectIndex].mPosition = float3()
 	}
 
 	if (objectType == STATIC_OBJECT)
@@ -339,7 +322,7 @@ void ObjectHandler::MoveStaticObjects()
 	using DirectX::operator*;
 
 	float scalingFactor = 2.0f;
-	for (size_t i = 0; i < mStaticObjects.size(); i++) 
+	for (int i = 0; i < mStaticObjects.size(); i++) 
 	{
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
@@ -349,9 +332,9 @@ void ObjectHandler::MoveStaticObjects()
 		int z = 10 * ((205+(i*5)) / 20 + 1);
 
 		float3 pos = { 
-			x,
+			(float)x,
 			WORLD_HEIGHT[z][x] + 10.0f,
-			z 
+			(float)z 
 		};
 		
 		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
@@ -360,7 +343,7 @@ void ObjectHandler::MoveStaticObjects()
 
 		mStaticObjects[i].worldMatrixPerObject = DirectX::XMMatrixTranspose(finalMatrix);
 
-		// Audio stuff
+		// Update the position used by the audio engine
 		mStaticObjects[i].mUpdatedSinceLastFrame = true;
 		mStaticObjects[i].mPosition = pos;
 	}
@@ -766,7 +749,7 @@ bool ObjectHandler::LoadObjectModel(
 		fileIn.close();
 		fileIn.open(meshMatLib.c_str());
 
-		int matCount = mMaterialArray.size(); //total number of materials
+		int matCount = (int)mMaterialArray.size(); //total number of materials
 
 
 		if (!fileIn) //early exit if the material file doesn't open
@@ -876,7 +859,7 @@ bool ObjectHandler::LoadObjectModel(
 					}
 					else
 					{
-						mMaterialArray[matCount - 1].Data.TexArrIndex = mMeshTextureSRV.size();
+						mMaterialArray[matCount - 1].Data.TexArrIndex = (int)mMeshTextureSRV.size();
 						mTextureNameArray.push_back(fileNamePath);
 						mMeshTextureSRV.push_back(tempSRV);
 					}
@@ -918,7 +901,7 @@ bool ObjectHandler::LoadObjectModel(
 	for (int i = 0; i < object.nrOfMeshSubsets; i++)
 	{
 		bool hasMat = false;
-		for (size_t j = 0; j < mMaterialArray.size(); j++)
+		for (int j = 0; j < mMaterialArray.size(); j++)
 		{
 			int int1 = i;
 			int int2 = j;

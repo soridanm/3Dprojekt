@@ -101,6 +101,7 @@ private:
 
 	// Input ---------------------------------------------------------------------
 	DIMOUSESTATE mLastMouseState;
+
 };
 
 #endif // !CAMERAHANDLER_HPP
