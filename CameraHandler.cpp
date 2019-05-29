@@ -173,29 +173,29 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 
     float fTime = static_cast<float>(time);
 
-	// WASD movement
-	if (keyboardState[DIK_W] & 0x80) 
+	// ESDF movement
+	if (keyboardState[DIK_E] & 0x80) 
 	{
 		mBackForwardMovement += mSpeed*fTime;
 	}
-	if (keyboardState[DIK_A] & 0x80) 
+	if (keyboardState[DIK_S] & 0x80) 
 	{
 		mLeftRightMovement -= mSpeed*fTime;
 	}
-	if (keyboardState[DIK_S] & 0x80) 
+	if (keyboardState[DIK_D] & 0x80) 
 	{
 		mBackForwardMovement -= mSpeed*fTime;
 	}
-	if (keyboardState[DIK_D] & 0x80) 
+	if (keyboardState[DIK_F] & 0x80) 
 	{
 		mLeftRightMovement += mSpeed*fTime;
 	}
 	// Up-Down movement
-	if (keyboardState[DIK_SPACE] & 0x80) 
+	if (keyboardState[DIK_A] & 0x80) 
 	{
 		mUpDownMovement += mSpeed*fTime;
 	}
-	if (keyboardState[DIK_C] & 0x80) 
+	if (keyboardState[DIK_Z] & 0x80) 
 	{
 		mUpDownMovement -= mSpeed*fTime;
 	}
@@ -210,7 +210,7 @@ void CameraHandler::DetectInput(double time, HWND &hwnd)
 	}
 
 	// Hold [E] to show the scene from above
-	GOD_CAMERA_ENABLED = (keyboardState[DIK_E] & 0x80) ? true : false;
+	GOD_CAMERA_ENABLED = (keyboardState[DIK_R] & 0x80) ? true : false;
 
 	// Camera movement if the mouse has moved
 	if ((mouse_current_state.lX != mLastMouseState.lX) || (mouse_current_state.lY != mLastMouseState.lY)) 

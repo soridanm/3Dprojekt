@@ -46,6 +46,12 @@ bool Engine::Initialize()
 
 	// Load all sounds
 	mAudioManager.Load("Sounds/1kHz.wav");
+	mAudioManager.Load("Sounds/high.wav");
+	mAudioManager.Load("Sounds/drums.wav");
+	mAudioManager.Load("Sounds/guitar.wav");
+	//mAudioManager.Load("Sounds/Song_bird.wav");
+	mAudioManager.Load("Sounds/whitenoise.wav");
+	mAudioManager.Load("Sounds/Disco16.wav");
 
 
 	mObjectHandler.InitializeObjects(mDev, mDevCon);
@@ -89,15 +95,19 @@ bool Engine::Initialize()
 
 	// Add Audio to the objects
 
-	std::vector<Object> *objects = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
+	std::vector<Object> *sObjects = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
 
-	mAudioManager.Play("Sounds/1kHz.wav", 1.0f, 1.0f, true, &objects->at(1));
+	mAudioManager.Play("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
+
+	mAudioManager.Play("Sounds/guitar.wav", 1.0f, 1.0f, true, &sObjects->at(1));
+
+	std::vector<Object> *dObjects = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
+	
+	mAudioManager.Play("Sounds/1kHz.wav", 0.5f, 0.88f, true, &dObjects->at(0));
 	
 	
-	mAudioManager.Play("Sounds/1kHz.wav", 1.0f, 1.7f, true, &objects->at(9));
 	
-	
-	mAudioManager.Play("Sounds/1kHz.wav", 0.4f, 0.7f, true);
+	mAudioManager.Play("Sounds/high.wav", 0.1f, 1.0f, true);
 
 
 

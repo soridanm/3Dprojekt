@@ -22,12 +22,14 @@ constexpr float SQRT2_2 = 0.70710678118; // SQRT(2)/2
 
 //info.decodebuffersize = 4410;
 //constexpr int DECODE_BUFFER_SIZE = 4410;
-constexpr int DECODE_BUFFER_SIZE = 2205;
+constexpr int DECODE_BUFFER_SIZE = 2048;
+//constexpr int DECODE_BUFFER_SIZE = 1024;
 
 typedef signed short PCM16;
 typedef unsigned int U32;
 typedef unsigned short U16;
 
+// Prevent under-/overflow
 template <typename T>
 inline T SafeAdd(T a, T b)
 {
@@ -92,16 +94,10 @@ struct float2
 
 
 
-
-
 inline float GetDistance(float3 a, float3 b)
 {
 	return sqrt(pow(a.x - b.x, 2) + pow(a.y - b.y, 2) + pow(a.z - b.z, 2));
 }
-
-
-
-static const int testData = 432;
 
 
 // Lower values prevent clipping when many sounds are present

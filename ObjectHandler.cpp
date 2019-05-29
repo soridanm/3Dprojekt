@@ -15,10 +15,16 @@ void ObjectHandler::InitializeObjects(ID3D11Device* Dev, ID3D11DeviceContext* De
 {
 	CreateHeightMap(Dev);
 	LoadObjectModel(Dev, DevCon, L"wt_teapot.obj", DYNAMIC_OBJECT, false, false);
-	LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false);
+	//LoadObjectModel(Dev, DevCon, L"cube.obj", DYNAMIC_OBJECT, false, false);
 
-	for (int i = 0; i < 400; i++) 
+	/*for (int i = 0; i < 400; i++) 
 	{
+		LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false);
+	}*/
+
+
+
+	for (int i = 0; i < 2; i++) {
 		LoadObjectModel(Dev, DevCon, L"cube.obj", STATIC_OBJECT, false, false);
 	}
 
@@ -75,25 +81,47 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	if (objectType == DYNAMIC_OBJECT)
 	{
 		static float rotation = 0.0f;
-		rotation += 0.001f;
+		rotation += 0.005f;
 		float scale = 10.0f;
 
 
-		DirectX::XMMATRIX scaleMatrix    = DirectX::XMMatrixScaling(scale, scale, scale);
+		//DirectX::XMMATRIX scaleMatrix    = DirectX::XMMatrixScaling(scale, scale, scale);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationZ(DirectX::XMConvertToRadians(90.0f)) * DirectX::XMMatrixRotationX(rotation);
 		
+
+
 		float3 pos = { 100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f };
 		
 		//DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(100.0f + 20.f * (objectIndex + 1.0f), 30.0f * (objectIndex + 1.0f), 100.0f);
 		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);
+
+
 		//DirectX::
-		DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;
+		/*DirectX::XMMATRIX finalMatrix = rotationMatrix * scaleMatrix * locationMatrix;*/
+
+
+		float x = 15.0f;
+		float y = 300.0f;
+		float z = 15.0f;
+		float s = 2.0f;
+
+		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(s, s, s);
+		DirectX::XMMATRIX to = DirectX::XMMatrixTranslation(-x, -y, -z);
+		DirectX::XMMATRIX rot = DirectX::XMMatrixRotationY(rotation);
+		DirectX::XMMATRIX from = DirectX::XMMatrixTranslation(x, y, z);
+		DirectX::XMMATRIX loc = DirectX::XMMatrixTranslation(100.0f, 325.0f, 100.0f);
+
+
+		DirectX::XMMATRIX finalMatrix = scaleMatrix * to * rot * (from + loc);// *locationMatrix;
+
 
 		XMStoreFloat4x4(&(*objectArray)[objectIndex].objectBufferData.World, DirectX::XMMatrixTranspose(finalMatrix));
+		DirectX::XMFLOAT4X4 test = (*objectArray)[objectIndex].objectBufferData.World;
 
-		// Audio stuff
+			// Audio stuff
 		(*objectArray)[objectIndex].mUpdatedSinceLastFrame = true;
-		(*objectArray)[objectIndex].mPosition = pos;
+		(*objectArray)[objectIndex].mPosition = float3{ test._14, test._24, test._34 };
+		//(*objectArray)[objectIndex].mPosition = float3()
 	}
 
 	if (objectType == STATIC_OBJECT)
@@ -316,10 +344,14 @@ void ObjectHandler::MoveStaticObjects()
 		DirectX::XMMATRIX scaleMatrix = DirectX::XMMatrixScaling(scalingFactor, scalingFactor, scalingFactor);
 		DirectX::XMMATRIX rotationMatrix = DirectX::XMMatrixRotationRollPitchYaw(0.1f * i, 0.2f * i, 0.3f * i);
 		
+
+		int x = 10 * ((205+(i*5)) % 20 + 1);
+		int z = 10 * ((205+(i*5)) / 20 + 1);
+
 		float3 pos = { 
-			10.0f * (i / 20 + 1.0f),
-			WORLD_HEIGHT[10 * (i % 20 + 1)][10 * (i / 20 + 1)] + 4.0f,
-			10.0f * (i % 20 + 1.0f) 
+			x,
+			WORLD_HEIGHT[z][x] + 10.0f,
+			z 
 		};
 		
 		DirectX::XMMATRIX locationMatrix = DirectX::XMMatrixTranslation(pos.x, pos.y, pos.z);

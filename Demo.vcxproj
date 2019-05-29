@@ -372,6 +372,13 @@
   </ItemGroup>
   <ItemGroup>
     <Media Include="Sounds\1kHz.wav" />
+    <Media Include="Sounds\5-high-S.wav" />
+    <Media Include="Sounds\Disco.wav" />
+    <Media Include="Sounds\drums.wav" />
+    <Media Include="Sounds\guitar.wav" />
+    <Media Include="Sounds\high.wav" />
+    <Media Include="Sounds\Song_bird.wav" />
+    <Media Include="Sounds\whitenoise.wav" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

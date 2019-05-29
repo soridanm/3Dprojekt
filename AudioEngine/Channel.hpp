@@ -74,6 +74,7 @@ public:
 
 	float GetPan() const { return mPan; }
 
+
 	void CalcAndSetPan(float2 camPos, float2 camRight, float2 objPos)
 	{
 		float2 toObj = objPos - camPos;
@@ -95,14 +96,19 @@ public:
 	void UpdatePan()
 	{
 		const double angle = mPan * PI_4;
-		mVolPoint.leftGain = static_cast<float>(SQRT2_2 * (cos(angle) - sin(angle)));
-		mVolPoint.rightGain = static_cast<float>(SQRT2_2 * (cos(angle) + sin(angle)));
+		constexpr float mg = 0.1f; // min gain
+
+
+
+		mVolPoint.leftGain = static_cast<float>(mg + (1.0f - mg) * SQRT2_2 * (cos(angle) - sin(angle)));
+		mVolPoint.rightGain = static_cast<float>(mg + (1.0f - mg) * SQRT2_2 * (cos(angle) + sin(angle)));
 	}
 
-	// todo change falloff function
+	// Volume based on the inverse distance.
 	void SetVolumeBasedOnDistance(float dist)
 	{
-		float vol = 1.0f / (1.0f + (dist / 10.f));
+		//float vol = 1.0f / (1.0f + (dist / 10.f));
+		float vol = std::min<float>(1.0f, (10.0f / dist));
 		SetVolume(vol);
 	}
 
