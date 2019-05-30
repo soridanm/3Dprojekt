@@ -58,8 +58,7 @@ public:
 	// The callback function called by the OS
 	static FMOD_RESULT F_CALLBACK WriteSoundData(FMOD_SOUND *sound, void *data, unsigned int length)
 	{
-		// Get the object we are using
-		// Note that FMOD_Sound * must be cast to FMOD::Sound * to access it
+		// Get access to the AudioManager
 		AudioManager *am;
 		((FMOD::Sound*)sound)->getUserData((void**)&am);
 
@@ -70,8 +69,7 @@ public:
 		PCM16* pcmData = (PCM16*)data;
 		int pcmDataCount = length / 2;
 
-
-		// Tell the channels to write to the output
+		// Tell all the channels to write to the output
 		for (auto &c : am->mChannels) {
 			c.WriteSoundData(pcmData, pcmDataCount);
 		}

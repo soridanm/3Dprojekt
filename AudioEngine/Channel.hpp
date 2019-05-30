@@ -166,10 +166,13 @@ public:
 		// If there is no sound assigned to the channel do nothing  
 		if (mSound == 0) return;
 
+		volumePoint vp;
+		float fade = 0.0f;
+		float delta = 2.0f / (float)(count - 2);
+
 		// We need to write "count" samples to the "data" array
 		// Since output is stereo it is easier to advance in pairs
 		for (int i = 0; i < count; i += 2) {
-
 			// If we have reached the end of the sound, stop and return
 			if (mPosition >= mSound->count) {
 				if (mLoop) {
@@ -180,11 +183,8 @@ public:
 				}
 			}
 
-			// Fade between old values and new ones to prevent popping
-			volumePoint vp;
-
+			// Fade between old volume and new one to prevent popping
 			if (mHasObject) {
-				float fade = (float)i / (float)(count-2);
 				vp = (mVolPoint * fade) + (mOldVolPoint * (1.0f - fade));
 			} else {
 				vp = mVolPoint;
@@ -197,10 +197,10 @@ public:
 			data[i]     = SafeAdd(data[i],     (PCM16)(value * gPerSoundGain * vp.leftGain));
 			data[i + 1] = SafeAdd(data[i + 1], (PCM16)(value * gPerSoundGain * vp.rightGain));
 
-			// Advance the position by one sample
+			// Advance the position by one sample and adjust the volume fading
 			mPosition += mPitch;
+			fade += delta;
 		}
-
 		mOldVolPoint = mVolPoint;
 	}
 

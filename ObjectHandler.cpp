@@ -73,7 +73,12 @@ bool ObjectHandler::SetObjectBufferWithIndex(ID3D11DeviceContext* DevCon, Render
 	if (objectType == DYNAMIC_OBJECT)
 	{
 		static float rotation = 0.0f;
-		rotation += 0.005f;
+
+		if (passID == GEOMETRY_PASS) {
+			rotation += 0.01f;
+		}
+		
+		
 		float scale = 10.0f;
 
 		float x = 15.0f;
