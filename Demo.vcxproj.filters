@@ -31,6 +31,12 @@
     <Filter Include="Resource Files\Sounds">
       <UniqueIdentifier>{8cc807d6-0677-48e5-9a82-f5ff56a962fa}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\XAudio2Engine">
+      <UniqueIdentifier>{1670673c-1c2a-4d6a-9260-26cdcf21bee7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\XAudio2Engine">
+      <UniqueIdentifier>{9e04f4f3-a716-42ee-ad36-43d0aaf19bf8}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -65,6 +71,12 @@
     </ClCompile>
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="XAudio2Engine\AudioFileReader.cpp">
+      <Filter>Source Files\XAudio2Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="XAudio2Engine\Sound.cpp">
+      <Filter>Source Files\XAudio2Engine</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -141,6 +153,15 @@
     </ClInclude>
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="XAudio2Engine\Sound.h">
+      <Filter>Header Files\XAudio2Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="XAudio2Engine\XAudio2Helpers.h">
+      <Filter>Header Files\XAudio2Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="XAudio2Engine\AudioFileReader.h">
+      <Filter>Header Files\XAudio2Engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -34,7 +34,43 @@
 
 // AUDIO Stuff
 
+//#include <collection.h>
+//#include <ppltasks.h>
 
+#include <XAudio2.h>
+#include <xapo.h>
+#include <hrtfapoapi.h>
+#include <DirectXMath.h>
+#include <wrl\client.h>
+#include <wrl\implements.h>
+#include <mfapi.h>
+#include <mfidl.h>
+#include <mfreadwrite.h>
+#include <strsafe.h>
+
+#pragma comment(lib, "Mfreadwrite.lib")
+#pragma comment(lib, "Mfplat.lib")
+#pragma comment(lib, "Mfuuid.lib")
+#pragma comment(lib, "hrtfapo.lib")
+
+
+using namespace Microsoft::WRL;
+//using namespace Windows::UI::Xaml;
+using namespace Windows::Foundation;
+
+//#include "AudioFileReader.h"
+//#include "XAudio2Helpers.h"
+//#include "App.xaml.h"
+//#include "OmnidirectionalSound.h"
+//#include "CardioidSound.h"
+//#include "CustomDecay.h"
+
+#include "XAudio2Engine\AudioFileReader.h"
+#include "XAudio2Engine\XAudio2Helpers.h"
+#include "XAudio2Engine\Sound.h"
+
+
+#define HRTF_2PI    6.283185307f
 
 
 

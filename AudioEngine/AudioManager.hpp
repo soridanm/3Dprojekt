@@ -86,4 +86,5 @@ private:
 	// data[0] = left, data[1] = right, data[2] = left, etc.
 	// count = 44100 Hz * 1 second * 2 channels
 	PCM16 data[88200];
+
 };

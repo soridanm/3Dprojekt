@@ -170,6 +170,8 @@
     <ClCompile Include="QuadtreeHandler.cpp" />
     <ClCompile Include="ShaderHandler.cpp" />
     <ClCompile Include="TimeHandler.cpp" />
+    <ClCompile Include="XAudio2Engine\AudioFileReader.cpp" />
+    <ClCompile Include="XAudio2Engine\Sound.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="ScreenPassPixel.hlsl">
@@ -352,6 +354,9 @@
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="ShaderHandler.hpp" />
     <ClInclude Include="TimeHandler.hpp" />
+    <ClInclude Include="XAudio2Engine\AudioFileReader.h" />
+    <ClInclude Include="XAudio2Engine\Sound.h" />
+    <ClInclude Include="XAudio2Engine\XAudio2Helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="grass.dds" />
