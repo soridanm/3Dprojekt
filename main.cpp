@@ -7,7 +7,7 @@
 * File summary:
 *	Creates the application window and launches it.
 */
-
+#include "pch.h"
 
 #define DIRECTINPUT_VERSION 0x0800
 

@@ -121,6 +121,8 @@
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
       <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link />
     <Link>
@@ -138,6 +140,8 @@
       <LanguageStandard>stdcpp17</LanguageStandard>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
     </ClCompile>
     <Link />
     <Link>
@@ -159,6 +163,10 @@
     <ClCompile Include="LightHandler.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="ObjectHandler.cpp" />
+    <ClCompile Include="pch.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="QuadtreeHandler.cpp" />
     <ClCompile Include="ShaderHandler.cpp" />
     <ClCompile Include="TimeHandler.cpp" />
@@ -339,6 +347,7 @@
     <ClInclude Include="GlobalSettings.hpp" />
     <ClInclude Include="LightHandler.hpp" />
     <ClInclude Include="ObjectHandler.hpp" />
+    <ClInclude Include="pch.h" />
     <ClInclude Include="QuadtreeHandler.hpp" />
     <ClInclude Include="GlobalResources.hpp" />
     <ClInclude Include="ShaderHandler.hpp" />

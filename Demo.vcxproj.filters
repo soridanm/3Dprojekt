@@ -63,6 +63,9 @@
     <ClCompile Include="AudioEngine\AudioManager.cpp">
       <Filter>Source Files\AudioEngine</Filter>
     </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="GBufferGeometry.hlsl">
@@ -135,6 +138,9 @@
     </ClInclude>
     <ClInclude Include="AudioEngine\Sound.hpp">
       <Filter>Header Files\AudioEngine</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
