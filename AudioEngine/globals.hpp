@@ -14,12 +14,68 @@ typedef signed short PCM16;
 typedef unsigned int U32;
 typedef unsigned short U16;
 
-typedef union
-{
-	struct { float x, y, z; };
-	struct { float r, g, b; };
-} float3;
+//typedef union
+//{
+//	struct { float x, y, z; };
+//	struct { float r, g, b; };
+//
+//	float length()
+//	{
+//		return (float)sqrt(x*x + y*y + z*z);
+//	}
+//
+//	void normalize()
+//	{
+//		float l = length();
+//		x = x / l;
+//		y = y / l;
+//		z = z / l;
+//	}
+//
+//	float3 normalize(float3 v)
+//	{
+//		v.normalize();
+//		return v;
+//	}
+//
+//} float3;
 
+
+struct float3
+{
+	float x;
+	float y;
+	float z;
+
+	float length() const
+	{
+		return (float)sqrt(x*x + y * y + z * z);
+	}
+
+	void normalize()
+	{
+		float l = length();
+		x = x / l;
+		y = y / l;
+		z = z / l;
+	}
+
+};
+
+float3 normalize(float3 v)
+{
+	v.normalize();
+	return v;
+}
+
+float3 cross(const float3 &a, const float3 &b)
+{
+	float3 c;
+	c.x = a.y*b.z - a.z*b.y;
+	c.y = a.z*b.x - a.x*b.z;
+	c.z = a.x*b.y - a.y*b.x;
+	return c;
+}
 
 struct float2
 {

@@ -26,7 +26,7 @@
 #pragma comment(lib, "dxguid.lib")
 #pragma comment(lib, "Ole32.lib")
 
-
+constexpr int MAX_SOUND_CHANNELS = 100;
 
 
 
@@ -48,6 +48,9 @@
 #include <mfreadwrite.h>
 #include <strsafe.h>
 
+#include <winrt/base.h>
+#include <winrt/Windows.Foundation.h>
+
 #pragma comment(lib, "Mfreadwrite.lib")
 #pragma comment(lib, "Mfplat.lib")
 #pragma comment(lib, "Mfuuid.lib")
@@ -67,7 +70,7 @@ using namespace Windows::Foundation;
 
 #include "XAudio2Engine\AudioFileReader.h"
 #include "XAudio2Engine\XAudio2Helpers.h"
-#include "XAudio2Engine\Sound.h"
+#include "XAudio2Engine\OmnidirectionalSound.h"
 
 
 #define HRTF_2PI    6.283185307f

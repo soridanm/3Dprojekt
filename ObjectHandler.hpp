@@ -23,6 +23,7 @@
 
 #include "AudioEngine/globals.hpp"
 
+#include <DirectXMath.h>
 
 enum ObjectType : int
 {
@@ -101,10 +102,13 @@ struct Object
 
 
 	bool mUpdatedSinceLastFrame = true;
-	float3 mPosition;
+	float3 mPosition = { 1.0f, 1.0f, 1.0f };
 
 	int GetNrOfMeshSubsets() { return nrOfMeshSubsets; }
 	bool GetUpdatedSinceLastFrame() { return mUpdatedSinceLastFrame; }
+
+	float3 GetPosition() const { return mPosition; }
+
 };
 
 // Materials will usually be taken from the .mtl file but the heightmap will use the Grass preset

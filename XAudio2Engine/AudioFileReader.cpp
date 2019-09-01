@@ -13,7 +13,7 @@
 
 //#include "AudioFileReader.h"
 
-//_Use_decl_annotations_
+_Use_decl_annotations_
 HRESULT AudioFileReader::Initialize(LPCWSTR filename)
 {
 	BOOL mfStarted = FALSE;
@@ -21,6 +21,7 @@ HRESULT AudioFileReader::Initialize(LPCWSTR filename)
 	mfStarted = SUCCEEDED(hr);
 
 	ComPtr<IMFSourceReader> reader;
+	//IMFSourceReader* reader=nullptr;
 	if (SUCCEEDED(hr))
 	{
 		hr = MFCreateSourceReaderFromURL(filename, nullptr, &reader);
@@ -39,6 +40,7 @@ HRESULT AudioFileReader::Initialize(LPCWSTR filename)
 
 	// Create a partial media type that specifies uncompressed PCM audio.
 	ComPtr<IMFMediaType> partialType;
+	//IMFMediaType* partialType;
 	if (SUCCEEDED(hr))
 	{
 		hr = MFCreateMediaType(&partialType);
@@ -149,7 +151,7 @@ HRESULT AudioFileReader::Initialize(LPCWSTR filename)
 
 	if (mfStarted)
 	{
-		MFShutdown();
+		//MFShutdown();
 	}
 
 	return hr;

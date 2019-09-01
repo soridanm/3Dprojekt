@@ -10,7 +10,9 @@
 //*********************************************************
 
 #pragma once
-#include "AudioFileReader.h"
+
+//#include "AudioFileReader.h"
+#include "..\AudioEngine\globals.hpp"
 
 //
 // Sound with omnidirectional radiation pattern i.e. emits sound equally in all directions.
@@ -18,12 +20,14 @@
 class OmnidirectionalSound
 {
 public:
+	OmnidirectionalSound(const std::string& path);
+
 	virtual ~OmnidirectionalSound();
 	HRESULT Initialize(_In_ LPCWSTR filename);
 
 	HRESULT Start();
 	HRESULT Stop();
-	HRESULT OnUpdate(_In_ float angularVelocity, _In_ float height, _In_ float radius);
+	HRESULT OnUpdate(_In_ winrt::Windows::Foundation::Numerics::float3 pos);
 	HRESULT SetEnvironment(_In_ HrtfEnvironment environment);
 	HrtfEnvironment GetEnvironment() { return _environment; }
 

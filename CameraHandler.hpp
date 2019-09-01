@@ -32,6 +32,8 @@ public:
 	
 	DirectX::XMFLOAT4   GetCameraPosition();
 	DirectX::XMFLOAT4   GetCameraRight();
+	DirectX::XMFLOAT4   GetCameraUp();
+	DirectX::XMFLOAT4   GetCameraForward();
 	DirectX::XMFLOAT4X4 GetProjection();
 	DirectX::XMFLOAT4X4 GetView();
 

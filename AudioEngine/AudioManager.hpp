@@ -16,7 +16,7 @@
 #include <vector>
 
 
-constexpr int MAX_SOUND_CHANNELS = 100;
+
 
 
 inline void ExitOnError(FMOD_RESULT result)

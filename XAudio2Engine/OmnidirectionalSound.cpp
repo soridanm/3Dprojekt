@@ -9,9 +9,25 @@
 //
 //*********************************************************
 #include "pch.h"
-//#include "Sound.h"
 
-//_Use_decl_annotations_
+//#include "Sound.h"
+#include <string>
+
+
+OmnidirectionalSound::OmnidirectionalSound(const std::string& path)
+{
+	int stringLength = MultiByteToWideChar(CP_ACP, 0, path.data(), path.length(), 0, 0);
+	std::wstring wstr(stringLength, 0);
+	MultiByteToWideChar(CP_ACP, 0, path.data(), path.length(), &wstr[0], stringLength);
+
+	Initialize(wstr.c_str());
+
+	if (FAILED(Initialize(wstr.c_str()))) {
+		int a = 43;
+	}
+}
+
+_Use_decl_annotations_
 HRESULT OmnidirectionalSound::Initialize(LPCWSTR filename)
 {
 	auto hr = _audioFile.Initialize(filename);
@@ -75,7 +91,7 @@ HRESULT OmnidirectionalSound::Stop()
 	return _sourceVoice->Stop();
 }
 
-//_Use_decl_annotations_
+_Use_decl_annotations_
 HRESULT OmnidirectionalSound::SetEnvironment(HrtfEnvironment environment)
 {
 	// Environment can be changed at any time.
@@ -87,15 +103,18 @@ HRESULT OmnidirectionalSound::SetEnvironment(HrtfEnvironment environment)
 // Caller passes in the information necessary to compute the source position.
 //
 _Use_decl_annotations_
-HRESULT OmnidirectionalSound::OnUpdate(float angularVelocity, float height, float radius)
+HRESULT OmnidirectionalSound::OnUpdate(winrt::Windows::Foundation::Numerics::float3 pos)
 {
-	auto tick = GetTickCount64();
+	auto hrtfPosition = HrtfPosition{ pos.x, pos.y, pos.z };
+	return _hrtfParams->SetSourcePosition(&hrtfPosition);
+
+	/*auto tick = GetTickCount64();
 	auto elapsedTime = tick - _lastTick;
 	_lastTick = tick;
 	_angle += elapsedTime * angularVelocity;
 	_angle = _angle > HRTF_2PI ? (_angle - HRTF_2PI) : _angle;
 	auto position = ComputePositionInOrbit(height, radius, _angle);
-	return _hrtfParams->SetSourcePosition(&position);
+	return _hrtfParams->SetSourcePosition(&position);*/
 }
 
 _Use_decl_annotations_

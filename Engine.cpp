@@ -44,10 +44,11 @@ bool Engine::Initialize()
 	mAudioManager.Init(info);
 
 	// Load all sounds
-	mAudioManager.Load("Sounds/1kHz.wav");
-	mAudioManager.Load("Sounds/high.wav");
+	//mAudioManager.Load("Sounds/MonoSound.wav");
+	//mAudioManager.Load("Sounds/1kHz.wav");
+	//mAudioManager.Load("Sounds/high.wav");
 	mAudioManager.Load("Sounds/drums.wav");
-	mAudioManager.Load("Sounds/guitar.wav");
+	//mAudioManager.Load("Sounds/guitar.wav");
 
 
 
@@ -90,14 +91,15 @@ bool Engine::Initialize()
 	// The two cubes
 	std::vector<Object> *sObjects = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
 	mAudioManager.Play("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
-	mAudioManager.Play("Sounds/guitar.wav", 1.0f, 1.0f, true, &sObjects->at(1));
+	//mAudioManager.Play("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
+	//mAudioManager.Play("Sounds/guitar.wav", 1.0f, 1.0f, true, &sObjects->at(1));
 
 	// The teapot
 	std::vector<Object> *dObjects = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
-	mAudioManager.Play("Sounds/1kHz.wav", 0.5f, 0.88f, true, &dObjects->at(0));
+	//mAudioManager.Play("Sounds/1kHz.wav", 0.5f, 0.88f, true, &dObjects->at(0));
 	
 	// The background noise
-	mAudioManager.Play("Sounds/high.wav", 0.1f, 1.0f, true);
+	//mAudioManager.Play("Sounds/high.wav", 0.1f, 1.0f, true);
 
 
 
@@ -344,5 +346,17 @@ void Engine::UpdateInput(HWND &wndHandle)
 
 void Engine::UpdateAudio()
 {
-	mAudioManager.Update(0.0f, gCameraHandler.GetCameraPosition(), gCameraHandler.GetCameraRight());
+	
+	// for FMOD
+	//mAudioManager.Update(0.0f, gCameraHandler.GetCameraPosition(), gCameraHandler.GetCameraRight());
+	
+	// for XAUDIO
+	mAudioManager.Update(0.0f, 
+		gCameraHandler.GetCameraPosition(), 
+		gCameraHandler.GetCameraRight(),
+		gCameraHandler.GetCameraUp(),
+		gCameraHandler.GetCameraForward()
+	);
+
+
 }

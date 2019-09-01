@@ -138,6 +138,21 @@ DirectX::XMFLOAT4 CameraHandler::GetCameraRight()
 	return temp;
 }
 
+DirectX::XMFLOAT4 CameraHandler::GetCameraUp()
+{
+	DirectX::XMFLOAT4 temp;
+	DirectX::XMStoreFloat4(&temp, mCamUp);
+	return temp;
+}
+
+DirectX::XMFLOAT4 CameraHandler::GetCameraForward()
+{
+	DirectX::XMFLOAT4 temp;
+	DirectX::XMStoreFloat4(&temp, mCamForward);
+	return temp;
+}
+
+
 DirectX::XMFLOAT4X4 CameraHandler::GetProjection() 
 {
 	return mCameraProjection;

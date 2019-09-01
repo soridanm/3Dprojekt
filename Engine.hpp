@@ -24,6 +24,7 @@
 #include "Objecthandler.hpp"
 
 #include "AudioEngine/AudioManager.hpp"
+#include "XAudio2Engine/XA2AudioManager.h"
 
 #include <vector>
 #include <algorithm>
@@ -66,7 +67,9 @@ private:
 	ShaderHandler mShaderHandler = ShaderHandler();
 	LightHandler  mLightHandler  = LightHandler();
 
-	AudioManager  mAudioManager;
+	//AudioManager  mAudioManager;
+	XA2AudioManager  mAudioManager;
+
 
 };
 

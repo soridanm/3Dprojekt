@@ -75,7 +75,10 @@
     <ClCompile Include="XAudio2Engine\AudioFileReader.cpp">
       <Filter>Source Files\XAudio2Engine</Filter>
     </ClCompile>
-    <ClCompile Include="XAudio2Engine\Sound.cpp">
+    <ClCompile Include="XAudio2Engine\OmnidirectionalSound.cpp">
+      <Filter>Source Files\XAudio2Engine</Filter>
+    </ClCompile>
+    <ClCompile Include="XAudio2Engine\XA2AudioManager.cpp">
       <Filter>Source Files\XAudio2Engine</Filter>
     </ClCompile>
   </ItemGroup>
@@ -154,13 +157,16 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="XAudio2Engine\Sound.h">
-      <Filter>Header Files\XAudio2Engine</Filter>
-    </ClInclude>
     <ClInclude Include="XAudio2Engine\XAudio2Helpers.h">
       <Filter>Header Files\XAudio2Engine</Filter>
     </ClInclude>
     <ClInclude Include="XAudio2Engine\AudioFileReader.h">
+      <Filter>Header Files\XAudio2Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="XAudio2Engine\XA2AudioManager.h">
+      <Filter>Header Files\XAudio2Engine</Filter>
+    </ClInclude>
+    <ClInclude Include="XAudio2Engine\OmnidirectionalSound.h">
       <Filter>Header Files\XAudio2Engine</Filter>
     </ClInclude>
   </ItemGroup>
@@ -218,6 +224,9 @@
       <Filter>Resource Files\Sounds</Filter>
     </Media>
     <Media Include="Sounds\high.wav">
+      <Filter>Resource Files\Sounds</Filter>
+    </Media>
+    <Media Include="Sounds\MonoSound.wav">
       <Filter>Resource Files\Sounds</Filter>
     </Media>
   </ItemGroup>
