@@ -36,10 +36,15 @@ public:
 		);
 
 	void Load(const std::string& path);
+	void Load2(const std::string& path);
+
+
 
 	void Stream(const std::string& path);
 
 	void Play(const std::string& path, float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr);
+	
+	void Play2(const std::string& path, float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr);
 
 	void Init(FMOD_CREATESOUNDEXINFO info);
 
@@ -83,8 +88,9 @@ private:
 
 
 	//SoundMap sounds; // TODO? do differently
-
 	OmnidirectionalSound *mSound;
+	OmnidirectionalSound *mSound2;
 	winrt::Windows::Foundation::Numerics::float3 mSoundPosition;
+	winrt::Windows::Foundation::Numerics::float3 mSoundPosition2;
 
 };

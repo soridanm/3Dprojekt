@@ -47,7 +47,8 @@ bool Engine::Initialize()
 	//mAudioManager.Load("Sounds/MonoSound.wav");
 	//mAudioManager.Load("Sounds/1kHz.wav");
 	//mAudioManager.Load("Sounds/high.wav");
-	mAudioManager.Load("Sounds/drums.wav");
+	mAudioManager.Load("Sounds/guitar.wav");
+	mAudioManager.Load2("Sounds/drums.wav");
 	//mAudioManager.Load("Sounds/guitar.wav");
 
 
@@ -90,13 +91,13 @@ bool Engine::Initialize()
 
 	// The two cubes
 	std::vector<Object> *sObjects = mObjectHandler.GetObjectArrayPtr(STATIC_OBJECT);
-	mAudioManager.Play("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
-	//mAudioManager.Play("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
+	mAudioManager.Play2("Sounds/drums.wav", 1.0f, 1.0f, true, &sObjects->at(0));
+	mAudioManager.Play("Sounds/guitar.wav", 1.0f, 1.0f, true, &sObjects->at(1));
 	//mAudioManager.Play("Sounds/guitar.wav", 1.0f, 1.0f, true, &sObjects->at(1));
 
 	// The teapot
 	std::vector<Object> *dObjects = mObjectHandler.GetObjectArrayPtr(DYNAMIC_OBJECT);
-	//mAudioManager.Play("Sounds/1kHz.wav", 0.5f, 0.88f, true, &dObjects->at(0));
+	//mAudioManager.Play("Sounds/drums.wav", 0.5f, 0.88f, true, &dObjects->at(0));
 	
 	// The background noise
 	//mAudioManager.Play("Sounds/high.wav", 0.1f, 1.0f, true);
