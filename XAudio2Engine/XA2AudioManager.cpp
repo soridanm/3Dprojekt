@@ -25,11 +25,7 @@ XA2AudioManager::~XA2AudioManager()
 	//system = 0;
 }
 
-void XA2AudioManager::Init(FMOD_CREATESOUNDEXINFO info)
-{
 
-
-}
 
 void XA2AudioManager::Update(float elapsed, 
 	DirectX::XMFLOAT4 camPos, DirectX::XMFLOAT4 camRight, 

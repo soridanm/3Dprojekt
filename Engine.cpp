@@ -16,32 +16,32 @@ bool Engine::Initialize()
 {
 	// AudioManager
 	// Create and initialize a sound info structure
-	FMOD_CREATESOUNDEXINFO info;
-	memset(&info, 0, sizeof(FMOD_CREATESOUNDEXINFO));
-	info.cbsize = sizeof(FMOD_CREATESOUNDEXINFO);
+	//FMOD_CREATESOUNDEXINFO info;
+	//memset(&info, 0, sizeof(FMOD_CREATESOUNDEXINFO));
+	//info.cbsize = sizeof(FMOD_CREATESOUNDEXINFO);
 
-	// Specify sampling rate, format, and number of channels to use
-	// In this case, 44100 Hz, signed 16-bit PCM, Stereo
-	info.defaultfrequency = 44100;
-	info.format = FMOD_SOUND_FORMAT_PCM16;
-	info.numchannels = 2;
+	//// Specify sampling rate, format, and number of channels to use
+	//// In this case, 44100 Hz, signed 16-bit PCM, Stereo
+	//info.defaultfrequency = 44100;
+	//info.format = FMOD_SOUND_FORMAT_PCM16;
+	//info.numchannels = 2;
 
-	// Size of the entire sound in bytes. Since the sound will be
-	// looping, it does not need to be too long. In this example
-	// we will be using the equivalent of a 5 seconds sound.
-	// i.e. sampleRate * channels * bytesPerSample * durationInSeconds
-	info.length = 44100 * 2 * sizeof(signed short) * 5;
+	//// Size of the entire sound in bytes. Since the sound will be
+	//// looping, it does not need to be too long. In this example
+	//// we will be using the equivalent of a 5 seconds sound.
+	//// i.e. sampleRate * channels * bytesPerSample * durationInSeconds
+	//info.length = 44100 * 2 * sizeof(signed short) * 5;
 
-	// Number of samples we will be submitting at a time
-	// A smaller value results in less latency between operations
-	// but if it is too small we get problems in the sound
-	info.decodebuffersize = 2048; // 2048/44.1kHz = ~50 ms delay
+	//// Number of samples we will be submitting at a time
+	//// A smaller value results in less latency between operations
+	//// but if it is too small we get problems in the sound
+	//info.decodebuffersize = 2048; // 2048/44.1kHz = ~50 ms delay
 
-	// Specify the callback function that will provide the audio data
-	info.pcmreadcallback = &AudioManager::WriteSoundData;
-	info.userdata = &mAudioManager; // Get access to the audiomanager
+	//// Specify the callback function that will provide the audio data
+	//info.pcmreadcallback = &AudioManager::WriteSoundData;
+	//info.userdata = &mAudioManager; // Get access to the audiomanager
 
-	mAudioManager.Init(info);
+	//mAudioManager.Init(info);
 
 	// Load all sounds
 	//mAudioManager.Load("Sounds/MonoSound.wav");
@@ -64,7 +64,7 @@ bool Engine::Initialize()
 
 	mObjectHandler.mQuadtree.mFrustum = FrustumHandler(gCameraHandler.GetProjection(), gCameraHandler.GetView());
 
-	CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
+	//CoInitializeEx(NULL, COINIT_APARTMENTTHREADED | COINIT_DISABLE_OLE1DDE);
 
 	// Textures for the heightmap
 	ID3D11Resource* textureGrass;

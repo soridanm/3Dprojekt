@@ -6,8 +6,6 @@
 #include "..\ObjectHandler.hpp"
 
 
-#include <fmod.hpp>
-#include <fmod_errors.h>
 
 #include <iostream>
 #include <map>
@@ -46,7 +44,7 @@ public:
 	
 	void Play2(const std::string& path, float volume = 1.0f, float pitch = 1.0f, bool loop = false, Object *object = nullptr);
 
-	void Init(FMOD_CREATESOUNDEXINFO info);
+
 
 
 
